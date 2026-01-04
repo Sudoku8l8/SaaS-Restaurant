@@ -36,9 +36,30 @@ export const orders = {
     },
 
     async updateStatus(orderId: string, status: OrderStatus) {
-        await db.orders.update(orderId, {
-            status,
-            updatedAt: new Date()
+        return db.transaction('rw', db.orders, async () => {
+            const order = await db.orders.get(orderId);
+            if (!order) throw new Error('Order not found');
+
+            // Simple State Machine Validation
+            const current = order.status;
+            let isValid = false;
+
+            if (current === 'pending' && status === 'in_preparation') isValid = true;
+            if (current === 'in_preparation' && status === 'ready') isValid = true;
+            if (current === 'ready' && status === 'delivered') isValid = true;
+            if (current === 'delivered' && status === 'paid') isValid = true;
+            if (status === 'cancelled' && current !== 'paid') isValid = true; // Allow cancelling any non-paid order
+
+            if (!isValid) {
+                console.warn(`Invalid transition from ${current} to ${status}`);
+                // For now allow it to avoid UI blocks if state desyncs, but log it.
+                // throw new Error(`Invalid transition from ${current} to ${status}`);
+            }
+
+            await db.orders.update(orderId, {
+                status,
+                updatedAt: new Date()
+            });
         });
     },
 
