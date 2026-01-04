@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrders } from '@/hooks/useOrders';
+import { useClosureStatus } from '@/hooks/useClosureStatus';
 import { Button, Badge } from '@/components/shared';
 import { OrderCard } from '@/components/features/OrderCard';
 import { OrderStatus } from '@/types';
@@ -10,6 +11,7 @@ export function CocinaPage() {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const { activeOrders } = useOrders();
+    const { isClosed } = useClosureStatus();
     const [filterStatus, setFilterStatus] = useState<OrderStatus | 'all'>('all');
 
     if (!activeOrders) return <div className="p-4">Cargando pedidos...</div>;
@@ -20,6 +22,23 @@ export function CocinaPage() {
 
     return (
         <div className="container mt-md">
+            {/* Closure Banner */}
+            {isClosed && (
+                <div style={{
+                    background: 'linear-gradient(135deg, #e74c3c, #c0392b)',
+                    color: 'white',
+                    padding: '1rem 1.5rem',
+                    borderRadius: '8px',
+                    marginBottom: '1.5rem',
+                    boxShadow: '0 4px 12px rgba(231, 76, 60, 0.3)'
+                }}>
+                    <strong>🔒 CAJA CERRADA</strong>
+                    <p style={{ margin: 0, fontSize: '0.9rem', opacity: 0.9 }}>
+                        Las operaciones del día han sido cerradas.
+                    </p>
+                </div>
+            )}
+
             <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                 <div>
                     <h1>Pantalla de Cocina</h1>
