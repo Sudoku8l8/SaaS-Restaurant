@@ -1,10 +1,11 @@
-import { useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/local-db';
+import { useState, useEffect } from 'react';
+import { db } from '@/services/firebase/config';
+import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
 import { Button, Card, Input, Badge } from '@/components/shared';
 import type { Product, OrderItem, RestaurantTable } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrders } from '@/hooks/useOrders';
+import { generateUUID } from '@/utils/uuid';
 
 interface OrderModalProps {
     table: RestaurantTable;
@@ -18,11 +19,18 @@ export function OrderModal({ table, onClose, onOrderCreated }: OrderModalProps) 
     const [items, setItems] = useState<OrderItem[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
+    const [products, setProducts] = useState<Product[]>([]);
 
     // Fetch products
-    const products = useLiveQuery(
-        () => db.products.where('restaurantId').equals(user?.restaurantId || '').toArray()
-    );
+    useEffect(() => {
+        const fetchProducts = async () => {
+            if (!user?.restaurantId) return;
+            const q = query(collection(db, 'products'), where('restaurantId', '==', user.restaurantId));
+            const snapshot = await getDocs(q);
+            setProducts(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Product)));
+        };
+        fetchProducts();
+    }, [user?.restaurantId]);
 
     // Filter products
     const filteredProducts = products?.filter(p => {
@@ -75,7 +83,7 @@ export function OrderModal({ table, onClose, onOrderCreated }: OrderModalProps) 
 
         try {
             // Create Order
-            const orderId = crypto.randomUUID();
+            const orderId = generateUUID();
             await createOrder({
                 id: orderId,
                 restaurantId: user.restaurantId,
@@ -90,10 +98,9 @@ export function OrderModal({ table, onClose, onOrderCreated }: OrderModalProps) 
             });
 
             // Update Table Status
-            await db.restaurantTables.update(table.id, {
-                status: 'occupied',
-                currentOrderId: orderId
-            });
+            // Table update is handled in createOrder hook now to be transactional/atomic with Firestore batch
+            // if we kept it here, we'd need to use Firestore SDK directly.
+            // Since useOrders.createOrder handles key logic, we can skip updating table here.
 
             onOrderCreated();
             onClose();

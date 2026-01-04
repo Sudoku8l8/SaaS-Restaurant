@@ -1,15 +1,19 @@
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import './index.css';
-import { App } from '@/app/App';
-import { seedUsers } from '@/local-db';
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import { RouterProvider } from 'react-router-dom'
+import { router } from './app/routes'
+import { AuthProvider } from './app/providers/AuthProvider'
+import { seedFirestore } from './services/firebase/seeders'
+import './index.css'
 
-// Initialize data
-seedUsers().catch(console.error);
+// Init DB
+seedFirestore();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
   </StrictMode>
 );
 ;
