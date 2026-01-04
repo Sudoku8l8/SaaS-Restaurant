@@ -1,12 +1,15 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrders } from '@/hooks/useOrders';
 import { Button, Badge } from '@/components/shared';
 import { OrderCard } from '@/components/features/OrderCard';
+import { SalesDashboard } from '@/components/features/SalesDashboard';
 import { OrderStatus } from '@/types';
 
 export function CocinaPage() {
     const { user, logout } = useAuth();
+    const navigate = useNavigate();
     const { activeOrders } = useOrders();
     const [filterStatus, setFilterStatus] = useState<OrderStatus | 'all'>('all');
 
@@ -23,10 +26,17 @@ export function CocinaPage() {
                     <h1>Pantalla de Cocina</h1>
                     <p>Hola, {user?.name} - {filteredOrders.length} pedidos</p>
                 </div>
-                <Button variant="secondary" onClick={logout}>
-                    Cerrar Sesión
-                </Button>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                    <Button variant="danger" onClick={() => navigate('/cierre-caja')}>
+                        💰 Cierre Caja
+                    </Button>
+                    <Button variant="secondary" onClick={logout}>
+                        Salir
+                    </Button>
+                </div>
             </header>
+
+            <SalesDashboard />
 
             <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
                 <span style={{ fontWeight: 'bold', alignSelf: 'center', marginRight: '0.5rem' }}>Filtros:</span>

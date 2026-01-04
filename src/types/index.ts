@@ -104,23 +104,18 @@ export interface StatusChange {
 }
 
 export interface Closure {
-    id: string;
+    id?: string;
     restaurantId: string;
-    date: Date;
+    date: string; // YYYY-MM-DD
     totalSales: number;
     orderCount: number;
-    details: ClosureDetails;
-    syncedAt?: Date;
+    salesByWaiter: Record<string, number>;
+    salesByPaymentMethod: Record<string, number>;
+    createdAt: Date;
     createdBy: string;
+    createdByName: string;
 }
 
-export interface ClosureDetails {
-    salesByWaiter: Record<string, number>;
-    salesByPaymentMethod: Record<PaymentMethod, number>;
-    orderIds: string[];
-    startTime: Date;
-    endTime: Date;
-}
 
 export interface User {
     id: string;
