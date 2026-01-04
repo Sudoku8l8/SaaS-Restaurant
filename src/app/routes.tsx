@@ -19,7 +19,13 @@ import { LandingPage } from '@/pages/Landing/LandingPage';
 import { TenantProvider } from '@/app/providers/TenantProvider';
 import { Outlet } from 'react-router-dom';
 
+import { SuperAdminPage } from '@/pages/SuperAdmin/SuperAdminPage';
+
 export const router = createBrowserRouter([
+    {
+        path: '/superadmin',
+        element: <SuperAdminPage />,
+    },
     {
         path: '/',
         element: <LandingPage />,
