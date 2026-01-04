@@ -30,7 +30,7 @@ export function AdminPage() {
             {/* Admin Actions */}
             <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
                 gap: '1.5rem',
                 marginTop: '2rem'
             }}>
@@ -38,6 +38,12 @@ export function AdminPage() {
                     <div style={{ fontSize: '3rem' }}>💰</div>
                     <h3>Cierre de Caja</h3>
                     <p style={{ color: '#666', fontSize: '0.9rem' }}>Cerrar operaciones del día</p>
+                </Card>
+
+                <Card style={{ padding: '2rem', textAlign: 'center', cursor: 'pointer' }} onClick={() => navigate('/reportes')}>
+                    <div style={{ fontSize: '3rem' }}>📊</div>
+                    <h3>Reportes</h3>
+                    <p style={{ color: '#666', fontSize: '0.9rem' }}>Histórico de ventas</p>
                 </Card>
 
                 <Card style={{ padding: '2rem', textAlign: 'center', cursor: 'pointer' }} onClick={() => navigate('/config')}>

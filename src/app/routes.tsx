@@ -5,6 +5,7 @@ import { CocinaPage } from '@/pages/Cocina/CocinaPage';
 import { CierreCajaPage } from '@/pages/CierreCaja/CierreCajaPage';
 import { ConfigPage } from '@/pages/Configuracion/ConfigPage';
 import { AdminPage } from '@/pages/Admin/AdminPage';
+import { ReportesPage } from '@/pages/Reportes/ReportesPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { ProtectedRoute } from '@/components/shared/ProtectedRoute';
 import { UserRole } from '@/types';
@@ -41,6 +42,11 @@ export const router = createBrowserRouter([
                 path: 'admin',
                 element: <ProtectedRoute allowedRoles={[UserRole.ADMIN]} />,
                 children: [{ index: true, element: <AdminPage /> }],
+            },
+            {
+                path: 'reportes',
+                element: <ProtectedRoute allowedRoles={[UserRole.ADMIN]} />,
+                children: [{ index: true, element: <ReportesPage /> }],
             },
             {
                 path: 'cierre-caja',
