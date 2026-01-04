@@ -3,7 +3,7 @@ import type { AuthUser } from '@/types';
 
 export interface AuthContextType {
     user: AuthUser | null;
-    login: (pin: string) => Promise<void>;
+    login: (pin: string, restaurantId?: string) => Promise<void>;
     logout: () => void;
     isAuthenticated: boolean;
     isLoading: boolean;

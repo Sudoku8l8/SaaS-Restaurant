@@ -26,7 +26,8 @@ export function LoginPage() {
         e.preventDefault();
         if (!pin) return;
         try {
-            await login(pin);
+            // Pass restaurantSlug to enforce security
+            await login(pin, restaurantSlug);
         } catch (err) {
             // Error handled by AuthProvider and displayed via error state
             console.error(err);

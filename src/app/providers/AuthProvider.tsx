@@ -44,18 +44,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         checkSession();
     }, []);
 
-    const login = async (pin: string) => {
+    const login = async (pin: string, expectedRestaurantId?: string) => {
         setIsLoading(true);
         setError(null);
         try {
             // Check against Firestore
             const usersRef = collection(db, 'users');
-            const q = query(usersRef, where('pinHash', '==', pin)); // Checking plain PIN for now based on my seeder
+            const q = query(usersRef, where('pinHash', '==', pin));
             const querySnapshot = await getDocs(q);
 
             if (!querySnapshot.empty) {
-                const userDoc = querySnapshot.docs[0];
-                const validUser = userDoc.data() as User;
+                // Find user that matches the PIN AND the restaurant
+                const matchingUserDoc = querySnapshot.docs.find(doc => {
+                    const data = doc.data() as User;
+                    // If expectedRestaurantId is provided, we MUST match it.
+                    // If not (legacy/superadmin login?), we might allow any (but risky).
+                    // For SaaS, we strictly enforce it.
+                    if (expectedRestaurantId) {
+                        return data.restaurantId === expectedRestaurantId;
+                    }
+                    return true;
+                });
+
+                if (!matchingUserDoc) {
+                    // PIN exists but not for this restaurant
+                    throw new Error('PIN incorrecto para este restaurante');
+                }
+
+                const validUser = matchingUserDoc.data() as User;
 
                 const authUser: AuthUser = {
                     id: validUser.id,
@@ -85,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         <AuthContext.Provider
             value={{
                 user,
-                login,
+                login: (pin: string, restaurantId?: string) => login(pin, restaurantId),
                 logout,
                 isAuthenticated: !!user,
                 isLoading,

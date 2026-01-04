@@ -138,11 +138,6 @@ export function LandingPage() {
                 </Card>
             )}
 
-            <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem' }}>
-                <Button variant="outline" onClick={() => navigate('/demo-restaurant/login')}>
-                    Ver Demo (demo-restaurant)
-                </Button>
-            </div>
         </div>
     );
 }
