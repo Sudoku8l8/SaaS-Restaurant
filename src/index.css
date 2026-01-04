@@ -100,3 +100,31 @@ button {
 
 .mt-md { margin-top: var(--spacing-md); }
 .mb-md { margin-bottom: var(--spacing-md); }
+
+/* Responsive Utilities */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 var(--spacing-sm);
+  }
+
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  /* Stack flex items on mobile */
+  .responsive-header {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    align-items: flex-start !important;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.25rem;
+  }
+
+  .container {
+    padding: 0 var(--spacing-xs);
+  }
+}
