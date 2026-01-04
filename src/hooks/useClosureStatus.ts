@@ -6,13 +6,26 @@ import { useAuth } from './useAuth';
 /**
  * Hook to check if today's cash box has been closed.
  * Returns true if there's a closure for today, blocking further operations.
+ * 
+ * Set VITE_DEMO_MODE=true in .env to bypass this check for demos/testing.
  */
 export function useClosureStatus() {
     const { user } = useAuth();
     const [isClosed, setIsClosed] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
+    // 🔧 DEMO MODE: Skip closure check if enabled
+    const isDemoMode = import.meta.env.VITE_DEMO_MODE === 'true';
+
     useEffect(() => {
+        // If demo mode is on, always return "not closed"
+        if (isDemoMode) {
+            console.log('🎭 Demo Mode: Closure check bypassed');
+            setIsClosed(false);
+            setIsLoading(false);
+            return;
+        }
+
         const checkClosure = async () => {
             if (!user?.restaurantId) {
                 setIsLoading(false);
@@ -39,7 +52,7 @@ export function useClosureStatus() {
         };
 
         checkClosure();
-    }, [user?.restaurantId]);
+    }, [user?.restaurantId, isDemoMode]);
 
     return { isClosed, isLoading };
 }
