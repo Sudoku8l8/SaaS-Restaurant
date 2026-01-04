@@ -1,45 +1,50 @@
 import { db } from './config';
-import { collection, doc, setDoc, getDocs, query, where, writeBatch } from 'firebase/firestore';
+import { collection, doc, getDocs, query, where, writeBatch } from 'firebase/firestore';
 import { generateUUID } from '@/utils/uuid';
-import type { User, RestaurantTable, Product, UserRole } from '@/types';
 
 // Initial Data Constants
 const RESTAURANT_ID = 'default-restaurant';
 
-const INITIAL_USERS: User[] = [
+const INITIAL_USERS = [
     {
         id: 'admin-1',
         name: 'Administrador',
-        role: 'admin',
+        role: 'admin' as const,
         restaurantId: RESTAURANT_ID,
-        pinHash: '1234' // In production this should be hashed
+        pinHash: '1234',
+        active: true,
+        createdAt: new Date()
     },
     {
         id: 'mozo-1',
         name: 'Juan Pérez',
-        role: 'waiter',
+        role: 'waiter' as const,
         restaurantId: RESTAURANT_ID,
-        pinHash: '1111'
+        pinHash: '1111',
+        active: true,
+        createdAt: new Date()
     },
     {
         id: 'mozo-2',
         name: 'María García',
-        role: 'waiter',
+        role: 'waiter' as const,
         restaurantId: RESTAURANT_ID,
-        pinHash: '2222'
+        pinHash: '2222',
+        active: true,
+        createdAt: new Date()
     }
 ];
 
 const INITIAL_PRODUCTS = [
-    { name: 'Ceviche Clásico', price: 35.00, category: 'Entradas' },
-    { name: 'Lomo Saltado', price: 42.00, category: 'Fondos' },
-    { name: 'Ají de Gallina', price: 30.00, category: 'Fondos' },
-    { name: 'Arroz con Mariscos', price: 38.00, category: 'Fondos' },
-    { name: 'Causa Rellena', price: 20.00, category: 'Entradas' },
-    { name: 'Papa a la Huancaína', price: 18.00, category: 'Entradas' },
-    { name: 'Chicha Morada (Jarra)', price: 15.00, category: 'Bebidas' },
-    { name: 'Limonada', price: 10.00, category: 'Bebidas' },
-    { name: 'Inca Kola 1.5L', price: 12.00, category: 'Bebidas' },
+    { name: 'Ceviche Clásico', price: 35.00, category: 'Entradas', available: true },
+    { name: 'Lomo Saltado', price: 42.00, category: 'Fondos', available: true },
+    { name: 'Ají de Gallina', price: 30.00, category: 'Fondos', available: true },
+    { name: 'Arroz con Mariscos', price: 38.00, category: 'Fondos', available: true },
+    { name: 'Causa Rellena', price: 20.00, category: 'Entradas', available: true },
+    { name: 'Papa a la Huancaína', price: 18.00, category: 'Entradas', available: true },
+    { name: 'Chicha Morada (Jarra)', price: 15.00, category: 'Bebidas', available: true },
+    { name: 'Limonada', price: 10.00, category: 'Bebidas', available: true },
+    { name: 'Inca Kola 1.5L', price: 12.00, category: 'Bebidas', available: true },
 ];
 
 export async function seedFirestore() {
@@ -82,26 +87,24 @@ export async function seedFirestore() {
         for (let i = 1; i <= 10; i++) {
             const tableId = `table-${i}`;
             const tableRef = doc(db, 'tables', tableId);
-            const tableData: RestaurantTable = {
+            batch.set(tableRef, {
                 id: tableId,
                 restaurantId: RESTAURANT_ID,
                 number: i,
                 status: 'free',
-                seats: 4
-            };
-            batch.set(tableRef, tableData);
+                capacity: 4
+            });
         }
 
         // 4. Seed Products
         for (const prod of INITIAL_PRODUCTS) {
             const prodId = generateUUID();
             const prodRef = doc(db, 'products', prodId);
-            const productData: Product = {
+            batch.set(prodRef, {
                 id: prodId,
                 restaurantId: RESTAURANT_ID,
                 ...prod
-            };
-            batch.set(prodRef, productData);
+            });
         }
 
         await batch.commit();

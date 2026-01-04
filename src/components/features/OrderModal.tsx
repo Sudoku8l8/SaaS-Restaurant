@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { db } from '@/services/firebase/config';
-import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { Button, Card, Input, Badge } from '@/components/shared';
 import type { Product, OrderItem, RestaurantTable } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
@@ -126,11 +126,11 @@ export function OrderModal({ table, onClose, onOrderCreated }: OrderModalProps) 
         }}>
             <Card title={`Mesa ${table.number} - Nuevo Pedido`} style={{ width: '100%', maxWidth: '800px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
-                <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: window.innerWidth <= 768 ? '1fr' : '1fr 1fr', 
-                    gap: '1rem', 
-                    flex: 1, 
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: window.innerWidth <= 768 ? '1fr' : '1fr 1fr',
+                    gap: '1rem',
+                    flex: 1,
                     minHeight: 0,
                     overflow: 'auto'
                 }}>

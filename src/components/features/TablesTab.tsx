@@ -19,7 +19,7 @@ export function TablesTab() {
             setIsCreating(true);
             await addDoc(collection(db, 'tables'), {
                 restaurantId: user?.restaurantId,
-                number: newTableNumber,
+                number: parseInt(newTableNumber, 10),
                 status: 'free'
             });
             setNewTableNumber('');
@@ -31,7 +31,7 @@ export function TablesTab() {
         }
     };
 
-    const handleDeleteTable = async (id: string, number: string) => {
+    const handleDeleteTable = async (id: string, number: number) => {
         if (confirm(`¿Eliminar Mesa ${number}?`)) {
             try {
                 await deleteDoc(doc(db, 'tables', id));
@@ -44,7 +44,7 @@ export function TablesTab() {
 
     // Sort tables by number (numeric sort)
     const sortedTables = [...tables].sort((a, b) => {
-        return parseInt(a.number) - parseInt(b.number);
+        return a.number - b.number;
     });
 
     return (

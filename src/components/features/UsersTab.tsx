@@ -3,7 +3,6 @@ import { db } from '@/services/firebase/config';
 import { collection, query, where, onSnapshot, addDoc, doc, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
 import { Button, Input, Card, Badge } from '@/components/shared';
-import { UserRole } from '@/types';
 import type { User } from '@/types';
 
 export function UsersTab() {
@@ -12,10 +11,14 @@ export function UsersTab() {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     // Form State
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<{
+        name: string;
+        pin: string;
+        role: 'admin' | 'waiter';
+    }>({
         name: '',
         pin: '',
-        role: UserRole.WAITER
+        role: 'waiter'
     });
 
     useEffect(() => {
@@ -69,7 +72,7 @@ export function UsersTab() {
     };
 
     const openModal = () => {
-        setFormData({ name: '', pin: '', role: UserRole.WAITER });
+        setFormData({ name: '', pin: '', role: 'waiter' });
         setIsModalOpen(true);
     };
 
@@ -86,12 +89,12 @@ export function UsersTab() {
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>
                 {users.map(u => (
-                    <Card key={u.id} style={{ padding: '1rem', borderLeft: u.role === UserRole.ADMIN ? '5px solid var(--color-primary)' : '5px solid #ccc' }}>
+                    <Card key={u.id} style={{ padding: '1rem', borderLeft: u.role === 'admin' ? '5px solid var(--color-primary)' : '5px solid #ccc' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <div>
                                 <div style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>{u.name}</div>
-                                <Badge variant={u.role === UserRole.ADMIN ? 'info' : 'neutral'} style={{ marginTop: '0.5rem' }}>
-                                    {u.role === UserRole.ADMIN ? 'Administrador' : 'Mozo'}
+                                <Badge variant={u.role === 'admin' ? 'info' : 'neutral'} style={{ marginTop: '0.5rem' }}>
+                                    {u.role === 'admin' ? 'Administrador' : 'Mozo'}
                                 </Badge>
                                 {/* Only show PIN preview for Admin context if needed, but usually better to hide. 
                                     Showing it here for Admin convenience in MVP */}
@@ -135,10 +138,10 @@ export function UsersTab() {
                                 <select
                                     style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid #ddd' }}
                                     value={formData.role}
-                                    onChange={e => setFormData({ ...formData, role: e.target.value as UserRole })}
+                                    onChange={e => setFormData({ ...formData, role: e.target.value as 'admin' | 'waiter' })}
                                 >
-                                    <option value={UserRole.WAITER}>Mozo</option>
-                                    <option value={UserRole.ADMIN}>Administrador</option>
+                                    <option value="waiter">Mozo</option>
+                                    <option value="admin">Administrador</option>
                                 </select>
                             </div>
 

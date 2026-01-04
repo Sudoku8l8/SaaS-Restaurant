@@ -1,4 +1,3 @@
-import { useRef } from 'react';
 import { Card, Button } from '@/components/shared';
 import { OrderCard } from '@/components/features/OrderCard';
 import { useOrders } from '@/hooks/useOrders';

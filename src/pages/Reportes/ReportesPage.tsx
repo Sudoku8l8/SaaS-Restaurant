@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '@/services/firebase/config';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
 import { Button, Card, Input } from '@/components/shared';
 import { format, subDays, parseISO } from 'date-fns';
@@ -141,7 +141,12 @@ export function ReportesPage() {
                             size="sm"
                             onClick={() => {
                                 // Export summary of all closures
-                                const summaryMetrics = {
+                                const summaryMetrics: {
+                                    totalSales: number;
+                                    orderCount: number;
+                                    salesByWaiter: Record<string, number>;
+                                    salesByPaymentMethod: Record<string, number>;
+                                } = {
                                     totalSales,
                                     orderCount: totalOrders,
                                     salesByWaiter: {},

@@ -44,25 +44,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         checkSession();
     }, []);
 
-    // NOTE: In a real production app, NEVER handle PIN validation client-side like this.
-    // Ideally use Firebase Auth or a Cloud Function. 
-    // For this MVP prototype, we query users by PIN hash (insecure but functional for demo).
-    // Or simpler: We are using "plain" PIN match here since we are seeding securely? 
-    // Wait, the seed has pinHash. Let's keep using local hashing to check against stored hash.
-
-    const hashPin = async (pin: string): Promise<string> => {
-        // Simplified for now, or match what seeders do (plain text for dev? No, seeders used string '1234')
-        // Actually the seeders I wrote use plain string '1234' on the 'pinHash' field for simplicity in this migration step,
-        // unless I change seeders to utilize real hashing.
-        // Let's assume the seeders stored the PIN directly for this MVP phase to ensure it works first try.
-        // User provided logic uses pinHash... 
-        // Let's stick to the previous logic: Hash the input and compare.
-        // BUT my seeder in `seedFirestore` put '1234' directly in `pinHash` field.
-        // So I should just compare equality for now to minimize friction, or hash '1234' in seeder.
-        // I'll just check equality to the stored value.
-        return pin;
-    };
-
     const login = async (pin: string) => {
         setIsLoading(true);
         setError(null);

@@ -5,11 +5,8 @@ import {
     query,
     where,
     onSnapshot,
-    addDoc,
     updateDoc,
     doc,
-    setDoc,
-    orderBy,
     writeBatch,
     getDocs,
     limit
@@ -46,7 +43,7 @@ export function useOrders() {
 
             // Client-side sorting & filtering
             const active = orders
-                .filter(o => o.status !== 'paid' && o.status !== 'cancelled')
+                .filter(o => o.status !== 'paid')
                 .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()); // Now safe because they are Dates
 
             setActiveOrders(active);
@@ -115,16 +112,7 @@ export function useOrders() {
         // Let's query order first to be safe (or passed from UI).
         // For efficiency, assume we need to fetch order to get tableNumber.
         // Or we can just fetch it.
-        // Creating a real transaction for this flow:
-        // Actually, let's keep it simple. Fetch order, find table, update.
-        // Warning: Race conditions possible but rare for MVP.
-        const orderSnap = await getDocs(query(collection(db, 'orders'), where('id', '==', orderId), limit(1))); // Wait, we can just get doc(db, 'orders', orderId) if ID matches docId.
-        // In createOrder I used: doc(db, 'orders', order.id). So yes.
-        // But I need to read it first to get tableNumber.
-        // Let's just do it in the UI? No, logic belongs here.
-
-        // FIXME: Better to read order, get table number, update both.
-        // Since I'm inside a hook, I might already have the order in `activeOrders`!
+        // Find order from activeOrders to get tableNumber
         const existingOrder = activeOrders.find(o => o.id === orderId);
 
         if (existingOrder) {
