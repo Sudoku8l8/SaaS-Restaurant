@@ -4,6 +4,7 @@ import { MozoPage } from '@/pages/Mozo/MozoPage';
 import { CocinaPage } from '@/pages/Cocina/CocinaPage';
 import { CierreCajaPage } from '@/pages/CierreCaja/CierreCajaPage';
 import { ConfigPage } from '@/pages/Configuracion/ConfigPage';
+import { AdminPage } from '@/pages/Admin/AdminPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { ProtectedRoute } from '@/components/shared/ProtectedRoute';
 import { UserRole } from '@/types';
@@ -35,6 +36,11 @@ export const router = createBrowserRouter([
                 path: 'cocina',
                 element: <ProtectedRoute allowedRoles={[UserRole.ADMIN]} />,
                 children: [{ index: true, element: <CocinaPage /> }],
+            },
+            {
+                path: 'admin',
+                element: <ProtectedRoute allowedRoles={[UserRole.ADMIN]} />,
+                children: [{ index: true, element: <AdminPage /> }],
             },
             {
                 path: 'cierre-caja',

@@ -4,7 +4,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useOrders } from '@/hooks/useOrders';
 import { Button, Badge } from '@/components/shared';
 import { OrderCard } from '@/components/features/OrderCard';
-import { SalesDashboard } from '@/components/features/SalesDashboard';
 import { OrderStatus } from '@/types';
 
 export function CocinaPage() {
@@ -27,16 +26,14 @@ export function CocinaPage() {
                     <p>Hola, {user?.name} - {filteredOrders.length} pedidos</p>
                 </div>
                 <div style={{ display: 'flex', gap: '1rem' }}>
-                    <Button variant="danger" onClick={() => navigate('/cierre-caja')}>
-                        💰 Cierre Caja
+                    <Button variant="primary" onClick={() => navigate('/admin')}>
+                        👮 Admin
                     </Button>
                     <Button variant="secondary" onClick={logout}>
                         Salir
                     </Button>
                 </div>
             </header>
-
-            <SalesDashboard />
 
             <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
                 <span style={{ fontWeight: 'bold', alignSelf: 'center', marginRight: '0.5rem' }}>Filtros:</span>
