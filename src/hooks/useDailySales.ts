@@ -15,52 +15,51 @@ export interface SalesMetrics {
 export function useDailySales() {
     const { user } = useAuth();
     const restaurantId = user?.restaurantId || '';
+
+    // Metrics State
     const [metrics, setMetrics] = useState<SalesMetrics>({
         totalSales: 0,
         orderCount: 0,
         salesByWaiter: {},
         salesByPaymentMethod: {}
     });
+
+    // Raw Orders State (for export)
+    const [orders, setOrders] = useState<Order[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         if (!restaurantId) return;
 
-        // Query ALL orders for the restaurant to avoid composite index issues for now.
-        // In a production app with thousands of orders, we would need composite indexes:
-        // index: restaurantId + status + createdAt
         const q = query(
             collection(db, 'orders'),
             where('restaurantId', '==', restaurantId)
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
-            const today = startOfDay(new Date());
-
             const paidOrdersToday = snapshot.docs
                 .map(doc => {
                     const data = doc.data();
-                    // Helper to safely get date from Timestamp or String or Date
                     const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
                     return { ...data, createdAt } as Order;
                 })
                 .filter(order => {
-                    // Filter: Status is 'paid' AND Created At is Today
                     const isPaid = order.status === 'paid';
                     const isToday = isSameDay(order.createdAt, new Date());
                     return isPaid && isToday;
                 });
+
+            // Update Orders State
+            setOrders(paidOrdersToday);
 
             // Calculate Metrics
             const newMetrics = paidOrdersToday.reduce((acc, order) => {
                 acc.totalSales += order.total;
                 acc.orderCount += 1;
 
-                // Group by Waiter (User Name or ID)
                 const waiterName = order.userName || 'Desconocido';
                 acc.salesByWaiter[waiterName] = (acc.salesByWaiter[waiterName] || 0) + order.total;
 
-                // Group by Payment Method
                 const paymentMethod = order.paymentMethod || 'unknown';
                 acc.salesByPaymentMethod[paymentMethod] = (acc.salesByPaymentMethod[paymentMethod] || 0) + order.total;
 
@@ -82,5 +81,5 @@ export function useDailySales() {
         return () => unsubscribe();
     }, [restaurantId]);
 
-    return { metrics, isLoading };
+    return { metrics, orders, isLoading };
 }

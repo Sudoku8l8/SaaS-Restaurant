@@ -7,9 +7,11 @@ import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 import { db } from '@/services/firebase/config';
 import { startOfDay } from 'date-fns';
 
+import { exportDailySalesToExcel } from '@/services/exportExcel';
+
 export function CierreCajaPage() {
     const { user, logout } = useAuth();
-    const { metrics, isLoading: loadingMetrics } = useDailySales();
+    const { metrics, orders, isLoading: loadingMetrics } = useDailySales();
     const { activeOrders } = useOrders(); // Reuse useOrders to check for pending orders
     const [isClosing, setIsClosing] = useState(false);
     const [existingClosure, setExistingClosure] = useState<boolean>(false);
@@ -97,9 +99,18 @@ export function CierreCajaPage() {
                     <h1>Cierre de Caja</h1>
                     <p>Resumen del Día - {new Date().toLocaleDateString()}</p>
                 </div>
-                <Button variant="secondary" onClick={logout}>
-                    Salir
-                </Button>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                    <Button
+                        variant="neutral"
+                        onClick={() => exportDailySalesToExcel(metrics, orders)}
+                        disabled={metrics.orderCount === 0}
+                    >
+                        📥 Exportar Excel
+                    </Button>
+                    <Button variant="secondary" onClick={logout}>
+                        Salir
+                    </Button>
+                </div>
             </header>
 
             {/* Validation Alerts */}
