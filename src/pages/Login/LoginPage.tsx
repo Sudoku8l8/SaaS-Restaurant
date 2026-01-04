@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button, Card, Input } from '@/components/shared';
 import { UserRole } from '@/types';
@@ -8,23 +8,26 @@ export function LoginPage() {
     const [pin, setPin] = useState('');
     const { login, isLoading, error, user } = useAuth();
     const navigate = useNavigate();
+    const { restaurantSlug } = useParams<{ restaurantSlug: string }>();
 
     // Redirect if already logged in
     useEffect(() => {
         if (user) {
+            const basePath = restaurantSlug ? `/${restaurantSlug}` : '';
             if (user.role === UserRole.ADMIN) {
-                navigate('/cocina');
+                navigate(`${basePath}/cocina`);
             } else {
-                navigate('/mozo');
+                navigate(`${basePath}/mozo`);
             }
         }
-    }, [user, navigate]);
+    }, [user, navigate, restaurantSlug]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!pin) return;
         try {
-            await login(pin);
+            // Pass restaurantSlug to enforce security
+            await login(pin, restaurantSlug);
         } catch (err) {
             // Error handled by AuthProvider and displayed via error state
             console.error(err);
