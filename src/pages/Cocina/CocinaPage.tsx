@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrders } from '@/hooks/useOrders';
 import { useClosureStatus } from '@/hooks/useClosureStatus';
@@ -10,6 +10,7 @@ import { OrderStatus } from '@/types';
 export function CocinaPage() {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+    const { restaurantSlug } = useParams<{ restaurantSlug: string }>();
     const { activeOrders } = useOrders();
     const { isClosed } = useClosureStatus();
     const [filterStatus, setFilterStatus] = useState<OrderStatus | 'all'>('all');
@@ -45,7 +46,7 @@ export function CocinaPage() {
                     <p>Hola, {user?.name} - {filteredOrders.length} pedidos</p>
                 </div>
                 <div style={{ display: 'flex', gap: '1rem' }}>
-                    <Button variant="primary" onClick={() => navigate('/admin')}>
+                    <Button variant="primary" onClick={() => navigate(`/${restaurantSlug}/admin`)}>
                         👮 Admin
                     </Button>
                     <Button variant="secondary" onClick={logout}>

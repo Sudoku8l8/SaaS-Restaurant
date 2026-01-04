@@ -1,266 +1,108 @@
-# 🍽️ SaaS Restaurant - Sistema de Pedidos (MVP)
+# 🍽️ SaaS Restaurant - Plataforma de Gestión (Cloud Native)
 
-Sistema web offline-first para la gestión de pedidos en restaurantes pequeños y medianos.
+Sistema web moderno y escalable para la gestión de restaurantes en tiempo real. SaaS Multi-tenant (en transición).
+
+> **Estado Actual:** MVP Completado (Sprint 5) 🚀 | Próximo: Escalamiento SaaS (Sprint 6)
 
 ## 📋 Descripción
 
-Este proyecto es un MVP (Producto Mínimo Viable) diseñado para resolver problemas operativos comunes en restaurantes:
-- ❌ Pedidos mal anotados o perdidos
-- ❌ Falta de visibilidad en cocina  
-- ❌ Errores en cobros
-- ❌ Control manual (papel / cuaderno / Excel)
+Solución integral basada en la nube para controlar pedidos, cocina y caja de restaurantes. Diseñado para ser escalable a miles de restaurantes bajo un modelo SaaS.
 
-### ✅ Solución
-
-Un sistema centralizado donde el mozo registra pedidos por mesa, la cocina ve pedidos en tiempo real, y el sistema calcula ventas automáticamente.
+### ✅ Módulos Completados (MVP)
+- **📱 Mozo:** Toma de pedidos por mesa en tiempo real.
+- **👨‍🍳 Cocina:** KDS (Kitchen Display System) con estados de pedido.
+- **👮 Admin:** Panel de control, métricas de ventas y cierre de caja.
+- **⚙️ Config:** Gestión de productos, mesas y usuarios.
+- **📊 Reportes:** Cierre diario obligatorio y exportación Excel.
 
 ## 🚀 Tecnologías
 
 ### Frontend
-- **React 19.2** - Librería UI
-- **TypeScript 5.9** - Type safety
-- **Vite 7.3** - Build tool ultra-rápido
-- **React Router 7.11** - Navegación SPA
+- **React 18+** & **Vite**
+- **TypeScript** (Strict Mode)
+- **CSS Modules** (Diseño Responsive)
 
-### Base de Datos
-- **IndexedDB** (vía Dexie.js 4.2) - Base de datos local (offline-first)
-- **Firebase Firestore** - Backup en la nube (futuro)
-
-### Utilidades
-- **date-fns 4.1** - Manejo de fechas
-- **ESLint** - Linter
-- **Prettier** - Formateo de código
+### Backend & Data
+- **Firebase Firestore** (Base de datos NoSQL en tiempo real)
+- **Firebase Hosting** (Deployment)
+- **Cloud Native Architecture** (Sin servidor propio)
 
 ## 🏗️ Arquitectura
 
-```
-Offline-First Architecture
-  ↓
-IndexedDB (Fuente de verdad)
-  ↓
-Sincronización opcional con Firebase
-```
+El sistema utiliza una arquitectura **Cloud Native** donde Firestore actúa como la fuente de verdad sincronizada en tiempo real entre todos los dispositivos (Mozos, Cocina, Caja).
 
-**Principio:** El sistema funciona 100% sin internet. La sincronización es solo para backup.
+```mermaid
+graph TD
+    Client[Cliente React PWA] <-->|Real-time Sync| Firestore[(Firebase DB)]
+    Firestore <-->|Trigger| Functions[Cloud Functions (Futuro)]
+```
 
 ## 📁 Estructura del Proyecto
 
 ```
-restaurant-orders/
-├── src/
-│   ├── app/                # Configuración de la app
-│   │   ├── App.tsx
-│   │   ├── routes.tsx
-│   │   └── providers/
-│   │       └── AuthProvider.tsx
-│   ├── pages/              # Páginas principales
-│   │   ├── Login/
-│   │   ├── Mozo/
-│   │   ├── Cocina/
-│   │   └── CierreCaja/
-│   ├── components/         # Componentes reutilizables
-│   │   ├── shared/
-│   │   └── features/
-│   ├── local-db/           # IndexedDB (Dexie)
-│   │   ├── db.ts
-│   │   ├── orders.ts
-│   │   ├── tables.ts
-│   │   ├── closures.ts
-│   │   └── products.ts
-│   ├── sync/               # Sincronización con Firebase
-│   │   └── syncService.ts
-│   ├── services/           # Servicios externos
-│   │   ├── firebase.ts
-│   │   └── exportExcel.ts
-│   ├── hooks/              # Custom hooks
-│   │   └── useOffline.ts
-│   ├── types/              # TypeScript types
-│   │   └── index.ts
-│   └── main.tsx            # Entry point
-├── public/
-├── .prettierrc             # Prettier config
-├── eslint.config.js        # ESLint config
-├── vite.config.ts          # Vite config
-├── tsconfig.json           # TypeScript config
-└── package.json
+src/
+├── app/            # Providers y Rutas
+├── pages/          # Vistas (Admin, Mozo, Cocina, Reportes, Config)
+├── components/     # UI Kit y Features
+├── hooks/          # Lógica de negocio (useOrders, useAuth, useTables)
+├── services/       # Firebase config, Seeders, Export
+├── types/          # Definiciones TypeScript
+└── utils/          # Helpers (formatters, uuid)
 ```
 
-## 🛠️ Instalación
+## 🛠️ Instalación y Configuración
 
-### Prerrequisitos
-- Node.js >= 18
-- npm >= 9
+### 1. Variables de Entorno
+Es **crucial** configurar las credenciales de Firebase. Crea un archivo `.env` en la raíz basado en `.env.example`:
 
-### Pasos
-
-1. **Clonar el repositorio**
-   ```bash
-   git clone <repository-url>
-   cd restaurant-orders
-   ```
-
-2. **Instalar dependencias**
-   ```bash
-   npm install
-   ```
-
-3. **Ejecutar en desarrollo**
-   ```bash
-   npm run dev
-   ```
-
-   La aplicación estará disponible en: `http://localhost:5173`
-
-## 📜 Scripts Disponibles
-
-| Script | Descripción |
-|--------|-------------|
-| `npm run dev` | Inicia el servidor de desarrollo |
-| `npm run build` | Compila para producción |
-| `npm run preview` | Preview de build de producción |
-| `npm run lint` | Ejecuta ESLint |
-| `npm run format` | Formatea el código con Prettier |
-
-## 🎯 Alcance del MVP
-
-### ✅ Incluye
-- [x] SaaS multi-restaurante (multi-tenant)
-- [x] Registro de pedidos en local (offline)
-- [x] Gestión de mesas
-- [x] Estados del pedido (Pendiente → En Preparación → Listo → Entregado → Pagado)
-- [x] Roles (Admin / Mozo)
-- [x] Registro de pagos (Yape / Efectivo / Tarjeta - solo registro)
-- [x] Reporte diario de ventas
-- [x] Exportación a Excel/PDF
-- [x] Cierre de caja obligatorio
-
-### ❌ No Incluye (Post-MVP)
-- [ ] Delivery
-- [ ] Pedidos por QR
-- [ ] Control de stock
-- [ ] Pagos online reales
-- [ ] Facturación electrónica
-- [ ] Portal de clientes
-
-## 🗺️ Roadmap de Implementación
-
-### Sprint 0 - Preparación y Base Técnica ✅
-- [x] Proyecto Vite + React + TypeScript
-- [x] Configuración de ESLint y Prettier
-- [x] Path aliases (@/)
-- [x] Dependencias base instaladas
-- [ ] Configuración PWA
-- [ ] Estructura de carpetas completa
-- [ ] IndexedDB con Dexie
-- [ ] Sistema de tipos TypeScript
-- [ ] Estilos base y componentes reutilizables
-
-### Sprint 1 - Autenticación y Gestión de Pedidos
-### Sprint 2 - Estados de Pedido y Control de Ventas
-### Sprint 3 - Cierre de Caja Obligatorio
-### Sprint 4 - Reportes y Exportación
-### Sprint 5 - Escalabilidad y Multi-Tenant
-
-## 🔑 Características Clave
-
-### Offline-First
-El sistema funciona completamente sin conexión a internet. IndexedDB es la fuente de verdad durante la operación del restaurante.
-
-### Multi-Tenant
-Arquitectura preparada para múltiples restaurantes desde el inicio.
-
-### Cierre de Caja Obligatorio
-Sistema formalizado de cierre diario con validaciones y bloqueos post-cierre.
-
-### Exportación de Reportes
-Generación automática de reportes en Excel y PDF al cierre de caja.
-
-## 🧪 Testing
-
-```bash
-# Linting
-npm run lint
-
-# Formateo
-npm run format
+```env
+VITE_FIREBASE_API_KEY=tu_api_key
+VITE_FIREBASE_AUTH_DOMAIN=tu_project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=tu_project_id
+VITE_FIREBASE_STORAGE_BUCKET=...
+VITE_FIREBASE_MESSAGING_SENDER_ID=...
+VITE_FIREBASE_APP_ID=...
+# Opcional para desarrollo:
+VITE_DEMO_MODE=true 
 ```
 
-## 📦 Build para Producción
+### 2. Comandos
 
 ```bash
+# Instalar dependencias
+npm install
+
+# Iniciar servidor de desarrollo
+npm run dev
+
+# Verificar TypeScript y Build (Producción)
 npm run build
 ```
 
-Los archivos compilados se generarán en la carpeta `dist/`.
+## 🗺️ Roadmap de Implementación
 
-## 🚀 Deployment
+### Fase 1: MVP (Completado) ✅
+- [x] **Sprint 0:** Arquitectura Base & Firebase Setup.
+- [x] **Sprint 1:** Autenticación PIN & Gestión de Mesas.
+- [x] **Sprint 2:** Flujo de Pedidos & Estados Cocina.
+- [x] **Sprint 3:** Cierre de Caja & Validaciones.
+- [x] **Sprint 4:** Reportes Históricos & Excel.
+- [x] **Sprint 5:** Panel de Configuración & Estabilización.
 
-### Opciones recomendadas:
-- **Vercel** (recomendado para SPAs)
-- **Netlify**
-- **Firebase Hosting**
+### Fase 2: Escalamiento SaaS (En Progreso) 🚧
+- [ ] **Sprint 6:** Arquitectura Multi-tenant (URLs dinámicas).
+- [ ] Onboarding automático de nuevos restaurantes.
+- [ ] SuperAdmin Dashboard.
+
+### Fase 3: Growth (Futuro) 🔮
+- [ ] Pagos SaaS (Stripe).
+- [ ] Pedidos QR.
+- [ ] Facturación Electrónica (SUNAT).
+- [ ] Integración Delivery.
 
 ## 👥 Roles de Usuario
-
-### Admin (Dueño / Cocina)
-- Ver todos los pedidos
-- Cambiar estado del pedido
-- Ver ventas del día
-- Cerrar caja
-- Exportar reportes
-- Gestionar mesas y mozos
-
-### Mozo
-- Login por PIN (4 dígitos)
-- Registrar pedidos
-- Asignar mesa
-- Ver estado del pedido
-- Registrar pago
-
-## 🔐 Seguridad
-
-- PIN encriptado con hash
-- Roles y permisos
-- Reglas de Firestore para multi-tenant
-- Un solo dispositivo admin por turno
-
-## 📊 Métricas del MVP
-
-- Número de pedidos diarios
-- Total vendido por día
-- Ventas por mozo
-- Tiempo promedio de preparación
-
-## 📝 Notas de Desarrollo
-
-### Path Aliases  
-Se puede usar `@/` para importar desde `src/`:
-
-```typescript
-import { Button } from '@/components/shared/Button';
-import { db } from '@/local-db/db';
-```
-
-### Hot Reload
-Vite proporciona HMR (Hot Module Replacement) instantáneo durante desarrollo.
-
-### TypeScript Strict Mode
-El proyecto usa TypeScript en modo estricto para máxima seguridad de tipos.
-
-## 🤝 Contribución
-
-Este proyecto está en desarrollo activo. Sprint actual: **Sprint 0 - Preparación y Base Técnica**
-
-## 📄 Licencia
-
-Privado - No distribuir
-
-## 📞 Contacto
-
-Desarrollador: [Tu Nombre]
+- **Admin:** Acceso total + Cierre de Caja + Configuración (Usuarios, Productos, Mesas).
+- **Mozo:** Toma de pedidos, cambio de estados y cobro básico.
 
 ---
-
-**Estado del Proyecto:** 🚧 En Desarrollo - Sprint 0 en progreso
-
-**Última actualización:** 2026-01-03
+**Última actualización:** 04/01/2026
