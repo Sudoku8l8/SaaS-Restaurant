@@ -1,60 +1,148 @@
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { SalesMetrics } from '@/hooks/useDailySales';
 import type { Order } from '@/types';
 
-export const exportDailySalesToExcel = (metrics: SalesMetrics, orders: Order[]) => {
-    // 1. Prepare Data for Sheets
+export const exportDailySalesToExcel = async (metrics: SalesMetrics, orders: Order[]) => {
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'Restaurant App';
+    workbook.created = new Date();
+
     const dateStr = format(new Date(), 'dd/MM/yyyy', { locale: es });
     const filename = `Ventas_${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
 
-    // --- Sheet 1: Resumen ---
-    const summaryData = [
-        ['Resumen de Ventas - ' + dateStr],
-        [''],
-        ['Total Ventas', `S/ ${metrics.totalSales.toFixed(2)}`],
-        ['Cantidad Pedidos', metrics.orderCount],
-        [''],
-        ['Desglose por Medio de Pago'],
-        ...Object.entries(metrics.salesByPaymentMethod).map(([method, amount]) => [method, `S/ ${amount.toFixed(2)}`]),
+    // ==========================================
+    // SHEET 1: RESUMEN
+    // ==========================================
+    const wsSummary = workbook.addWorksheet('Resumen', {
+        views: [{ showGridLines: false }]
+    });
+
+    // Title
+    wsSummary.mergeCells('A1:B1');
+    const titleCell = wsSummary.getCell('A1');
+    titleCell.value = `Resumen de Ventas - ${dateStr}`;
+    titleCell.font = { name: 'Arial', size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
+    titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2c3e50' } };
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    wsSummary.getRow(1).height = 30;
+
+    // Metrics Table
+    wsSummary.getCell('A3').value = 'Métrica';
+    wsSummary.getCell('B3').value = 'Valor';
+
+    // Style Headers
+    ['A3', 'B3'].forEach(cell => {
+        const c = wsSummary.getCell(cell);
+        c.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF34495e' } };
+        c.border = { bottom: { style: 'thin' } };
+    });
+
+    wsSummary.getCell('A4').value = 'Total Ventas';
+    wsSummary.getCell('B4').value = metrics.totalSales;
+    wsSummary.getCell('B4').numFmt = '"S/" #,##0.00';
+
+    wsSummary.getCell('A5').value = 'Cantidad Pedidos';
+    wsSummary.getCell('B5').value = metrics.orderCount;
+
+    // Payment Methods Section
+    wsSummary.getCell('A7').value = 'Desglose por Medio de Pago';
+    wsSummary.getCell('A7').font = { bold: true, size: 12 };
+
+    let currentRow = 8;
+    Object.entries(metrics.salesByPaymentMethod).forEach(([method, amount]) => {
+        wsSummary.getCell(`A${currentRow}`).value = method.charAt(0).toUpperCase() + method.slice(1);
+        wsSummary.getCell(`B${currentRow}`).value = amount;
+        wsSummary.getCell(`B${currentRow}`).numFmt = '"S/" #,##0.00';
+        currentRow++;
+    });
+
+    // Column Widths
+    wsSummary.getColumn('A').width = 30;
+    wsSummary.getColumn('B').width = 20;
+
+
+    // ==========================================
+    // SHEET 2: DETALLE DE PEDIDOS
+    // ==========================================
+    const wsDetails = workbook.addWorksheet('Detalle Pedidos');
+
+    // Headers
+    const headers = ['ID', 'Hora', 'Mesa', 'Mozo', 'Items', 'Método Pago', 'Total'];
+    const headerRow = wsDetails.addRow(headers);
+
+    headerRow.eachCell((cell) => {
+        cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2980b9' } };
+        cell.alignment = { horizontal: 'center' };
+    });
+
+    // Data
+    orders.forEach(order => {
+        const row = wsDetails.addRow([
+            order.id.slice(0, 8),
+            format(order.createdAt, 'HH:mm'),
+            order.tableNumber,
+            order.userName || 'N/A',
+            order.items.map(i => `${i.quantity}x ${i.productName}`).join(', '),
+            order.paymentMethod || '-',
+            order.total
+        ]);
+
+        // Currency Format for Total
+        row.getCell(7).numFmt = '"S/" #,##0.00';
+    });
+
+    // Auto-filter
+    wsDetails.autoFilter = {
+        from: 'A1',
+        to: { row: 1, column: headers.length }
+    };
+
+    // Columns Width
+    wsDetails.columns = [
+        { width: 12 }, // ID
+        { width: 10 }, // Hora
+        { width: 10 }, // Mesa
+        { width: 20 }, // Mozo
+        { width: 50 }, // Items
+        { width: 15 }, // Payment
+        { width: 15 }, // Total
     ];
 
-    // --- Sheet 2: Detalle de Pedidos ---
-    const detailsData = [
-        ['ID', 'Hora', 'Mesa', 'Mozo', 'Items', 'Método Pago', 'Total'],
-        ...orders.map(o => [
-            o.id.slice(0, 8), // Short ID
-            format(o.createdAt, 'HH:mm'),
-            o.tableNumber,
-            o.userName,
-            o.items.map(i => `${i.quantity}x ${i.productName}`).join(', '),
-            o.paymentMethod,
-            o.total.toFixed(2)
-        ])
-    ];
 
-    // --- Sheet 3: Ventas por Mozo ---
-    const waiterData = [
-        ['Mozo', 'Venta Total'],
-        ...Object.entries(metrics.salesByWaiter).map(([name, total]) => [
-            name,
-            total.toFixed(2)
-        ])
-    ];
+    // ==========================================
+    // SHEET 3: POR MOZO
+    // ==========================================
+    const wsWaiters = workbook.addWorksheet('Por Mozo');
 
-    // 2. Create Workbook and Sheets
-    const wb = XLSX.utils.book_new();
+    const wHeader = wsWaiters.addRow(['Mozo', 'Venta Total']);
+    wHeader.eachCell(cell => {
+        cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF16a085' } };
+    });
 
-    const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
-    const wsDetails = XLSX.utils.aoa_to_sheet(detailsData);
-    const wsWaiters = XLSX.utils.aoa_to_sheet(waiterData);
+    Object.entries(metrics.salesByWaiter).forEach(([name, total]) => {
+        const row = wsWaiters.addRow([name, total]);
+        row.getCell(2).numFmt = '"S/" #,##0.00';
+    });
 
-    // 3. Append Sheets
-    XLSX.utils.book_append_sheet(wb, wsSummary, "Resumen");
-    XLSX.utils.book_append_sheet(wb, wsDetails, "Detalle Pedidos");
-    XLSX.utils.book_append_sheet(wb, wsWaiters, "Por Mozo");
+    wsWaiters.getColumn(1).width = 30;
+    wsWaiters.getColumn(2).width = 20;
 
-    // 4. Download File
-    XLSX.writeFile(wb, filename);
+
+    // ==========================================
+    // GENERATE FILE
+    // ==========================================
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+    const url = window.URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.click();
+    window.URL.revokeObjectURL(url);
 };

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { db } from '@/services/firebase/config';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { useAuth } from './useAuth';
-import { startOfDay, isSameDay } from 'date-fns';
+import { isSameDay } from 'date-fns';
 import type { Order } from '@/types';
 
 export interface SalesMetrics {

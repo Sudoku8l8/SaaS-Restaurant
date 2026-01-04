@@ -5,7 +5,6 @@ import { useOrders } from '@/hooks/useOrders';
 import { Card, Button, Badge } from '@/components/shared';
 import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 import { db } from '@/services/firebase/config';
-import { startOfDay } from 'date-fns';
 
 import { exportDailySalesToExcel } from '@/services/exportExcel';
 
@@ -101,7 +100,7 @@ export function CierreCajaPage() {
                 </div>
                 <div style={{ display: 'flex', gap: '1rem' }}>
                     <Button
-                        variant="neutral"
+                        variant="secondary"
                         onClick={() => exportDailySalesToExcel(metrics, orders)}
                         disabled={metrics.orderCount === 0}
                     >
