@@ -104,9 +104,9 @@ export function OrderModal({ table, onClose, onOrderCreated }: OrderModalProps) 
 
             onOrderCreated();
             onClose();
-        } catch (err) {
+        } catch (err: any) {
             console.error('Failed to create order:', err);
-            alert('Error al crear el pedido');
+            alert(`Error al crear el pedido: ${err.message || 'Desconocido'}`);
         }
     };
 

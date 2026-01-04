@@ -25,7 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
                     if (userSnap.exists() && userData) {
                         setUser({
-                            id: userData.id,
+                            id: userSnap.id, // Use doc ID directly
                             name: userData.name,
                             role: userData.role,
                             restaurantId: userData.restaurantId,
@@ -74,13 +74,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 const validUser = matchingUserDoc.data() as User;
 
                 const authUser: AuthUser = {
-                    id: validUser.id,
+                    id: matchingUserDoc.id, // Use doc ID directly
                     name: validUser.name,
                     role: validUser.role,
                     restaurantId: validUser.restaurantId,
                 };
                 setUser(authUser);
-                sessionStorage.setItem('auth_user_id', validUser.id);
+                sessionStorage.setItem('auth_user_id', matchingUserDoc.id);
             } else {
                 throw new Error('PIN incorrecto');
             }
