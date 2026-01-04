@@ -4,6 +4,7 @@ import { db } from '@/local-db';
 import { Button, Card, Input, Badge } from '@/components/shared';
 import type { Product, OrderItem, RestaurantTable } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
+import { useOrders } from '@/hooks/useOrders';
 
 interface OrderModalProps {
     table: RestaurantTable;
@@ -13,6 +14,7 @@ interface OrderModalProps {
 
 export function OrderModal({ table, onClose, onOrderCreated }: OrderModalProps) {
     const { user } = useAuth();
+    const { createOrder } = useOrders();
     const [items, setItems] = useState<OrderItem[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -74,12 +76,12 @@ export function OrderModal({ table, onClose, onOrderCreated }: OrderModalProps) 
         try {
             // Create Order
             const orderId = crypto.randomUUID();
-            await db.orders.add({
+            await createOrder({
                 id: orderId,
                 restaurantId: user.restaurantId,
                 tableNumber: table.number,
                 items,
-                status: 'pending', // OrderStatus.PENDING
+                status: 'pending',
                 total,
                 createdAt: new Date(),
                 updatedAt: new Date(),
@@ -89,7 +91,7 @@ export function OrderModal({ table, onClose, onOrderCreated }: OrderModalProps) 
 
             // Update Table Status
             await db.restaurantTables.update(table.id, {
-                status: 'occupied', // TableStatus.OCCUPIED
+                status: 'occupied',
                 currentOrderId: orderId
             });
 
