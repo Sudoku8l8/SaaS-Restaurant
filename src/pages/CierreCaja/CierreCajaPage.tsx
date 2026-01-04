@@ -110,6 +110,11 @@ export function CierreCajaPage() {
                         Salir
                     </Button>
                 </div>
+                <div style={{ marginTop: '1rem', textAlign: 'right' }}>
+                    <Button variant="ghost" onClick={() => window.location.href = '/config'} style={{ fontSize: '0.9rem' }}>
+                        ⚙️ Configuración
+                    </Button>
+                </div>
             </header>
 
             {/* Validation Alerts */}

@@ -3,6 +3,7 @@ import { LoginPage } from '@/pages/Login/LoginPage';
 import { MozoPage } from '@/pages/Mozo/MozoPage';
 import { CocinaPage } from '@/pages/Cocina/CocinaPage';
 import { CierreCajaPage } from '@/pages/CierreCaja/CierreCajaPage';
+import { ConfigPage } from '@/pages/Configuracion/ConfigPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { ProtectedRoute } from '@/components/shared/ProtectedRoute';
 import { UserRole } from '@/types';
@@ -39,6 +40,11 @@ export const router = createBrowserRouter([
                 path: 'cierre-caja',
                 element: <ProtectedRoute allowedRoles={[UserRole.ADMIN]} />,
                 children: [{ index: true, element: <CierreCajaPage /> }],
+            },
+            {
+                path: 'config',
+                element: <ProtectedRoute allowedRoles={[UserRole.ADMIN]} />,
+                children: [{ index: true, element: <ConfigPage /> }],
             },
         ],
     },
