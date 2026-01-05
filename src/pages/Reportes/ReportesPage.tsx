@@ -19,9 +19,9 @@ interface ClosureRecord {
 }
 
 export function ReportesPage() {
-    const { user, logout } = useAuth();
+    const { user } = useAuth();
     const navigate = useNavigate();
-    const { restaurantSlug } = useParams<{ restaurantSlug: string }>();
+    const { restaurantSlug } = useParams();
 
     // Date Range State (default: last 7 days)
     const [fromDate, setFromDate] = useState(format(subDays(new Date(), 7), 'yyyy-MM-dd'));
@@ -78,9 +78,6 @@ export function ReportesPage() {
                 <div style={{ display: 'flex', gap: '1rem' }}>
                     <Button variant="ghost" onClick={() => navigate(`/${restaurantSlug}/admin`)}>
                         ← Volver
-                    </Button>
-                    <Button variant="secondary" onClick={logout}>
-                        Salir
                     </Button>
                 </div>
             </header>

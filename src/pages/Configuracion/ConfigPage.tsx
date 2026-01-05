@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/shared';
 
 import { ProductsTab } from '@/components/features/ProductsTab';
@@ -9,8 +9,11 @@ import { TablesTab } from '@/components/features/TablesTab';
 type Tab = 'products' | 'users' | 'tables';
 
 export function ConfigPage() {
-    const { logout } = useAuth();
+
+    const navigate = useNavigate();
+    const { restaurantSlug } = useParams();
     const [activeTab, setActiveTab] = useState<Tab>('products');
+
 
     return (
         <div className="container mt-md">
@@ -19,8 +22,8 @@ export function ConfigPage() {
                     <h1>Configuración</h1>
                     <p>Administración del Restaurante</p>
                 </div>
-                <Button variant="secondary" onClick={logout}>
-                    Salir
+                <Button variant="ghost" onClick={() => navigate(`/${restaurantSlug}/admin`)}>
+                    ← Volver
                 </Button>
             </header>
 

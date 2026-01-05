@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useDailySales } from '@/hooks/useDailySales';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrders } from '@/hooks/useOrders';
@@ -9,7 +10,9 @@ import { db } from '@/services/firebase/config';
 import { exportDailySalesToExcel } from '@/services/exportExcel';
 
 export function CierreCajaPage() {
-    const { user, logout } = useAuth();
+    const navigate = useNavigate();
+    const { restaurantSlug } = useParams();
+    const { user } = useAuth();
     const { metrics, orders, isLoading: loadingMetrics } = useDailySales();
     const { activeOrders } = useOrders(); // Reuse useOrders to check for pending orders
     const [isClosing, setIsClosing] = useState(false);
@@ -106,13 +109,8 @@ export function CierreCajaPage() {
                     >
                         📥 Exportar Excel
                     </Button>
-                    <Button variant="secondary" onClick={logout}>
-                        Salir
-                    </Button>
-                </div>
-                <div style={{ marginTop: '1rem', textAlign: 'right' }}>
-                    <Button variant="ghost" onClick={() => window.location.href = '/config'} style={{ fontSize: '0.9rem' }}>
-                        ⚙️ Configuración
+                    <Button variant="ghost" onClick={() => navigate(`/${restaurantSlug}/admin`)}>
+                        ← Volver
                     </Button>
                 </div>
             </header>
