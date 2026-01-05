@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { db } from '@/services/firebase/config';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
@@ -21,6 +21,7 @@ interface ClosureRecord {
 export function ReportesPage() {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+    const { restaurantSlug } = useParams<{ restaurantSlug: string }>();
 
     // Date Range State (default: last 7 days)
     const [fromDate, setFromDate] = useState(format(subDays(new Date(), 7), 'yyyy-MM-dd'));
@@ -75,7 +76,7 @@ export function ReportesPage() {
                     <p>Consulta de ventas por rango de fechas</p>
                 </div>
                 <div style={{ display: 'flex', gap: '1rem' }}>
-                    <Button variant="ghost" onClick={() => navigate('/admin')}>
+                    <Button variant="ghost" onClick={() => navigate(`/${restaurantSlug}/admin`)}>
                         ← Volver
                     </Button>
                     <Button variant="secondary" onClick={logout}>
