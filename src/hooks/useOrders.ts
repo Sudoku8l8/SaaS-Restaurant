@@ -135,10 +135,52 @@ export function useOrders() {
         await batch.commit();
     };
 
+    const deleteOrder = async (orderId: string) => {
+        const orderRef = doc(db, 'orders', orderId);
+
+        // Transaction to delete order and free table
+        const batch = writeBatch(db);
+
+        // Find order from activeOrders to get tableNumber
+        const existingOrder = activeOrders.find(o => o.id === orderId);
+
+        if (existingOrder) {
+            const tablesRef = collection(db, 'tables');
+            const q = query(
+                tablesRef,
+                where('restaurantId', '==', restaurantId),
+                where('number', '==', existingOrder.tableNumber),
+                limit(1)
+            );
+            const tableSnap = await getDocs(q);
+            if (!tableSnap.empty) {
+                batch.update(tableSnap.docs[0].ref, {
+                    status: 'free',
+                    currentOrderId: null
+                });
+            }
+        }
+
+        // Delete Order
+        batch.delete(orderRef);
+
+        await batch.commit();
+    };
+
+    const updateOrder = async (orderId: string, updates: Partial<Order>) => {
+        const orderRef = doc(db, 'orders', orderId);
+        await updateDoc(orderRef, {
+            ...updates,
+            updatedAt: new Date()
+        });
+    };
+
     return {
         activeOrders,
         createOrder,
         updateOrderStatus,
-        payOrder
+        payOrder,
+        deleteOrder,
+        updateOrder
     };
 }

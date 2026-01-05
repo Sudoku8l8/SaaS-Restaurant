@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTables } from '@/hooks/useTables';
 import { useClosureStatus } from '@/hooks/useClosureStatus';
 import { seedFirestore } from '@/services/firebase/seeders';
-import type { RestaurantTable } from '@/types';
+import type { RestaurantTable, Order } from '@/types';
 
 export function MozoPage() {
     const { user, logout } = useAuth();
@@ -16,6 +16,7 @@ export function MozoPage() {
     const [selectedTable, setSelectedTable] = useState<RestaurantTable | null>(null);
     const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+    const [orderToEdit, setOrderToEdit] = useState<Order | undefined>(undefined);
 
     const handleTableClick = (table: RestaurantTable) => {
         // Block new orders if cash box is closed
@@ -26,6 +27,7 @@ export function MozoPage() {
 
         if (table.status === 'free') {
             setSelectedTable(table);
+            setOrderToEdit(undefined);
             setIsOrderModalOpen(true);
         } else if (table.status === 'occupied') {
             setSelectedTable(table);
@@ -36,11 +38,19 @@ export function MozoPage() {
     const handleCloseOrderModal = () => {
         setIsOrderModalOpen(false);
         setSelectedTable(null);
+        setOrderToEdit(undefined);
     };
 
     const handleCloseDetailModal = () => {
         setIsDetailModalOpen(false);
+        setIsDetailModalOpen(false);
         setSelectedTable(null);
+    };
+
+    const handleEditOrder = (order: Order) => {
+        setOrderToEdit(order);
+        setIsDetailModalOpen(false); // Close detail to open edit
+        setIsOrderModalOpen(true);
     };
 
     if (!tables || checkingClosure) return <div className="p-4">Cargando mesas...</div>;
@@ -111,6 +121,7 @@ export function MozoPage() {
             {isOrderModalOpen && selectedTable && !isClosed && (
                 <OrderModal
                     table={selectedTable}
+                    initialOrder={orderToEdit}
                     onClose={handleCloseOrderModal}
                     onOrderCreated={handleCloseOrderModal}
                 />
@@ -120,6 +131,7 @@ export function MozoPage() {
                 <TableDetailModal
                     table={selectedTable}
                     onClose={handleCloseDetailModal}
+                    onEdit={handleEditOrder}
                 />
             )}
         </div>

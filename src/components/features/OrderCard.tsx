@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { Button, Card } from '@/components/shared';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { PaymentModal } from '@/components/features/PaymentModal';
@@ -9,9 +10,10 @@ import { es } from 'date-fns/locale';
 
 interface OrderCardProps {
     order: Order;
+    actions?: ReactNode;
 }
 
-export function OrderCard({ order }: OrderCardProps) {
+export function OrderCard({ order, actions }: OrderCardProps) {
     const { updateOrderStatus, payOrder } = useOrders();
     const [showPaymentModal, setShowPaymentModal] = useState(false);
 
@@ -67,7 +69,10 @@ export function OrderCard({ order }: OrderCardProps) {
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
                     <div style={{ fontWeight: 'bold' }}>Total: S/ {order.total.toFixed(2)}</div>
-                    {nextAction()}
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        {actions}
+                        {nextAction()}
+                    </div>
                 </div>
             </Card>
 

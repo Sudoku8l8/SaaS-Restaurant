@@ -2,21 +2,22 @@ import { useState, useEffect } from 'react';
 import { db } from '@/services/firebase/config';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { Button, Card, Input, Badge } from '@/components/shared';
-import type { Product, OrderItem, RestaurantTable } from '@/types';
+import type { Product, OrderItem, RestaurantTable, Order } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrders } from '@/hooks/useOrders';
 import { generateUUID } from '@/utils/uuid';
 
 interface OrderModalProps {
     table: RestaurantTable;
+    initialOrder?: Order;
     onClose: () => void;
     onOrderCreated: () => void;
 }
 
-export function OrderModal({ table, onClose, onOrderCreated }: OrderModalProps) {
+export function OrderModal({ table, initialOrder, onClose, onOrderCreated }: OrderModalProps) {
     const { user } = useAuth();
-    const { createOrder } = useOrders();
-    const [items, setItems] = useState<OrderItem[]>([]);
+    const { createOrder, updateOrder } = useOrders();
+    const [items, setItems] = useState<OrderItem[]>(initialOrder?.items || []);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
     const [products, setProducts] = useState<Product[]>([]);
@@ -78,35 +79,39 @@ export function OrderModal({ table, onClose, onOrderCreated }: OrderModalProps) 
 
     const total = items.reduce((sum, item) => sum + item.subtotal, 0);
 
-    const handleCreateOrder = async () => {
+    const handleSaveOrder = async () => {
         if (!user || items.length === 0) return;
 
         try {
-            // Create Order
-            const orderId = generateUUID();
-            await createOrder({
-                id: orderId,
-                restaurantId: user.restaurantId,
-                tableNumber: table.number,
-                items,
-                status: 'pending',
-                total,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-                userId: user.id,
-                userName: user.name,
-            });
-
-            // Update Table Status
-            // Table update is handled in createOrder hook now to be transactional/atomic with Firestore batch
-            // if we kept it here, we'd need to use Firestore SDK directly.
-            // Since useOrders.createOrder handles key logic, we can skip updating table here.
+            if (initialOrder) {
+                // Update Order
+                await updateOrder(initialOrder.id, {
+                    items,
+                    total,
+                    updatedAt: new Date()
+                });
+            } else {
+                // Create Order
+                const orderId = generateUUID();
+                await createOrder({
+                    id: orderId,
+                    restaurantId: user.restaurantId,
+                    tableNumber: table.number,
+                    items,
+                    status: 'pending',
+                    total,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    userId: user.id,
+                    userName: user.name,
+                });
+            }
 
             onOrderCreated();
             onClose();
         } catch (err: any) {
-            console.error('Failed to create order:', err);
-            alert(`Error al crear el pedido: ${err.message || 'Desconocido'}`);
+            console.error('Failed to save order:', err);
+            alert(`Error al guardar el pedido: ${err.message || 'Desconocido'}`);
         }
     };
 
@@ -124,7 +129,7 @@ export function OrderModal({ table, onClose, onOrderCreated }: OrderModalProps) 
             zIndex: 1000,
             padding: '1rem'
         }}>
-            <Card title={`Mesa ${table.number} - Nuevo Pedido`} style={{ width: '100%', maxWidth: '800px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <Card title={`Mesa ${table.number} - ${initialOrder ? 'Editar Pedido' : 'Nuevo Pedido'}`} style={{ width: '100%', maxWidth: '800px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
                 <div style={{
                     display: 'grid',
@@ -210,7 +215,9 @@ export function OrderModal({ table, onClose, onOrderCreated }: OrderModalProps) 
                             </div>
                             <div style={{ display: 'flex', gap: '1rem' }}>
                                 <Button variant="secondary" fullWidth onClick={onClose}>Cancelar</Button>
-                                <Button variant="primary" fullWidth onClick={handleCreateOrder} disabled={items.length === 0}>Crear Pedido</Button>
+                                <Button variant="primary" fullWidth onClick={handleSaveOrder} disabled={items.length === 0}>
+                                    {initialOrder ? 'Actualizar Pedido' : 'Crear Pedido'}
+                                </Button>
                             </div>
                         </div>
                     </div>

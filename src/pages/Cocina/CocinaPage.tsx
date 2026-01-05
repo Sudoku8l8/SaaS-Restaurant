@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import type { RestaurantTable, Order } from '@/types';
+import { OrderModal } from '@/components/features/OrderModal';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrders } from '@/hooks/useOrders';
@@ -11,15 +13,31 @@ export function CocinaPage() {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const { restaurantSlug } = useParams<{ restaurantSlug: string }>();
-    const { activeOrders } = useOrders();
+    const { activeOrders, deleteOrder } = useOrders();
     const { isClosed } = useClosureStatus();
     const [filterStatus, setFilterStatus] = useState<OrderStatus | 'all'>('all');
+    const [orderToEdit, setOrderToEdit] = useState<Order | undefined>(undefined);
 
     if (!activeOrders) return <div className="p-4">Cargando pedidos...</div>;
 
     const filteredOrders = activeOrders.filter(order =>
         filterStatus === 'all' ? true : order.status === filterStatus
     );
+
+    const handleDelete = async (orderId: string) => {
+        if (confirm('¿Estás seguro de eliminar este pedido? Esta acción liberará la mesa.')) {
+            await deleteOrder(orderId);
+        }
+    };
+
+    // Helper to construct minimal table object for OrderModal
+    const getMinimalTable = (order: Order): RestaurantTable => ({
+        id: 'temp', // Not used for update
+        restaurantId: user?.restaurantId || '',
+        number: order.tableNumber,
+        status: 'occupied',
+        capacity: 4 // Dummy
+    });
 
     return (
         <div className="container mt-md">
@@ -93,7 +111,20 @@ export function CocinaPage() {
                 gap: '1.5rem'
             }}>
                 {filteredOrders.map(order => (
-                    <OrderCard key={order.id} order={order} />
+                    <OrderCard
+                        key={order.id}
+                        order={order}
+                        actions={
+                            <>
+                                <Button size="sm" variant="secondary" onClick={() => setOrderToEdit(order)}>
+                                    ✏️
+                                </Button>
+                                <Button size="sm" variant="danger" onClick={() => handleDelete(order.id)}>
+                                    🗑️
+                                </Button>
+                            </>
+                        }
+                    />
                 ))}
 
                 {activeOrders.length === 0 && (
@@ -103,6 +134,15 @@ export function CocinaPage() {
                     </div>
                 )}
             </div>
+
+            {orderToEdit && user?.restaurantId && (
+                <OrderModal
+                    table={getMinimalTable(orderToEdit)}
+                    initialOrder={orderToEdit}
+                    onClose={() => setOrderToEdit(undefined)}
+                    onOrderCreated={() => setOrderToEdit(undefined)}
+                />
+            )}
         </div>
     );
 }

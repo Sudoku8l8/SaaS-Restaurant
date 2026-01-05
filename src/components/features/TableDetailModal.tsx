@@ -6,9 +6,10 @@ import type { RestaurantTable } from '@/types';
 interface TableDetailModalProps {
     table: RestaurantTable;
     onClose: () => void;
+    onEdit?: (order: any) => void;
 }
 
-export function TableDetailModal({ table, onClose }: TableDetailModalProps) {
+export function TableDetailModal({ table, onClose, onEdit }: TableDetailModalProps) {
     const { activeOrders } = useOrders();
     // Assuming table has currentOrderId or looking up by table number
     // For robustness, let's find the active order for this table
@@ -31,9 +32,16 @@ export function TableDetailModal({ table, onClose }: TableDetailModalProps) {
                             <div style={{ marginBottom: '1rem' }}>
                                 <OrderCard order={activeOrder} />
                             </div>
-                            <Button variant="secondary" fullWidth onClick={onClose}>
-                                Cerrar
-                            </Button>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <Button variant="secondary" fullWidth onClick={onClose}>
+                                    Cerrar
+                                </Button>
+                                {activeOrder.status !== 'paid' && onEdit && (
+                                    <Button variant="primary" fullWidth onClick={() => onEdit(activeOrder)}>
+                                        ✏️ Editar
+                                    </Button>
+                                )}
+                            </div>
                         </>
                     ) : (
                         <div style={{ textAlign: 'center', padding: '2rem' }}>
