@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Lock } from 'lucide-react';
 import { TableCard } from '@/components/features/TableCard';
 import { OrderModal } from '@/components/features/OrderModal';
 import { TableDetailModal } from '@/components/features/TableDetailModal';
@@ -71,7 +72,7 @@ export function MozoPage() {
                     boxShadow: '0 4px 12px rgba(231, 76, 60, 0.3)'
                 }}>
                     <div>
-                        <strong>🔒 CAJA CERRADA</strong>
+                        <strong style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Lock size={16} /> CAJA CERRADA</strong>
                         <p style={{ margin: 0, fontSize: '0.9rem', opacity: 0.9 }}>
                             Las operaciones del día han sido cerradas. Solo consulta disponible.
                         </p>

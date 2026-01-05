@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Lock, ShieldCheck, Pencil, Trash2 } from 'lucide-react';
 import type { RestaurantTable, Order } from '@/types';
 import { OrderModal } from '@/components/features/OrderModal';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -51,7 +52,7 @@ export function CocinaPage() {
                     marginBottom: '1.5rem',
                     boxShadow: '0 4px 12px rgba(231, 76, 60, 0.3)'
                 }}>
-                    <strong>🔒 CAJA CERRADA</strong>
+                    <strong style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Lock size={16} /> CAJA CERRADA</strong>
                     <p style={{ margin: 0, fontSize: '0.9rem', opacity: 0.9 }}>
                         Las operaciones del día han sido cerradas.
                     </p>
@@ -64,8 +65,8 @@ export function CocinaPage() {
                     <p>Hola, {user?.name} - {filteredOrders.length} pedidos</p>
                 </div>
                 <div style={{ display: 'flex', gap: '1rem' }}>
-                    <Button variant="primary" onClick={() => navigate(`/${restaurantSlug}/admin`)}>
-                        👮 Admin
+                    <Button variant="primary" onClick={() => navigate(`/${restaurantSlug}/admin`)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <ShieldCheck size={18} /> Admin
                     </Button>
                     <Button variant="secondary" onClick={logout}>
                         Salir
@@ -117,10 +118,10 @@ export function CocinaPage() {
                         actions={
                             <>
                                 <Button size="sm" variant="secondary" onClick={() => setOrderToEdit(order)}>
-                                    ✏️
+                                    <Pencil size={16} />
                                 </Button>
                                 <Button size="sm" variant="danger" onClick={() => handleDelete(order.id)}>
-                                    🗑️
+                                    <Trash2 size={16} />
                                 </Button>
                             </>
                         }

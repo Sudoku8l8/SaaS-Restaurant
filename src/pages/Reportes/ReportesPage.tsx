@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { BarChart3, ArrowLeft, Search, Download, DollarSign, ShoppingBag, CalendarCheck } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { db } from '@/services/firebase/config';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -72,12 +73,14 @@ export function ReportesPage() {
         <div className="container mt-md">
             <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                 <div>
-                    <h1>📊 Reportes Históricos</h1>
+                    <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <BarChart3 size={32} className="text-primary" /> Reportes Históricos
+                    </h1>
                     <p>Consulta de ventas por rango de fechas</p>
                 </div>
                 <div style={{ display: 'flex', gap: '1rem' }}>
-                    <Button variant="ghost" onClick={() => navigate(`/${restaurantSlug}/admin`)}>
-                        ← Volver
+                    <Button variant="ghost" onClick={() => navigate(`/${restaurantSlug}/admin`)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <ArrowLeft size={18} /> Volver
                     </Button>
                 </div>
             </header>
@@ -101,8 +104,8 @@ export function ReportesPage() {
                             onChange={e => setToDate(e.target.value)}
                         />
                     </div>
-                    <Button onClick={fetchClosures} disabled={isLoading}>
-                        {isLoading ? 'Cargando...' : '🔍 Buscar'}
+                    <Button onClick={fetchClosures} disabled={isLoading} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        {isLoading ? 'Cargando...' : <><Search size={18} /> Buscar</>}
                     </Button>
                 </div>
             </Card>
@@ -110,19 +113,25 @@ export function ReportesPage() {
             {/* Summary Cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
                 <Card style={{ padding: '1.5rem', textAlign: 'center', borderTop: '4px solid var(--color-primary)' }}>
-                    <div style={{ fontSize: '0.9rem', color: '#666' }}>Total Ventas</div>
+                    <div style={{ fontSize: '0.9rem', color: '#666', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                        <DollarSign size={16} /> Total Ventas
+                    </div>
                     <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--color-primary)' }}>
                         S/ {totalSales.toFixed(2)}
                     </div>
                 </Card>
                 <Card style={{ padding: '1.5rem', textAlign: 'center', borderTop: '4px solid #27ae60' }}>
-                    <div style={{ fontSize: '0.9rem', color: '#666' }}>Total Pedidos</div>
+                    <div style={{ fontSize: '0.9rem', color: '#666', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                        <ShoppingBag size={16} /> Total Pedidos
+                    </div>
                     <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#27ae60' }}>
                         {totalOrders}
                     </div>
                 </Card>
                 <Card style={{ padding: '1.5rem', textAlign: 'center', borderTop: '4px solid #8e44ad' }}>
-                    <div style={{ fontSize: '0.9rem', color: '#666' }}>Días con Cierre</div>
+                    <div style={{ fontSize: '0.9rem', color: '#666', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                        <CalendarCheck size={16} /> Días con Cierre
+                    </div>
                     <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#8e44ad' }}>
                         {closures.length}
                     </div>
@@ -161,8 +170,9 @@ export function ReportesPage() {
                                 });
                                 exportDailySalesToExcel(summaryMetrics, []);
                             }}
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                         >
-                            📥 Exportar Resumen
+                            <Download size={16} /> Exportar Resumen
                         </Button>
                     )}
                 </div>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Utensils } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Card, Button, Input } from '@/components/shared';
 import { createRestaurant } from '@/services/onboardingService';
@@ -65,7 +66,9 @@ export function LandingPage() {
             padding: '2rem'
         }}>
             <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-                <h1 style={{ fontSize: '3rem', marginBottom: '1rem', color: '#333' }}>🍽️ SaaS Restaurant</h1>
+                <h1 style={{ fontSize: '3rem', marginBottom: '1rem', color: '#333', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
+                    <Utensils size={48} /> SaaS Restaurant
+                </h1>
                 <p style={{ fontSize: '1.2rem', color: '#666' }}>Plataforma de gestión multi-restaurante</p>
             </div>
 

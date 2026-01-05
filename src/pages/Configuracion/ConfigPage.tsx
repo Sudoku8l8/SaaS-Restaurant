@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Utensils, Users, LayoutGrid, ArrowLeft } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/shared';
 
@@ -22,8 +23,8 @@ export function ConfigPage() {
                     <h1>Configuración</h1>
                     <p>Administración del Restaurante</p>
                 </div>
-                <Button variant="ghost" onClick={() => navigate(`/${restaurantSlug}/admin`)}>
-                    ← Volver
+                <Button variant="ghost" onClick={() => navigate(`/${restaurantSlug}/admin`)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <ArrowLeft size={18} /> Volver
                 </Button>
             </header>
 
@@ -32,20 +33,23 @@ export function ConfigPage() {
                 <Button
                     variant={activeTab === 'products' ? 'primary' : 'ghost'}
                     onClick={() => setActiveTab('products')}
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                 >
-                    🍔 Productos
+                    <Utensils size={18} /> Productos
                 </Button>
                 <Button
                     variant={activeTab === 'users' ? 'primary' : 'ghost'}
                     onClick={() => setActiveTab('users')}
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                 >
-                    👥 Usuarios
+                    <Users size={18} /> Usuarios
                 </Button>
                 <Button
                     variant={activeTab === 'tables' ? 'primary' : 'ghost'}
                     onClick={() => setActiveTab('tables')}
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                 >
-                    🪑 Mesas
+                    <LayoutGrid size={18} /> Mesas
                 </Button>
             </div>
 

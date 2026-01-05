@@ -5,6 +5,7 @@ import { useDailySales } from '@/hooks/useDailySales';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrders } from '@/hooks/useOrders';
 import { Card, Button, Badge } from '@/components/shared';
+import { Download, ArrowLeft, CheckCircle, AlertTriangle, Check, Lock, DollarSign, CreditCard, User } from 'lucide-react';
 import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 import { db } from '@/services/firebase/config';
 
@@ -107,25 +108,26 @@ export function CierreCajaPage() {
                         variant="secondary"
                         onClick={() => exportDailySalesToExcel(metrics, orders)}
                         disabled={metrics.orderCount === 0}
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                     >
-                        📥 Exportar Excel
+                        <Download size={18} /> Exportar Excel
                     </Button>
-                    <Button variant="ghost" onClick={() => navigate(`/${restaurantSlug}/admin`)}>
-                        ← Volver
+                    <Button variant="ghost" onClick={() => navigate(`/${restaurantSlug}/admin`)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <ArrowLeft size={18} /> Volver
                     </Button>
                 </div>
             </header>
 
             {/* Validation Alerts */}
             {existingClosure && (
-                <div style={{ background: '#d4edda', color: '#155724', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', border: '1px solid #c3e6cb' }}>
-                    ✅ <strong>Caja Cerrada:</strong> Ya se ha realizado el cierre de hoy. No se pueden realizar más operaciones.
+                <div style={{ background: '#d4edda', color: '#155724', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', border: '1px solid #c3e6cb', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <CheckCircle size={20} /> <span><strong>Caja Cerrada:</strong> Ya se ha realizado el cierre de hoy. No se pueden realizar más operaciones.</span>
                 </div>
             )}
 
             {hasPendingOrders && (
-                <div style={{ background: '#f8d7da', color: '#721c24', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', border: '1px solid #f5c6cb' }}>
-                    ⚠️ <strong>Imposible Cerrar:</strong> Hay {activeOrders.length} pedidos activos (sin pagar). Debes cerrarlos o cancelarlos antes del cierre de caja.
+                <div style={{ background: '#f8d7da', color: '#721c24', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', border: '1px solid #f5c6cb', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <AlertTriangle size={20} /> <span><strong>Imposible Cerrar:</strong> Hay {activeOrders.length} pedidos activos (sin pagar). Debes cerrarlos o cancelarlos antes del cierre de caja.</span>
                 </div>
             )}
 
@@ -133,7 +135,10 @@ export function CierreCajaPage() {
 
                 {/* Resumen General */}
                 <Card style={{ padding: '1.5rem', borderLeft: '5px solid var(--color-primary)' }}>
-                    <h3>Total Ventas</h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                        <DollarSign size={24} className="text-primary" />
+                        <h3>Total Ventas</h3>
+                    </div>
                     <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--color-primary)' }}>
                         S/ {metrics.totalSales.toFixed(2)}
                     </div>
@@ -142,7 +147,10 @@ export function CierreCajaPage() {
 
                 {/* Desglose por Medio de Pago */}
                 <Card style={{ padding: '1.5rem' }}>
-                    <h3>Medios de Pago</h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <CreditCard size={20} />
+                        <h3>Medios de Pago</h3>
+                    </div>
                     <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         {Object.entries(metrics.salesByPaymentMethod).length === 0 && <p className="text-secondary">Sin movimientos</p>}
 
@@ -157,7 +165,10 @@ export function CierreCajaPage() {
 
                 {/* Desglose por Mozo */}
                 <Card style={{ padding: '1.5rem' }}>
-                    <h3>Ventas por Mozo</h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <User size={20} />
+                        <h3>Ventas por Mozo</h3>
+                    </div>
                     <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         {Object.entries(metrics.salesByWaiter).length === 0 && <p className="text-secondary">Sin movimientos</p>}
 
@@ -173,8 +184,8 @@ export function CierreCajaPage() {
 
             {/* Acciones de Cierre */}
             <div style={{ textAlign: 'center', marginTop: '3rem', padding: '2rem', background: '#fff', borderRadius: '8px', boxShadow: '0 -2px 10px rgba(0,0,0,0.05)' }}>
-                <p style={{ marginBottom: '1rem', color: '#666' }}>
-                    ⚠️ Al cerrar caja se bloquearán las operaciones de venta para este día.
+                <p style={{ marginBottom: '1rem', color: '#666', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                    <AlertTriangle size={18} /> Al cerrar caja se bloquearán las operaciones de venta para este día.
                 </p>
                 <Button
                     variant="danger"
@@ -182,7 +193,11 @@ export function CierreCajaPage() {
                     disabled={isClosing || !canClose}
                     style={{ fontSize: '1.2rem', padding: '1rem 2rem', opacity: !canClose ? 0.5 : 1, cursor: !canClose ? 'not-allowed' : 'pointer' }}
                 >
-                    {existingClosure ? '✅ CAJA CERRADA' : (isClosing ? 'Cerrando...' : '🔒 OBLIGATORIO: CERRAR CAJA')}
+                    {existingClosure ? (
+                        <><Check size={20} style={{ marginRight: '0.5rem' }} /> CAJA CERRADA</>
+                    ) : (
+                        isClosing ? 'Cerrando...' : <><Lock size={20} style={{ marginRight: '0.5rem' }} /> OBLIGATORIO: CERRAR CAJA</>
+                    )}
                 </Button>
             </div>
         </div>

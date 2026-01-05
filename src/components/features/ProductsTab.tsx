@@ -3,6 +3,7 @@ import { db } from '@/services/firebase/config';
 import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
 import { Button, Input, Card, Badge } from '@/components/shared';
+import { Trash2, Edit2 } from 'lucide-react';
 import type { Product } from '@/types';
 
 export function ProductsTab() {
@@ -100,8 +101,8 @@ export function ProductsTab() {
                         <div style={{ color: 'var(--color-primary)', fontSize: '1.2rem' }}>S/ {product.price.toFixed(2)}</div>
                         <div style={{ fontSize: '0.8rem', color: '#666' }}>{product.category}</div>
                         <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
-                            <Button size="sm" variant="outline" onClick={() => openModal(product)}>Editar</Button>
-                            <Button size="sm" variant="danger" onClick={() => handleDelete(product.id)}>🗑️</Button>
+                            <Button size="sm" variant="outline" onClick={() => openModal(product)}><Edit2 size={14} className="mr-1" /> Editar</Button>
+                            <Button size="sm" variant="danger" onClick={() => handleDelete(product.id)}><Trash2 size={14} /></Button>
                         </div>
                         {!product.available && <Badge variant="warning" style={{ position: 'absolute', top: 5, right: 5 }}>Agotado</Badge>}
                     </Card>

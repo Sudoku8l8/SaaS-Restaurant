@@ -4,6 +4,7 @@ import { collection, addDoc, doc, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
 import { useTables } from '@/hooks/useTables';
 import { Button, Input, Card, Badge } from '@/components/shared';
+import { X, Plus } from 'lucide-react';
 
 export function TablesTab() {
     const { user } = useAuth();
@@ -59,8 +60,8 @@ export function TablesTab() {
                         onChange={e => setNewTableNumber(e.target.value)}
                         style={{ width: '100px' }}
                     />
-                    <Button type="submit" disabled={!newTableNumber || isCreating}>
-                        + Agregar
+                    <Button type="submit" disabled={!newTableNumber || isCreating} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Plus size={16} /> Agregar
                     </Button>
                 </form>
             </div>
@@ -82,7 +83,7 @@ export function TablesTab() {
                             style={{ position: 'absolute', top: 5, right: 5, padding: '2px 6px', fontSize: '0.8rem' }}
                             onClick={() => handleDeleteTable(table.id, table.number)}
                         >
-                            ✕
+                            <X size={14} />
                         </Button>
                     </Card>
                 ))}

@@ -1,4 +1,5 @@
 import { useNavigate, useParams } from 'react-router-dom';
+import { ChefHat, DollarSign, BarChart3, Settings } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button, Card } from '@/components/shared';
 import { SalesDashboard } from '@/components/features/SalesDashboard';
@@ -16,8 +17,8 @@ export function AdminPage() {
                     <p>Hola, {user?.name}</p>
                 </div>
                 <div style={{ display: 'flex', gap: '1rem' }}>
-                    <Button variant="ghost" onClick={() => navigate(`/${restaurantSlug}/cocina`)}>
-                        🍳 Volver a Cocina
+                    <Button variant="ghost" onClick={() => navigate(`/${restaurantSlug}/cocina`)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <ChefHat size={18} /> Volver a Cocina
                     </Button>
                     <Button variant="secondary" onClick={logout}>
                         Salir
@@ -36,19 +37,19 @@ export function AdminPage() {
                 marginTop: '2rem'
             }}>
                 <Card style={{ padding: '2rem', textAlign: 'center', cursor: 'pointer' }} onClick={() => navigate(`/${restaurantSlug}/cierre-caja`)}>
-                    <div style={{ fontSize: '3rem' }}>💰</div>
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}><DollarSign size={48} className="text-primary" /></div>
                     <h3>Cierre de Caja</h3>
                     <p style={{ color: '#666', fontSize: '0.9rem' }}>Cerrar operaciones del día</p>
                 </Card>
 
                 <Card style={{ padding: '2rem', textAlign: 'center', cursor: 'pointer' }} onClick={() => navigate(`/${restaurantSlug}/reportes`)}>
-                    <div style={{ fontSize: '3rem' }}>📊</div>
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}><BarChart3 size={48} className="text-primary" /></div>
                     <h3>Reportes</h3>
                     <p style={{ color: '#666', fontSize: '0.9rem' }}>Histórico de ventas</p>
                 </Card>
 
                 <Card style={{ padding: '2rem', textAlign: 'center', cursor: 'pointer' }} onClick={() => navigate(`/${restaurantSlug}/config`)}>
-                    <div style={{ fontSize: '3rem' }}>⚙️</div>
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}><Settings size={48} className="text-primary" /></div>
                     <h3>Configuración</h3>
                     <p style={{ color: '#666', fontSize: '0.9rem' }}>Productos, Usuarios, Mesas</p>
                 </Card>

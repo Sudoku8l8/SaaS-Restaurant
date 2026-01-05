@@ -3,6 +3,7 @@ import { db } from '@/services/firebase/config';
 import { collection, query, where, onSnapshot, addDoc, doc, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
 import { Button, Input, Card, Badge } from '@/components/shared';
+import { Trash2 } from 'lucide-react';
 import type { User } from '@/types';
 
 export function UsersTab() {
@@ -103,7 +104,7 @@ export function UsersTab() {
                                 </div>
                             </div>
                             {u.id !== currentUser?.id && (
-                                <Button size="sm" variant="danger" onClick={() => handleDelete(u.id)}>🗑️</Button>
+                                <Button size="sm" variant="danger" onClick={() => handleDelete(u.id)}><Trash2 size={16} /></Button>
                             )}
                         </div>
                     </Card>
