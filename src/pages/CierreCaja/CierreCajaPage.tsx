@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { format } from 'date-fns';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDailySales } from '@/hooks/useDailySales';
 import { useAuth } from '@/hooks/useAuth';
@@ -26,7 +27,7 @@ export function CierreCajaPage() {
 
             // We store date as string YYYY-MM-DD to easily check "day equality" or timestamp.
             // Let's assume we store 'date' string in closure for query simplicity.
-            const todayStr = new Date().toISOString().split('T')[0];
+            const todayStr = format(new Date(), 'yyyy-MM-dd');
 
             const q = query(
                 collection(db, 'closures'),
@@ -67,7 +68,7 @@ export function CierreCajaPage() {
 
         setIsClosing(true);
         try {
-            const todayStr = new Date().toISOString().split('T')[0];
+            const todayStr = format(new Date(), 'yyyy-MM-dd');
 
             const closureData = {
                 restaurantId: user?.restaurantId,
