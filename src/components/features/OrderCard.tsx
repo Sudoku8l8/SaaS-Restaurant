@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { Button } from '@/components/shared';
 import { PaymentModal } from '@/components/features/PaymentModal';
 import { useOrders } from '@/hooks/useOrders';
 import type { Order, OrderStatus, PaymentMethod } from '@/types';
