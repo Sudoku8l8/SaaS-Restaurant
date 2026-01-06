@@ -9,18 +9,20 @@ import { useOrders } from '@/hooks/useOrders';
 import { generateUUID } from '@/utils/uuid';
 
 interface OrderModalProps {
-    table: RestaurantTable;
+    table?: RestaurantTable; // Optional for takeout
     initialOrder?: Order;
     onClose: () => void;
     onOrderCreated: () => void;
+    orderType?: 'dine-in' | 'takeout';
 }
 
-export function OrderModal({ table, initialOrder, onClose, onOrderCreated }: OrderModalProps) {
+export function OrderModal({ table, initialOrder, onClose, onOrderCreated, orderType = 'dine-in' }: OrderModalProps) {
     const { user } = useAuth();
     const { createOrder, updateOrder } = useOrders();
     const [items, setItems] = useState<OrderItem[]>(initialOrder?.items || []);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
+    const [customerName, setCustomerName] = useState(initialOrder?.customerName || '');
     const [products, setProducts] = useState<Product[]>([]);
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
     const [mobileView, setMobileView] = useState<'menu' | 'cart'>('menu');
@@ -97,7 +99,8 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated }: Ord
                 await updateOrder(initialOrder.id, {
                     items,
                     total,
-                    updatedAt: new Date()
+                    updatedAt: new Date(),
+                    ...(customerName.trim() ? { customerName: customerName.trim() } : { customerName: '' }) // Clear if empty
                 });
             } else {
                 // Create Order
@@ -105,7 +108,7 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated }: Ord
                 await createOrder({
                     id: orderId,
                     restaurantId: user.restaurantId,
-                    tableNumber: table.number,
+                    tableNumber: orderType === 'takeout' ? 0 : (table?.number || 0),
                     items,
                     status: 'pending',
                     total,
@@ -113,6 +116,8 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated }: Ord
                     updatedAt: new Date(),
                     userId: user.id,
                     userName: user.name,
+                    orderType,
+                    ...(customerName.trim() ? { customerName: customerName.trim() } : {})
                 });
             }
 
@@ -222,7 +227,9 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated }: Ord
                         <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', marginBottom: '1.5rem', gap: isMobile ? '1rem' : 0 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <h2 style={{ fontSize: '1.5rem', fontWeight: '600', margin: 0 }}>
-                                    {table.number ? `Mesa ${table.number}` : 'Nuevo Pedido'}
+                                    {orderType === 'takeout'
+                                        ? 'Nuevo Pedido (Para Llevar)'
+                                        : (table?.number ? `Mesa ${table.number}` : 'Nuevo Pedido')}
                                 </h2>
                                 {isMobile && <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#666', fontSize: '1.5rem' }}>×</button>}
                             </div>
@@ -378,6 +385,23 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated }: Ord
 
                         {/* Footer Actions */}
                         <div style={{ padding: '1.5rem', borderTop: `1px solid ${darkTheme.border}`, backgroundColor: '#121212' }}>
+                            <div style={{ marginBottom: '1rem' }}>
+                                <label style={{ display: 'block', color: '#888', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Nombre del Cliente (Opcional)</label>
+                                <Input
+                                    placeholder="Ej. Juan Pérez"
+                                    value={customerName}
+                                    onChange={(e) => setCustomerName(e.target.value)}
+                                    style={{
+                                        background: darkTheme.surface,
+                                        border: `1px solid ${darkTheme.border}`,
+                                        color: 'white',
+                                        borderRadius: '8px',
+                                        padding: '0.75rem'
+                                    }}
+                                    fullWidth
+                                />
+                            </div>
+
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '1.5rem' }}>
                                 <span style={{ color: '#888' }}>Total:</span>
                                 <span style={{ fontSize: '2rem', fontWeight: 'bold', lineHeight: 1 }}>S/ {total.toFixed(2)}</span>

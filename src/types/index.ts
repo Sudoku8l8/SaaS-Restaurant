@@ -8,6 +8,7 @@ export const OrderStatus = {
     READY: 'ready',
     DELIVERED: 'delivered',
     PAID: 'paid',
+    CANCELLED: 'cancelled',
 } as const;
 export type OrderStatus = (typeof OrderStatus)[keyof typeof OrderStatus];
 
@@ -93,6 +94,8 @@ export interface Order {
     paymentMethod?: PaymentMethod;
     userId: string; // Waiter who created the order
     userName: string;
+    orderType: 'dine-in' | 'takeout';
+    customerName?: string;
     statusHistory?: StatusChange[];
 }
 
