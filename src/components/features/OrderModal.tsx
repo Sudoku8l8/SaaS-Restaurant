@@ -152,13 +152,13 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
             justifyContent: 'center',
             alignItems: 'center',
             zIndex: 1000,
-            padding: '2rem',
+            padding: isMobile ? '0.25rem' : '2rem',
             backdropFilter: 'blur(5px)'
         }}>
             <div style={{
                 width: '100%',
                 maxWidth: '1200px',
-                height: '90vh',
+                height: isMobile ? '95vh' : '90vh',
                 backgroundColor: darkTheme.bg,
                 borderRadius: '16px',
                 boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
@@ -331,7 +331,8 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                         display: (!isMobile || mobileView === 'cart') ? 'flex' : 'none',
                         backgroundColor: '#0f0f0f',
                         flexDirection: 'column',
-                        borderLeft: isMobile ? 'none' : `1px solid ${darkTheme.border}`
+                        borderLeft: isMobile ? 'none' : `1px solid ${darkTheme.border}`,
+                        overflow: 'hidden' // Ensure it doesn't push the modal height
                     }}>
 
                         {/* Summary Header - Only desktop closes from here, mobile has tabs/close in menu */}
@@ -343,7 +344,13 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                         )}
 
                         {/* Order Items List */}
-                        <div style={{ flex: 1, overflowY: 'auto', padding: '1rem' }}>
+                        <div style={{
+                            flex: 1,
+                            overflowY: 'auto',
+                            padding: isMobile ? '0.75rem' : '1rem',
+                            minHeight: isMobile ? '280px' : 0, // Approx 4 items
+                            maxHeight: isMobile ? 'calc(100% - 200px)' : 'none' // Safeguard to keep footer visible
+                        }}>
                             {items.length === 0 ? (
                                 <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#666', gap: '1rem' }}>
                                     <div style={{ fontSize: '3rem', opacity: 0.2 }}>🛒</div>
@@ -384,9 +391,14 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                         </div>
 
                         {/* Footer Actions */}
-                        <div style={{ padding: '1.5rem', borderTop: `1px solid ${darkTheme.border}`, backgroundColor: '#121212' }}>
-                            <div style={{ marginBottom: '1rem' }}>
-                                <label style={{ display: 'block', color: '#888', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Nombre del Cliente (Opcional)</label>
+                        <div style={{
+                            padding: isMobile ? '1rem' : '1.5rem',
+                            borderTop: `1px solid ${darkTheme.border}`,
+                            backgroundColor: '#121212',
+                            marginTop: 'auto' // Pull footer to bottom
+                        }}>
+                            <div style={{ marginBottom: isMobile ? '0.75rem' : '1rem' }}>
+                                <label style={{ display: 'block', color: '#888', marginBottom: '0.25rem', fontSize: '0.9rem' }}>Nombre del Cliente (Opcional)</label>
                                 <Input
                                     placeholder="Ej. Juan Pérez"
                                     value={customerName}
@@ -396,25 +408,25 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                         border: `1px solid ${darkTheme.border}`,
                                         color: 'white',
                                         borderRadius: '8px',
-                                        padding: '0.75rem'
+                                        padding: isMobile ? '0.6rem' : '0.75rem'
                                     }}
                                     fullWidth
                                 />
                             </div>
 
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '1.5rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: isMobile ? '1rem' : '1.5rem' }}>
                                 <span style={{ color: '#888' }}>Total:</span>
-                                <span style={{ fontSize: '2rem', fontWeight: 'bold', lineHeight: 1 }}>S/ {total.toFixed(2)}</span>
+                                <span style={{ fontSize: isMobile ? '1.5rem' : '2rem', fontWeight: 'bold', lineHeight: 1 }}>S/ {total.toFixed(2)}</span>
                             </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: isMobile ? '0.75rem' : '1rem' }}>
                                 <Button
                                     variant="outline"
                                     onClick={onClose}
                                     style={{
                                         borderColor: darkTheme.danger,
                                         color: darkTheme.danger,
-                                        height: '50px'
+                                        height: isMobile ? '44px' : '50px'
                                     }}
                                 >
                                     Cancelar
@@ -425,12 +437,12 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                     disabled={items.length === 0}
                                     style={{
                                         background: darkTheme.primary,
-                                        height: '50px',
-                                        fontSize: '1.1rem',
+                                        height: isMobile ? '44px' : '50px',
+                                        fontSize: isMobile ? '1rem' : '1.1rem',
                                         fontWeight: 'bold'
                                     }}
                                 >
-                                    {initialOrder ? 'Actualizar Pedido' : 'Crear Pedido'}
+                                    {initialOrder ? 'Actualizar' : 'Crear'} Pedido
                                 </Button>
                             </div>
                         </div>
