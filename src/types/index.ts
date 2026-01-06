@@ -94,6 +94,8 @@ export interface Order {
     paymentMethod?: PaymentMethod;
     userId: string; // Waiter who created the order
     userName: string;
+    orderType: 'dine-in' | 'takeout';
+    customerName?: string;
     statusHistory?: StatusChange[];
 }
 

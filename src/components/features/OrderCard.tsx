@@ -175,6 +175,11 @@ export function OrderCard({ order, onEdit, onDelete }: OrderCardProps) {
                                 <Clock size={14} />
                                 <span>{formatDistanceToNow(order.createdAt, { locale: es })}</span>
                             </div>
+                            {order.customerName && (
+                                <div style={{ color: '#fbbf24', fontSize: '0.9rem', fontWeight: 'bold', marginTop: '0.25rem' }}>
+                                    {order.customerName}
+                                </div>
+                            )}
                         </div>
                     </div>
 
