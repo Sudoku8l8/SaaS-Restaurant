@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
+import { ShoppingCart, Utensils, Search, Trash2 } from 'lucide-react';
 import { db } from '@/services/firebase/config';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import { Button, Card, Input, Badge } from '@/components/shared';
+import { Button, Input } from '@/components/shared';
 import type { Product, OrderItem, RestaurantTable, Order } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrders } from '@/hooks/useOrders';
@@ -21,6 +22,14 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated }: Ord
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
     const [products, setProducts] = useState<Product[]>([]);
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+    const [mobileView, setMobileView] = useState<'menu' | 'cart'>('menu');
+
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth <= 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // Fetch products
     useEffect(() => {
@@ -115,6 +124,17 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated }: Ord
         }
     };
 
+    // Styles for Dark Theme Modal
+    const darkTheme = {
+        bg: '#121212',
+        surface: '#1e1e1e',
+        border: '#333333',
+        textPrimary: '#ffffff',
+        textSecondary: '#a0a0a0',
+        primary: '#2563eb', // Blue
+        danger: '#dc2626'
+    };
+
     return (
         <div style={{
             position: 'fixed',
@@ -122,85 +142,233 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated }: Ord
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
+            backgroundColor: 'rgba(0,0,0,0.85)',
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
             zIndex: 1000,
-            padding: '1rem'
+            padding: '2rem',
+            backdropFilter: 'blur(5px)'
         }}>
-            <Card title={`Mesa ${table.number} - ${initialOrder ? 'Editar Pedido' : 'Nuevo Pedido'}`} style={{ width: '100%', maxWidth: '800px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div style={{
+                width: '100%',
+                maxWidth: '1200px',
+                height: '90vh',
+                backgroundColor: darkTheme.bg,
+                borderRadius: '16px',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden',
+                color: darkTheme.textPrimary,
+                border: `1px solid ${darkTheme.border}`
+            }}>
+                {/* MOBILE TABS (Only visible on mobile) */}
+                {isMobile && (
+                    <div style={{ display: 'flex', borderBottom: `1px solid ${darkTheme.border}` }}>
+                        <button
+                            onClick={() => setMobileView('menu')}
+                            style={{
+                                flex: 1,
+                                padding: '1rem',
+                                background: mobileView === 'menu' ? darkTheme.surface : darkTheme.bg,
+                                color: mobileView === 'menu' ? darkTheme.primary : darkTheme.textSecondary,
+                                border: 'none',
+                                borderBottom: mobileView === 'menu' ? `2px solid ${darkTheme.primary}` : 'none',
+                                fontWeight: 'bold',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '0.5rem'
+                            }}
+                        >
+                            <Utensils size={18} /> Menú
+                        </button>
+                        <button
+                            onClick={() => setMobileView('cart')}
+                            style={{
+                                flex: 1,
+                                padding: '1rem',
+                                background: mobileView === 'cart' ? darkTheme.surface : darkTheme.bg,
+                                color: mobileView === 'cart' ? darkTheme.primary : darkTheme.textSecondary,
+                                border: 'none',
+                                borderBottom: mobileView === 'cart' ? `2px solid ${darkTheme.primary}` : 'none',
+                                fontWeight: 'bold',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '0.5rem'
+                            }}
+                        >
+                            <ShoppingCart size={18} />
+                            Pedido ({items.reduce((acc, item) => acc + item.quantity, 0)})
+                        </button>
+                    </div>
+                )}
 
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: window.innerWidth <= 768 ? '1fr' : '1fr 1fr',
-                    gap: '1rem',
-                    flex: 1,
-                    minHeight: 0,
-                    overflow: 'auto'
-                }}>
+                <div style={{ display: 'flex', flex: 1, overflow: 'hidden', flexDirection: isMobile ? 'column' : 'row' }}>
 
-                    {/* Left: Product Selector */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', overflowY: 'auto', paddingRight: '0.5rem' }}>
-                        <Input
-                            placeholder="Buscar producto..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            fullWidth
-                        />
+                    {/* LEFT PANEL: Menu & Selection */}
+                    <div style={{
+                        flex: isMobile ? 1 : 7,
+                        display: (!isMobile || mobileView === 'menu') ? 'flex' : 'none',
+                        flexDirection: 'column',
+                        padding: '1.5rem',
+                        borderRight: isMobile ? 'none' : `1px solid ${darkTheme.border}`,
+                        overflow: 'hidden'
+                    }}>
 
-                        <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
+                        {/* Header: Title & Search */}
+                        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', marginBottom: '1.5rem', gap: isMobile ? '1rem' : 0 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <h2 style={{ fontSize: '1.5rem', fontWeight: '600', margin: 0 }}>
+                                    {table.number ? `Mesa ${table.number}` : 'Nuevo Pedido'}
+                                </h2>
+                                {isMobile && <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#666', fontSize: '1.5rem' }}>×</button>}
+                            </div>
+
+                            <div style={{ width: isMobile ? '100%' : '300px', position: 'relative' }}>
+                                <Search size={18} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#666' }} />
+                                <Input
+                                    placeholder="Buscar producto..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    style={{
+                                        background: darkTheme.surface,
+                                        border: `1px solid ${darkTheme.border}`,
+                                        color: 'white',
+                                        borderRadius: '8px',
+                                        paddingLeft: '2.5rem'
+                                    }}
+                                    fullWidth
+                                />
+                            </div>
+                        </div>
+
+                        {/* Category Tabs */}
+                        <div style={{ display: 'flex', gap: '0.5rem', paddingBottom: '1rem', overflowX: 'auto', marginBottom: '1rem' }}>
                             {categories.map(cat => (
-                                <Badge
+                                <button
                                     key={cat}
-                                    variant={selectedCategory === cat ? 'info' : 'neutral'}
                                     onClick={() => setSelectedCategory(cat)}
-                                    style={{ cursor: 'pointer' }}
+                                    style={{
+                                        padding: '0.75rem 1.5rem',
+                                        borderRadius: '8px',
+                                        border: 'none',
+                                        background: selectedCategory === cat ? darkTheme.primary : darkTheme.surface,
+                                        color: 'white',
+                                        fontWeight: selectedCategory === cat ? '600' : '400',
+                                        cursor: 'pointer',
+                                        whiteSpace: 'nowrap',
+                                        transition: 'all 0.2s'
+                                    }}
                                 >
                                     {cat === 'all' ? 'Todos' : cat}
-                                </Badge>
+                                </button>
                             ))}
                         </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '0.5rem' }}>
+                        {/* Product Grid */}
+                        <div style={{
+                            flex: 1,
+                            overflowY: 'auto',
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                            gap: '1rem',
+                            alignContent: 'start',
+                            paddingRight: '0.5rem'
+                        }}>
                             {filteredProducts?.map(product => (
                                 <div
                                     key={product.id}
                                     onClick={() => addToOrder(product)}
                                     style={{
-                                        border: '1px solid var(--color-border)',
-                                        borderRadius: '8px',
-                                        padding: '0.5rem',
+                                        backgroundColor: darkTheme.surface,
+                                        border: `1px solid ${darkTheme.border}`,
+                                        borderRadius: '12px',
+                                        padding: '1.25rem',
                                         cursor: 'pointer',
-                                        backgroundColor: 'var(--color-background-paper)'
+                                        position: 'relative',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '0.5rem',
+                                        transition: 'transform 0.1s, border-color 0.1s',
+                                        height: '140px'
                                     }}
+                                    onMouseEnter={e => { e.currentTarget.style.borderColor = darkTheme.primary; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                                    onMouseLeave={e => { e.currentTarget.style.borderColor = darkTheme.border; e.currentTarget.style.transform = 'translateY(0)'; }}
                                 >
-                                    <div style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>{product.name}</div>
-                                    <div style={{ color: 'var(--color-text-secondary)', fontSize: '0.8rem' }}>S/ {product.price.toFixed(2)}</div>
+                                    <div style={{ fontWeight: '600', fontSize: '1rem', color: '#fff', lineHeight: '1.3' }}>
+                                        {product.name}
+                                    </div>
+
+                                    <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{ color: '#60a5fa', fontWeight: 'bold', fontSize: '1.1rem' }}>
+                                            S/ {product.price.toFixed(2)}
+                                        </span>
+                                        <div style={{
+                                            width: '32px', height: '32px', borderRadius: '50%', background: '#2563eb33',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#60a5fa'
+                                        }}>
+                                            +
+                                        </div>
+                                    </div>
                                 </div>
                             ))}
                         </div>
                     </div>
 
-                    {/* Right: Order Summary */}
-                    <div style={{ display: 'flex', flexDirection: 'column', borderLeft: '1px solid var(--color-border)', paddingLeft: '1rem' }}>
-                        <h3>Resumen</h3>
-                        <div style={{ flex: 1, overflowY: 'auto' }}>
+                    {/* RIGHT PANEL: Summary Sidebar */}
+                    <div style={{
+                        flex: isMobile ? 1 : 3,
+                        display: (!isMobile || mobileView === 'cart') ? 'flex' : 'none',
+                        backgroundColor: '#0f0f0f',
+                        flexDirection: 'column',
+                        borderLeft: isMobile ? 'none' : `1px solid ${darkTheme.border}`
+                    }}>
+
+                        {/* Summary Header - Only desktop closes from here, mobile has tabs/close in menu */}
+                        {!isMobile && (
+                            <div style={{ padding: '1.5rem', borderBottom: `1px solid ${darkTheme.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <h3 style={{ margin: 0, fontWeight: '600', fontSize: '1.2rem' }}>Resumen</h3>
+                                <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#666', cursor: 'pointer', fontSize: '1.5rem' }}>×</button>
+                            </div>
+                        )}
+
+                        {/* Order Items List */}
+                        <div style={{ flex: 1, overflowY: 'auto', padding: '1rem' }}>
                             {items.length === 0 ? (
-                                <p style={{ color: 'var(--color-text-secondary)', textAlign: 'center' }}>No hay productos seleccionados</p>
+                                <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#666', gap: '1rem' }}>
+                                    <div style={{ fontSize: '3rem', opacity: 0.2 }}>🛒</div>
+                                    <p>Selecciona productos del menú</p>
+                                </div>
                             ) : (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                                     {items.map(item => (
-                                        <div key={item.productId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <div key={item.productId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#1e1e1e', padding: '0.75rem', borderRadius: '8px' }}>
                                             <div style={{ flex: 1 }}>
-                                                <div>{item.productName}</div>
-                                                <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>S/ {item.price.toFixed(2)} x {item.quantity}</div>
+                                                <div style={{ fontWeight: '500', marginBottom: '0.25rem' }}>{item.productName}</div>
+                                                <div style={{ fontSize: '0.85rem', color: '#888' }}>S/ {item.price.toFixed(2)} c/u</div>
                                             </div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                <Button size="sm" variant="secondary" onClick={() => updateQuantity(item.productId, -1)}>-</Button>
-                                                <span>{item.quantity}</span>
-                                                <Button size="sm" variant="secondary" onClick={() => updateQuantity(item.productId, 1)}>+</Button>
-                                                <Button size="sm" variant="danger" onClick={() => removeFromOrder(item.productId)}>x</Button>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginLeft: '1rem' }}>
+                                                <button
+                                                    onClick={() => updateQuantity(item.productId, -1)}
+                                                    style={{ width: '24px', height: '24px', borderRadius: '4px', border: '1px solid #444', background: 'transparent', color: 'white', cursor: 'pointer' }}
+                                                >-</button>
+                                                <span style={{ fontWeight: 'bold', minWidth: '1.5rem', textAlign: 'center' }}>{item.quantity}</span>
+                                                <button
+                                                    onClick={() => updateQuantity(item.productId, 1)}
+                                                    style={{ width: '24px', height: '24px', borderRadius: '4px', border: '1px solid #444', background: 'transparent', color: 'white', cursor: 'pointer' }}
+                                                >+</button>
+                                                <button
+                                                    onClick={() => removeFromOrder(item.productId)}
+                                                    style={{ width: '24px', height: '24px', borderRadius: '4px', border: '1px solid #dc2626', background: 'transparent', color: '#dc2626', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', marginLeft: '0.5rem' }}
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </div>
+                                            <div style={{ fontWeight: 'bold', width: '80px', textAlign: 'right' }}>
+                                                S/ {(item.price * item.quantity).toFixed(2)}
                                             </div>
                                         </div>
                                     ))}
@@ -208,21 +376,43 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated }: Ord
                             )}
                         </div>
 
-                        <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '1rem', marginTop: '1rem' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem' }}>
-                                <span>Total:</span>
-                                <span>S/ {total.toFixed(2)}</span>
+                        {/* Footer Actions */}
+                        <div style={{ padding: '1.5rem', borderTop: `1px solid ${darkTheme.border}`, backgroundColor: '#121212' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '1.5rem' }}>
+                                <span style={{ color: '#888' }}>Total:</span>
+                                <span style={{ fontSize: '2rem', fontWeight: 'bold', lineHeight: 1 }}>S/ {total.toFixed(2)}</span>
                             </div>
-                            <div style={{ display: 'flex', gap: '1rem' }}>
-                                <Button variant="secondary" fullWidth onClick={onClose}>Cancelar</Button>
-                                <Button variant="primary" fullWidth onClick={handleSaveOrder} disabled={items.length === 0}>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1rem' }}>
+                                <Button
+                                    variant="outline"
+                                    onClick={onClose}
+                                    style={{
+                                        borderColor: darkTheme.danger,
+                                        color: darkTheme.danger,
+                                        height: '50px'
+                                    }}
+                                >
+                                    Cancelar
+                                </Button>
+                                <Button
+                                    variant="primary"
+                                    onClick={handleSaveOrder}
+                                    disabled={items.length === 0}
+                                    style={{
+                                        background: darkTheme.primary,
+                                        height: '50px',
+                                        fontSize: '1.1rem',
+                                        fontWeight: 'bold'
+                                    }}
+                                >
                                     {initialOrder ? 'Actualizar Pedido' : 'Crear Pedido'}
                                 </Button>
                             </div>
                         </div>
                     </div>
                 </div>
-            </Card>
+            </div>
         </div>
     );
 }
