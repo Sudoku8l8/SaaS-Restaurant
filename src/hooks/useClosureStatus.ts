@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { db } from '@/services/firebase/config';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useAuth } from './useAuth';
+import { format } from 'date-fns';
 
 /**
  * Hook to check if today's cash box has been closed.
@@ -32,7 +33,7 @@ export function useClosureStatus() {
                 return;
             }
 
-            const todayStr = new Date().toISOString().split('T')[0];
+            const todayStr = format(new Date(), 'yyyy-MM-dd');
 
             try {
                 const q = query(
@@ -52,7 +53,7 @@ export function useClosureStatus() {
         };
 
         checkClosure();
-    }, [user?.restaurantId, isDemoMode]);
+    }, [user?.restaurantId]);
 
     return { isClosed, isLoading };
 }
