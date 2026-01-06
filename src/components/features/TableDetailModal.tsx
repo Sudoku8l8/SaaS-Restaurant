@@ -74,7 +74,7 @@ export function TableDetailModal({ table, onClose, onEdit }: TableDetailModalPro
                         </>
                     ) : (
                         <div style={{ textAlign: 'center', padding: '2rem', color: darkTheme.textSecondary }}>
-                            <p style={{ marginBottom: '1.5rem' }}>No se encontró un pedido activo para esta mesa.</p>
+                            <p style={{ marginBottom: '1.5rem' }}>Pago registrado, mesa liberada. </p>
                             <Button variant="secondary" onClick={onClose}>
                                 Cerrar
                             </Button>

@@ -280,10 +280,10 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                             flex: 1,
                             overflowY: 'auto',
                             display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-                            gap: '1rem',
+                            gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : 'repeat(auto-fill, minmax(160px, 1fr))',
+                            gap: isMobile ? '0.5rem' : '1rem',
                             alignContent: 'start',
-                            paddingRight: '0.5rem'
+                            paddingRight: '0.25rem'
                         }}>
                             {filteredProducts?.map(product => (
                                 <div
@@ -293,29 +293,41 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                         backgroundColor: darkTheme.surface,
                                         border: `1px solid ${darkTheme.border}`,
                                         borderRadius: '12px',
-                                        padding: '1.25rem',
+                                        padding: isMobile ? '0.75rem' : '1.25rem',
                                         cursor: 'pointer',
                                         position: 'relative',
                                         display: 'flex',
                                         flexDirection: 'column',
-                                        gap: '0.5rem',
+                                        gap: '0.4rem',
                                         transition: 'transform 0.1s, border-color 0.1s',
-                                        height: '140px'
+                                        height: isMobile ? '110px' : '140px'
                                     }}
                                     onMouseEnter={e => { e.currentTarget.style.borderColor = darkTheme.primary; e.currentTarget.style.transform = 'translateY(-2px)'; }}
                                     onMouseLeave={e => { e.currentTarget.style.borderColor = darkTheme.border; e.currentTarget.style.transform = 'translateY(0)'; }}
                                 >
-                                    <div style={{ fontWeight: '600', fontSize: '1rem', color: '#fff', lineHeight: '1.3' }}>
+                                    <div style={{
+                                        fontWeight: '600',
+                                        fontSize: isMobile ? '0.85rem' : '1rem',
+                                        color: '#fff',
+                                        lineHeight: '1.2',
+                                        display: '-webkit-box',
+                                        WebkitLineClamp: 2,
+                                        WebkitBoxOrient: 'vertical',
+                                        overflow: 'hidden'
+                                    }}>
                                         {product.name}
                                     </div>
 
                                     <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <span style={{ color: '#60a5fa', fontWeight: 'bold', fontSize: '1.1rem' }}>
+                                        <span style={{ color: '#60a5fa', fontWeight: 'bold', fontSize: isMobile ? '0.9rem' : '1.1rem' }}>
                                             S/ {product.price.toFixed(2)}
                                         </span>
                                         <div style={{
-                                            width: '32px', height: '32px', borderRadius: '50%', background: '#2563eb33',
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#60a5fa'
+                                            width: isMobile ? '24px' : '32px',
+                                            height: isMobile ? '24px' : '32px',
+                                            borderRadius: '50%', background: '#2563eb33',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#60a5fa',
+                                            fontSize: isMobile ? '0.8rem' : '1rem'
                                         }}>
                                             +
                                         </div>
