@@ -36,6 +36,7 @@ export function MozoPage() {
         if (table.status === 'free') {
             setSelectedTable(table);
             setOrderToEdit(undefined);
+            setTakeoutOrderType('dine-in'); // Reset order type for table orders
             setIsOrderModalOpen(true);
         } else if (table.status === 'occupied') {
             setSelectedTable(table);
