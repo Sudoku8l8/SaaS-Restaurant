@@ -72,6 +72,13 @@ export interface Product {
     imageUrl?: string;
 }
 
+export interface Category {
+    id: string;
+    restaurantId: string;
+    name: string;
+    createdAt: Date;
+}
+
 export interface OrderItem {
     productId: string;
     productName: string;

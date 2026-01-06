@@ -4,11 +4,12 @@ import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, deleteDoc
 import { useAuth } from '@/hooks/useAuth';
 import { Button, Input, Card, Badge } from '@/components/shared';
 import { Trash2, Edit2 } from 'lucide-react';
-import type { Product } from '@/types';
+import type { Product, Category } from '@/types';
 
 export function ProductsTab() {
     const { user } = useAuth();
     const [products, setProducts] = useState<Product[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
@@ -16,24 +17,43 @@ export function ProductsTab() {
     const [formData, setFormData] = useState({
         name: '',
         price: '',
-        category: 'Platos',
+        category: '',
         available: true
     });
 
     useEffect(() => {
         if (!user?.restaurantId) return;
 
-        const q = query(
+        const pQuery = query(
             collection(db, 'products'),
             where('restaurantId', '==', user.restaurantId)
         );
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
+        const unsubscribeProducts = onSnapshot(pQuery, (snapshot) => {
             const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
             setProducts(data);
         });
 
-        return () => unsubscribe();
+        // Fetch Categories
+        const cQuery = query(
+            collection(db, 'categories'),
+            where('restaurantId', '==', user.restaurantId)
+        );
+
+        const unsubscribeCategories = onSnapshot(cQuery, (snapshot) => {
+            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category));
+            setCategories(data.sort((a, b) => a.name.localeCompare(b.name)));
+
+            // Set initial category if not set
+            if (data.length > 0 && !formData.category) {
+                setFormData(prev => ({ ...prev, category: data[0].name }));
+            }
+        });
+
+        return () => {
+            unsubscribeProducts();
+            unsubscribeCategories();
+        };
     }, [user?.restaurantId]);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -77,7 +97,12 @@ export function ProductsTab() {
             });
         } else {
             setEditingProduct(null);
-            setFormData({ name: '', price: '', category: 'Platos', available: true });
+            setFormData({
+                name: '',
+                price: '',
+                category: categories.length > 0 ? categories[0].name : '',
+                available: true
+            });
         }
         setIsModalOpen(true);
     };
@@ -138,11 +163,12 @@ export function ProductsTab() {
                                     style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid #ddd' }}
                                     value={formData.category}
                                     onChange={e => setFormData({ ...formData, category: e.target.value })}
+                                    required
                                 >
-                                    <option value="Platos">Platos</option>
-                                    <option value="Bebidas">Bebidas</option>
-                                    <option value="Entradas">Entradas</option>
-                                    <option value="Postres">Postres</option>
+                                    {categories.length === 0 && <option value="">Crear categoría primero...</option>}
+                                    {categories.map(cat => (
+                                        <option key={cat.id} value={cat.name}>{cat.name}</option>
+                                    ))}
                                 </select>
                             </div>
 

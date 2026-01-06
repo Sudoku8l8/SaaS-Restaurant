@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import { Utensils, Users, LayoutGrid, ArrowLeft } from 'lucide-react';
+import { Utensils, Users, LayoutGrid, ArrowLeft, FolderKanban } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/shared';
 
 import { ProductsTab } from '@/components/features/ProductsTab';
 import { UsersTab } from '@/components/features/UsersTab';
 import { TablesTab } from '@/components/features/TablesTab';
+import { CategoriesTab } from '@/components/features/CategoriesTab';
 
-type Tab = 'products' | 'users' | 'tables';
+type Tab = 'products' | 'categories' | 'users' | 'tables';
 
 export function ConfigPage() {
 
@@ -38,6 +39,13 @@ export function ConfigPage() {
                     <Utensils size={18} /> Productos
                 </Button>
                 <Button
+                    variant={activeTab === 'categories' ? 'primary' : 'ghost'}
+                    onClick={() => setActiveTab('categories')}
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                >
+                    <FolderKanban size={18} /> Categorías
+                </Button>
+                <Button
                     variant={activeTab === 'users' ? 'primary' : 'ghost'}
                     onClick={() => setActiveTab('users')}
                     style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
@@ -56,6 +64,7 @@ export function ConfigPage() {
             {/* Tab Content */}
             <div style={{ background: '#fff', borderRadius: '8px', padding: '2rem', minHeight: '400px' }}>
                 {activeTab === 'products' && <ProductsTab />}
+                {activeTab === 'categories' && <CategoriesTab />}
                 {activeTab === 'users' && <UsersTab />}
                 {activeTab === 'tables' && <TablesTab />}
             </div>

@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { ShoppingCart, Utensils, Search, Trash2 } from 'lucide-react';
 import { db } from '@/services/firebase/config';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
 import { Button, Input } from '@/components/shared';
-import type { Product, OrderItem, RestaurantTable, Order } from '@/types';
+import type { Product, OrderItem, RestaurantTable, Order, Category } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrders } from '@/hooks/useOrders';
 import { generateUUID } from '@/utils/uuid';
+import { onSnapshot } from 'firebase/firestore';
 
 interface OrderModalProps {
     table?: RestaurantTable; // Optional for takeout
@@ -24,6 +25,7 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
     const [customerName, setCustomerName] = useState(initialOrder?.customerName || '');
     const [products, setProducts] = useState<Product[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
     const [mobileView, setMobileView] = useState<'menu' | 'cart'>('menu');
 
@@ -33,15 +35,24 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    // Fetch products
+    // Fetch products and categories
     useEffect(() => {
-        const fetchProducts = async () => {
-            if (!user?.restaurantId) return;
-            const q = query(collection(db, 'products'), where('restaurantId', '==', user.restaurantId));
-            const snapshot = await getDocs(q);
+        if (!user?.restaurantId) return;
+
+        const pQuery = query(collection(db, 'products'), where('restaurantId', '==', user.restaurantId));
+        const unsubscribeProducts = onSnapshot(pQuery, (snapshot) => {
             setProducts(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Product)));
+        });
+
+        const cQuery = query(collection(db, 'categories'), where('restaurantId', '==', user.restaurantId));
+        const unsubscribeCategories = onSnapshot(cQuery, (snapshot) => {
+            setCategories(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Category)));
+        });
+
+        return () => {
+            unsubscribeProducts();
+            unsubscribeCategories();
         };
-        fetchProducts();
     }, [user?.restaurantId]);
 
     // Filter products
@@ -51,8 +62,8 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
         return matchesSearch && matchesCategory;
     });
 
-    // Get unique categories
-    const categories = ['all', ...new Set(products?.map(p => p.category) || [])];
+    // Get dynamic categories
+    const categoryTabs = ['all', ...categories.map(c => c.name)];
 
     const addToOrder = (product: Product) => {
         setItems(prev => {
@@ -254,7 +265,7 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
 
                         {/* Category Tabs */}
                         <div style={{ display: 'flex', gap: '0.5rem', paddingBottom: '1rem', overflowX: 'auto', marginBottom: '1rem' }}>
-                            {categories.map(cat => (
+                            {categoryTabs.map(cat => (
                                 <button
                                     key={cat}
                                     onClick={() => setSelectedCategory(cat)}
