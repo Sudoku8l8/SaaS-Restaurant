@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { Lock, ShieldCheck, Pencil, Trash2 } from 'lucide-react';
+import { Lock, ShieldCheck, ChefHat } from 'lucide-react';
 import type { RestaurantTable, Order } from '@/types';
 import { OrderModal } from '@/components/features/OrderModal';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrders } from '@/hooks/useOrders';
 import { useClosureStatus } from '@/hooks/useClosureStatus';
-import { Button, Badge } from '@/components/shared';
+import { Button } from '@/components/shared';
 import { OrderCard } from '@/components/features/OrderCard';
 import { OrderStatus } from '@/types';
 
@@ -19,11 +19,17 @@ export function CocinaPage() {
     const [filterStatus, setFilterStatus] = useState<OrderStatus | 'all'>('all');
     const [orderToEdit, setOrderToEdit] = useState<Order | undefined>(undefined);
 
-    if (!activeOrders) return <div className="p-4">Cargando pedidos...</div>;
+    if (!activeOrders) return (
+        <div style={{ minHeight: '100vh', backgroundColor: '#121212', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ fontSize: '1.2rem', color: '#9ca3af' }}>Cargando pedidos...</div>
+        </div>
+    );
 
     const filteredOrders = activeOrders.filter(order =>
         filterStatus === 'all' ? true : order.status === filterStatus
     );
+
+    const getCount = (status: OrderStatus) => activeOrders.filter(o => o.status === status).length;
 
     const handleDelete = async (orderId: string) => {
         if (confirm('¿Estás seguro de eliminar este pedido? Esta acción liberará la mesa.')) {
@@ -40,100 +46,143 @@ export function CocinaPage() {
         capacity: 4 // Dummy
     });
 
-    return (
-        <div className="container mt-md">
-            {/* Closure Banner */}
-            {isClosed && (
-                <div style={{
-                    background: 'linear-gradient(135deg, #e74c3c, #c0392b)',
-                    color: 'white',
-                    padding: '1rem 1.5rem',
+    const FilterButton = ({ status, label }: { status: OrderStatus | 'all', label: string }) => {
+        const isActive = filterStatus === status;
+        const count = status === 'all' ? activeOrders.length : getCount(status as OrderStatus);
+
+        return (
+            <button
+                onClick={() => setFilterStatus(status)}
+                style={{
+                    backgroundColor: isActive ? '#2563eb' : '#1f2937',
+                    color: isActive ? 'white' : '#9ca3af',
+                    border: 'none',
+                    padding: '0.5rem 1rem',
                     borderRadius: '8px',
-                    marginBottom: '1.5rem',
-                    boxShadow: '0 4px 12px rgba(231, 76, 60, 0.3)'
-                }}>
-                    <strong style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Lock size={16} /> CAJA CERRADA</strong>
-                    <p style={{ margin: 0, fontSize: '0.9rem', opacity: 0.9 }}>
-                        Las operaciones del día han sido cerradas.
-                    </p>
-                </div>
-            )}
+                    cursor: 'pointer',
+                    fontWeight: '500',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    transition: 'all 0.2s'
+                }}
+            >
+                {label}
+                {count > 0 && (
+                    <span style={{
+                        backgroundColor: isActive ? '#1d4ed8' : '#374151',
+                        padding: '0.1rem 0.5rem',
+                        borderRadius: '999px',
+                        fontSize: '0.75rem',
+                        minWidth: '20px',
+                        textAlign: 'center'
+                    }}>
+                        {count}
+                    </span>
+                )}
+            </button>
+        );
+    };
 
-            <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                <div>
-                    <h1>Pantalla de Cocina</h1>
-                    <p>Hola, {user?.name} - {filteredOrders.length} pedidos</p>
-                </div>
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                    <Button variant="primary" onClick={() => navigate(`/${restaurantSlug}/admin`)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <ShieldCheck size={18} /> Admin
-                    </Button>
-                    <Button variant="secondary" onClick={logout}>
-                        Salir
-                    </Button>
-                </div>
-            </header>
+    return (
+        <div style={{ minHeight: '100vh', backgroundColor: '#121212', paddingBottom: '2rem' }}>
+            {/* Dark Header */}
+            <div style={{ backgroundColor: '#1e1e1e', borderBottom: '1px solid #333', padding: '1.5rem 0', marginBottom: '2rem' }}>
+                <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div style={{
+                            width: '48px', height: '48px',
+                            backgroundColor: '#c2410c', // Orange Chef
+                            borderRadius: '12px',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            color: 'white'
+                        }}>
+                            <ChefHat size={28} />
+                        </div>
+                        <div>
+                            <h1 style={{ margin: 0, color: 'white', fontSize: '1.5rem', fontWeight: 'bold' }}>Pantalla de Cocina</h1>
+                            <p style={{ margin: 0, color: '#9ca3af', fontSize: '0.9rem' }}>
+                                Hola, {user?.name} &bull; {filteredOrders.length} pedido(s) visible(s)
+                            </p>
+                        </div>
+                    </div>
 
-            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
-                <span style={{ fontWeight: 'bold', alignSelf: 'center', marginRight: '0.5rem' }}>Filtros:</span>
-                <Badge
-                    variant={filterStatus === 'all' ? 'info' : 'neutral'}
-                    onClick={() => setFilterStatus('all')}
-                    style={{ cursor: 'pointer' }}
-                >
-                    Todos
-                </Badge>
-                <Badge
-                    variant={filterStatus === 'pending' ? 'warning' : 'neutral'}
-                    onClick={() => setFilterStatus('pending')}
-                    style={{ cursor: 'pointer' }}
-                >
-                    Pendientes
-                </Badge>
-                <Badge
-                    variant={filterStatus === 'in_preparation' ? 'info' : 'neutral'}
-                    onClick={() => setFilterStatus('in_preparation')}
-                    style={{ cursor: 'pointer' }}
-                >
-                    En Preparación
-                </Badge>
-                <Badge
-                    variant={filterStatus === 'ready' ? 'success' : 'neutral'}
-                    onClick={() => setFilterStatus('ready')}
-                    style={{ cursor: 'pointer' }}
-                >
-                    Listos
-                </Badge>
+                    <div style={{ display: 'flex', gap: '1rem' }}>
+                        <Button
+                            variant="secondary"
+                            onClick={() => navigate(`/${restaurantSlug}/admin`)}
+                            style={{
+                                display: 'flex', alignItems: 'center', gap: '0.5rem',
+                                backgroundColor: '#374151', border: '1px solid #4b5563', color: 'white'
+                            }}
+                        >
+                            <ShieldCheck size={18} /> Admin
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            onClick={logout}
+                            style={{ backgroundColor: '#ef4444', border: 'none', color: 'white' }}
+                        >
+                            Salir
+                        </Button>
+                    </div>
+                </div>
             </div>
 
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-                gap: '1.5rem'
-            }}>
-                {filteredOrders.map(order => (
-                    <OrderCard
-                        key={order.id}
-                        order={order}
-                        actions={
-                            <>
-                                <Button size="sm" variant="secondary" onClick={() => setOrderToEdit(order)}>
-                                    <Pencil size={16} />
-                                </Button>
-                                <Button size="sm" variant="danger" onClick={() => handleDelete(order.id)}>
-                                    <Trash2 size={16} />
-                                </Button>
-                            </>
-                        }
-                    />
-                ))}
-
-                {activeOrders.length === 0 && (
-                    <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '3rem', color: 'var(--color-text-secondary)' }}>
-                        <h3>No hay pedidos pendientes</h3>
-                        <p>Los nuevos pedidos aparecerán aquí automáticamente.</p>
+            <div className="container">
+                {/* Closure Banner */}
+                {isClosed && (
+                    <div style={{
+                        background: 'linear-gradient(135deg, #7f1d1d, #450a0a)',
+                        color: '#fca5a5',
+                        padding: '1rem 1.5rem',
+                        borderRadius: '12px',
+                        marginBottom: '2rem',
+                        border: '1px solid #991b1b',
+                        display: 'flex', alignItems: 'center', gap: '1rem'
+                    }}>
+                        <Lock size={20} />
+                        <div>
+                            <strong style={{ display: 'block', color: 'white' }}>CAJA CERRADA</strong>
+                            <span style={{ fontSize: '0.9rem' }}>Las operaciones del día han sido cerradas.</span>
+                        </div>
                     </div>
                 )}
+
+                {/* Filters */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
+                    <span style={{ color: '#9ca3af', fontWeight: 'bold' }}>Filtros:</span>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <FilterButton status="all" label="Todos" />
+                        <FilterButton status="pending" label="Pendientes" />
+                        <FilterButton status="in_preparation" label="En Preparación" />
+                        <FilterButton status="ready" label="Listos" />
+                    </div>
+                </div>
+
+                {/* Grid */}
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
+                    gap: '1.5rem'
+                }}>
+                    {filteredOrders.map(order => (
+                        <OrderCard
+                            key={order.id}
+                            order={order}
+                            onEdit={() => setOrderToEdit(order)}
+                            onDelete={() => handleDelete(order.id)}
+                        />
+                    ))}
+
+                    {activeOrders.length === 0 && (
+                        <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '5rem', color: '#4b5563' }}>
+                            <div style={{ fontSize: '4rem', marginBottom: '1rem', opacity: 0.2 }}>🍽️</div>
+                            <h3 style={{ color: '#9ca3af', marginBottom: '0.5rem' }}>No hay pedidos pendientes</h3>
+                            <p>Los nuevos pedidos aparecerán aquí automáticamente.</p>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {orderToEdit && user?.restaurantId && (
