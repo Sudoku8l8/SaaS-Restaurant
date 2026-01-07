@@ -120,62 +120,90 @@ export function CierreCajaPage() {
 
             {/* Validation Alerts */}
             {existingClosure && (
-                <div style={{ background: '#d4edda', color: '#155724', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', border: '1px solid #c3e6cb', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <CheckCircle size={20} /> <span><strong>Caja Cerrada:</strong> Ya se ha realizado el cierre de hoy. No se pueden realizar más operaciones.</span>
+                <div style={{
+                    background: 'var(--surface-color)',
+                    color: 'var(--success-color)',
+                    padding: '1.25rem 1.5rem',
+                    borderRadius: 'var(--radius-lg)',
+                    marginBottom: '1.5rem',
+                    border: '1px solid var(--border-color)',
+                    borderLeft: '5px solid var(--success-color)',
+                    display: 'flex', alignItems: 'center', gap: '1rem',
+                    boxShadow: 'var(--shadow-sm)'
+                }}>
+                    <CheckCircle size={22} />
+                    <span style={{ fontWeight: '600' }}>
+                        <strong style={{ textTransform: 'uppercase', marginRight: '0.5rem' }}>Caja Cerrada:</strong>
+                        Ya se ha realizado el cierre de hoy. Todas las operaciones están bloqueadas.
+                    </span>
                 </div>
             )}
 
             {hasPendingOrders && (
-                <div style={{ background: '#f8d7da', color: '#721c24', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', border: '1px solid #f5c6cb', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <AlertTriangle size={20} /> <span><strong>Imposible Cerrar:</strong> Hay {activeOrders.length} pedidos activos (sin pagar). Debes cerrarlos o cancelarlos antes del cierre de caja.</span>
+                <div style={{
+                    background: 'var(--surface-color)',
+                    color: 'var(--danger-color)',
+                    padding: '1.25rem 1.5rem',
+                    borderRadius: 'var(--radius-lg)',
+                    marginBottom: '1.5rem',
+                    border: '1px solid var(--border-color)',
+                    borderLeft: '5px solid var(--danger-color)',
+                    display: 'flex', alignItems: 'center', gap: '1rem',
+                    boxShadow: 'var(--shadow-sm)'
+                }}>
+                    <AlertTriangle size={22} />
+                    <span style={{ fontWeight: '600' }}>
+                        <strong style={{ textTransform: 'uppercase', marginRight: '0.5rem' }}>Imposible Cerrar:</strong>
+                        Hay {activeOrders.length} pedidos activos. Debes cerrarlos o cancelarlos antes del cierre.
+                    </span>
                 </div>
             )}
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
 
                 {/* Resumen General */}
-                <Card style={{ padding: '1.5rem', borderLeft: '5px solid var(--color-primary)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                        <DollarSign size={24} className="text-primary" />
-                        <h3>Total Ventas</h3>
+                <Card style={{ padding: '2rem', borderTop: '5px solid var(--primary-color)', boxShadow: 'var(--shadow-lg)', borderRadius: 'var(--radius-xl)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                        <DollarSign size={28} style={{ color: 'var(--primary-color)' }} />
+                        <h3 style={{ margin: 0, fontWeight: '800', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '1rem' }}>Total Recaudado</h3>
                     </div>
-                    <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--color-primary)' }}>
+                    <div style={{ fontSize: '3.5rem', fontWeight: '900', color: 'var(--text-primary)', letterSpacing: '-0.03em', lineHeight: '1.2' }}>
                         S/ {metrics.totalSales.toFixed(2)}
                     </div>
-                    <p style={{ color: '#666' }}>{metrics.orderCount} pedidos atendidos</p>
+                    <p style={{ color: 'var(--text-secondary)', fontWeight: '700', marginTop: '0.5rem', fontSize: '1.1rem' }}>{metrics.orderCount} pedidos atendidos</p>
                 </Card>
 
                 {/* Desglose por Medio de Pago */}
-                <Card style={{ padding: '1.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <CreditCard size={20} />
-                        <h3>Medios de Pago</h3>
+                <Card style={{ padding: '1.5rem', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-md)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.25rem', borderBottom: '1px solid var(--divider-color)', paddingBottom: '0.75rem' }}>
+                        <CreditCard size={20} style={{ color: 'var(--primary-color)' }} />
+                        <h3 style={{ margin: 0, fontWeight: '800', fontSize: '0.95rem', color: 'var(--text-primary)' }}>Medios de Pago</h3>
                     </div>
-                    <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        {Object.entries(metrics.salesByPaymentMethod).length === 0 && <p className="text-secondary">Sin movimientos</p>}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        {Object.entries(metrics.salesByPaymentMethod).length === 0 && <p style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>Sin movimientos</p>}
 
                         {Object.entries(metrics.salesByPaymentMethod).map(([method, amount]) => (
-                            <div key={method} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #eee', paddingBottom: '0.5rem' }}>
-                                <Badge variant="neutral" style={{ textTransform: 'capitalize' }}>{method}</Badge>
-                                <span style={{ fontWeight: 'bold' }}>S/ {amount.toFixed(2)}</span>
+                            <div key={method} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--divider-color)', paddingBottom: '0.5rem' }}>
+                                <Badge variant="neutral" style={{ textTransform: 'capitalize', fontWeight: '700', fontSize: '0.75rem' }}>{method}</Badge>
+                                <span style={{ fontWeight: '800', color: 'var(--text-primary)' }}>S/ {amount.toFixed(2)}</span>
                             </div>
                         ))}
                     </div>
                 </Card>
 
                 {/* Desglose por Mozo */}
-                <Card style={{ padding: '1.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <User size={20} />
-                        <h3>Ventas por Mozo</h3>
+                <Card style={{ padding: '1.5rem', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-md)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.25rem', borderBottom: '1px solid var(--divider-color)', paddingBottom: '0.75rem' }}>
+                        <User size={20} style={{ color: 'var(--primary-color)' }} />
+                        <h3 style={{ margin: 0, fontWeight: '800', fontSize: '0.95rem', color: 'var(--text-primary)' }}>Rendimiento Mozos</h3>
                     </div>
-                    <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        {Object.entries(metrics.salesByWaiter).length === 0 && <p className="text-secondary">Sin movimientos</p>}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        {Object.entries(metrics.salesByWaiter).length === 0 && <p style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>Sin movimientos</p>}
 
                         {Object.entries(metrics.salesByWaiter).map(([waiter, amount]) => (
-                            <div key={waiter} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #eee', paddingBottom: '0.5rem' }}>
-                                <span>{waiter}</span>
-                                <strong>S/ {amount.toFixed(2)}</strong>
+                            <div key={waiter} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--divider-color)', paddingBottom: '0.5rem' }}>
+                                <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{waiter}</span>
+                                <strong style={{ color: 'var(--primary-color)', fontWeight: '800' }}>S/ {amount.toFixed(2)}</strong>
                             </div>
                         ))}
                     </div>
@@ -183,20 +211,30 @@ export function CierreCajaPage() {
             </div>
 
             {/* Acciones de Cierre */}
-            <div style={{ textAlign: 'center', marginTop: '3rem', padding: '2rem', background: '#fff', borderRadius: '8px', boxShadow: '0 -2px 10px rgba(0,0,0,0.05)' }}>
-                <p style={{ marginBottom: '1rem', color: '#666', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                    <AlertTriangle size={18} /> Al cerrar caja se bloquearán las operaciones de venta para este día.
+            <div style={{ textAlign: 'center', marginTop: '4rem', padding: '3rem 2rem', background: 'var(--surface-color)', borderRadius: 'var(--radius-xl)', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-lg)' }}>
+                <p style={{ marginBottom: '2rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.65rem', fontWeight: '700' }}>
+                    <AlertTriangle size={20} style={{ color: 'var(--danger-color)' }} /> Al cerrar caja se bloquearán permanentemente las ventas de este día.
                 </p>
                 <Button
-                    variant="danger"
+                    variant="primary"
                     onClick={handleCloseBox}
                     disabled={isClosing || !canClose}
-                    style={{ fontSize: '1.2rem', padding: '1rem 2rem', opacity: !canClose ? 0.5 : 1, cursor: !canClose ? 'not-allowed' : 'pointer' }}
+                    style={{
+                        fontSize: '1.25rem',
+                        padding: '1.25rem 3rem',
+                        opacity: !canClose && !existingClosure ? 0.4 : 1,
+                        cursor: !canClose ? 'not-allowed' : 'pointer',
+                        backgroundColor: existingClosure ? 'var(--success-color)' : 'var(--danger-color)',
+                        border: 'none',
+                        borderRadius: 'var(--radius-md)',
+                        fontWeight: '800',
+                        boxShadow: '0 8px 20px rgba(230, 57, 70, 0.2)'
+                    }}
                 >
                     {existingClosure ? (
-                        <><Check size={20} style={{ marginRight: '0.5rem' }} /> CAJA CERRADA</>
+                        <><Check size={22} style={{ marginRight: '0.5rem' }} /> CAJA CERRADA EXITOSAMENTE</>
                     ) : (
-                        isClosing ? 'Cerrando...' : <><Lock size={20} style={{ marginRight: '0.5rem' }} /> OBLIGATORIO: CERRAR CAJA</>
+                        isClosing ? 'PROCESANDO...' : <><Lock size={22} style={{ marginRight: '0.5rem' }} /> CERRAR CAJA AHORA</>
                     )}
                 </Button>
             </div>

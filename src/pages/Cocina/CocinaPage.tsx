@@ -20,8 +20,8 @@ export function CocinaPage() {
     const [orderToEdit, setOrderToEdit] = useState<Order | undefined>(undefined);
 
     if (!activeOrders) return (
-        <div style={{ minHeight: '100vh', backgroundColor: '#121212', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ fontSize: '1.2rem', color: '#9ca3af' }}>Cargando pedidos...</div>
+        <div style={{ minHeight: '100vh', backgroundColor: 'var(--background-color)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ fontSize: '1.2rem', color: 'var(--text-secondary)', fontWeight: '600' }}>Cargando pedidos...</div>
         </div>
     );
 
@@ -54,28 +54,33 @@ export function CocinaPage() {
             <button
                 onClick={() => setFilterStatus(status)}
                 style={{
-                    backgroundColor: isActive ? '#2563eb' : '#1f2937',
-                    color: isActive ? 'white' : '#9ca3af',
-                    border: 'none',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '8px',
+                    backgroundColor: isActive ? 'var(--primary-color)' : 'var(--surface-color)',
+                    color: isActive ? 'white' : 'var(--text-secondary)',
+                    border: '1px solid',
+                    borderColor: isActive ? 'var(--primary-color)' : 'var(--border-color)',
+                    padding: '0.65rem 1.25rem',
+                    borderRadius: 'var(--radius-full)',
                     cursor: 'pointer',
-                    fontWeight: '500',
+                    fontWeight: '700',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.5rem',
-                    transition: 'all 0.2s'
+                    gap: '0.75rem',
+                    transition: 'all 0.2s',
+                    boxShadow: isActive ? 'var(--shadow-md)' : 'var(--shadow-sm)',
+                    fontSize: '0.9rem'
                 }}
             >
                 {label}
                 {count > 0 && (
                     <span style={{
-                        backgroundColor: isActive ? '#1d4ed8' : '#374151',
-                        padding: '0.1rem 0.5rem',
-                        borderRadius: '999px',
+                        backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : 'var(--divider-color)',
+                        color: isActive ? 'white' : 'var(--text-primary)',
+                        padding: '2px 8px',
+                        borderRadius: 'var(--radius-full)',
                         fontSize: '0.75rem',
-                        minWidth: '20px',
-                        textAlign: 'center'
+                        minWidth: '22px',
+                        textAlign: 'center',
+                        fontWeight: '800'
                     }}>
                         {count}
                     </span>
@@ -85,43 +90,44 @@ export function CocinaPage() {
     };
 
     return (
-        <div style={{ minHeight: '100vh', backgroundColor: '#121212', paddingBottom: '2rem' }}>
-            {/* Dark Header */}
-            <div style={{ backgroundColor: '#1e1e1e', borderBottom: '1px solid #333', padding: '1.5rem 0', marginBottom: '2rem' }}>
+        <div style={{ minHeight: '100vh', backgroundColor: 'var(--background-color)', paddingBottom: '3rem' }}>
+            {/* Header */}
+            <div style={{ backgroundColor: 'var(--surface-color)', borderBottom: '1px solid var(--border-color)', padding: '1.25rem 0', marginBottom: '2.5rem', boxShadow: 'var(--shadow-sm)' }}>
                 <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
                         <div style={{
                             width: '48px', height: '48px',
-                            backgroundColor: '#c2410c', // Orange Chef
-                            borderRadius: '12px',
+                            backgroundColor: 'var(--divider-color)',
+                            borderRadius: '14px',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            color: 'white'
+                            color: 'var(--primary-color)',
+                            border: '1px solid var(--border-color)'
                         }}>
-                            <ChefHat size={28} />
+                            <ChefHat size={30} />
                         </div>
                         <div>
-                            <h1 style={{ margin: 0, color: 'white', fontSize: '1.5rem', fontWeight: 'bold' }}>Pantalla de Cocina</h1>
-                            <p style={{ margin: 0, color: '#9ca3af', fontSize: '0.9rem' }}>
-                                Hola, {user?.name} &bull; {filteredOrders.length} pedido(s) visible(s)
+                            <h1 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.5rem', fontWeight: '800', letterSpacing: '-0.01em' }}>Centro de Cocina</h1>
+                            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: '600' }}>
+                                Hola, <span style={{ color: 'var(--primary-color)' }}>{user?.name}</span> &bull; {filteredOrders.length} pedido(s) activos
                             </p>
                         </div>
                     </div>
 
                     <div style={{ display: 'flex', gap: '1rem' }}>
                         <Button
-                            variant="secondary"
+                            variant="outline"
                             onClick={() => navigate(`/${restaurantSlug}/admin`)}
                             style={{
-                                display: 'flex', alignItems: 'center', gap: '0.5rem',
-                                backgroundColor: '#374151', border: '1px solid #4b5563', color: 'white'
+                                display: 'flex', alignItems: 'center', gap: '0.6rem',
+                                padding: '0.6rem 1.2rem', fontWeight: '700'
                             }}
                         >
                             <ShieldCheck size={18} /> Admin
                         </Button>
                         <Button
-                            variant="secondary"
+                            variant="primary"
                             onClick={logout}
-                            style={{ backgroundColor: '#ef4444', border: 'none', color: 'white' }}
+                            style={{ backgroundColor: 'var(--danger-color)', border: 'none', color: 'white', padding: '0.6rem 1.5rem', fontWeight: '700' }}
                         >
                             Salir
                         </Button>
@@ -133,29 +139,31 @@ export function CocinaPage() {
                 {/* Closure Banner */}
                 {isClosed && (
                     <div style={{
-                        background: 'linear-gradient(135deg, #7f1d1d, #450a0a)',
-                        color: '#fca5a5',
-                        padding: '1rem 1.5rem',
-                        borderRadius: '12px',
-                        marginBottom: '2rem',
-                        border: '1px solid #991b1b',
-                        display: 'flex', alignItems: 'center', gap: '1rem'
+                        background: 'var(--surface-color)',
+                        color: 'var(--danger-color)',
+                        padding: '1.25rem 2rem',
+                        borderRadius: 'var(--radius-lg)',
+                        marginBottom: '2.5rem',
+                        border: '1px solid var(--border-color)',
+                        borderLeft: '5px solid var(--danger-color)',
+                        display: 'flex', alignItems: 'center', gap: '1.25rem',
+                        boxShadow: 'var(--shadow-md)'
                     }}>
-                        <Lock size={20} />
+                        <Lock size={22} />
                         <div>
-                            <strong style={{ display: 'block', color: 'white' }}>CAJA CERRADA</strong>
-                            <span style={{ fontSize: '0.9rem' }}>Las operaciones del día han sido cerradas.</span>
+                            <strong style={{ display: 'block', fontSize: '1.1rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Servicio Finalizado</strong>
+                            <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: '600' }}>Se ha realizado el cierre de caja. Solo lectura.</span>
                         </div>
                     </div>
                 )}
 
                 {/* Filters */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
-                    <span style={{ color: '#9ca3af', fontWeight: 'bold' }}>Filtros:</span>
-                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
+                    <span style={{ color: 'var(--text-primary)', fontWeight: '800', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Visualización:</span>
+                    <div style={{ display: 'flex', gap: '0.85rem', flexWrap: 'wrap' }}>
                         <FilterButton status="all" label="Todos" />
                         <FilterButton status="pending" label="Pendientes" />
-                        <FilterButton status="in_preparation" label="En Preparación" />
+                        <FilterButton status="in_preparation" label="En Cocina" />
                         <FilterButton status="ready" label="Listos" />
                     </div>
                 </div>
@@ -163,7 +171,7 @@ export function CocinaPage() {
                 {/* Grid */}
                 <div style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))',
                     gap: '1.5rem'
                 }}>
                     {filteredOrders.map(order => (
@@ -176,15 +184,14 @@ export function CocinaPage() {
                     ))}
 
                     {activeOrders.length === 0 && (
-                        <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '5rem', color: '#4b5563' }}>
-                            <div style={{ fontSize: '4rem', marginBottom: '1rem', opacity: 0.2 }}>🍽️</div>
-                            <h3 style={{ color: '#9ca3af', marginBottom: '0.5rem' }}>No hay pedidos pendientes</h3>
-                            <p>Los nuevos pedidos aparecerán aquí automáticamente.</p>
+                        <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '6rem 2rem', color: 'var(--text-secondary)', background: 'var(--surface-color)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)', borderStyle: 'dashed' }}>
+                            <div style={{ fontSize: '4.5rem', marginBottom: '1.5rem', opacity: 0.15 }}>⚡</div>
+                            <h3 style={{ color: 'var(--text-primary)', marginBottom: '0.5rem', fontWeight: '800', fontSize: '1.25rem' }}>No hay pedidos en curso</h3>
+                            <p style={{ fontWeight: '500' }}>Los pedidos que generen los mozos aparecerán aquí al instante.</p>
                         </div>
                     )}
                 </div>
             </div>
-
             {orderToEdit && user?.restaurantId && (
                 <OrderModal
                     table={getMinimalTable(orderToEdit)}

@@ -1,26 +1,24 @@
 :root {
   /* Lumière Kitchen Palette - Elegant & Light */
-  --primary-color: #8E735B;
-  /* Warm Taupe - Professional */
-  --primary-hover: #725D4A;
-  --secondary-color: #B2AC88;
-  /* Sage Green - Kitchen/Fresh */
-  --secondary-hover: #9A9475;
+  /* New Palette Implementation */
+  --primary-color: #457B9D;
+  --primary-hover: #1D3557;
+  --secondary-color: #A8DADC;
+  --secondary-hover: #91C9CB;
 
-  /* Status Colors - Softened for Elegance */
+  /* Status Colors */
   --success-color: #7FB069;
   --warning-color: #DC9E82;
-  --danger-color: #C06E52;
-  --info-color: #7192BE;
+  --danger-color: #E63946;
+  --info-color: #A8DADC;
 
   /* Neutral Colors - Clean & Professional */
-  --background-color: #F9FAFB;
+  --background-color: #F1FAEE;
   --surface-color: #FFFFFF;
-  --text-primary: #111827;
-  /* Near black slate for clarity */
-  --text-secondary: #6B7280;
+  --text-primary: #1D3557;
+  --text-secondary: #457B9D;
   --border-color: #E5E7EB;
-  --divider-color: #F3F4F6;
+  --divider-color: #F8FAF7;
 
   /* Typography */
   --font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;

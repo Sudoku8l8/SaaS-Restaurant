@@ -111,28 +111,28 @@ export function ReportesPage() {
             </Card>
 
             {/* Summary Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-                <Card style={{ padding: '1.5rem', textAlign: 'center', borderTop: '4px solid var(--color-primary)' }}>
-                    <div style={{ fontSize: '0.9rem', color: '#666', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
+                <Card style={{ padding: '1.75rem', textAlign: 'center', borderTop: '4px solid var(--primary-color)', boxShadow: 'var(--shadow-md)', borderRadius: 'var(--radius-lg)' }}>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.75rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                         <DollarSign size={16} /> Total Ventas
                     </div>
-                    <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--color-primary)' }}>
+                    <div style={{ fontSize: '2.25rem', fontWeight: '900', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
                         S/ {totalSales.toFixed(2)}
                     </div>
                 </Card>
-                <Card style={{ padding: '1.5rem', textAlign: 'center', borderTop: '4px solid #27ae60' }}>
-                    <div style={{ fontSize: '0.9rem', color: '#666', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <Card style={{ padding: '1.75rem', textAlign: 'center', borderTop: '4px solid var(--success-color)', boxShadow: 'var(--shadow-md)', borderRadius: 'var(--radius-lg)' }}>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.75rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                         <ShoppingBag size={16} /> Total Pedidos
                     </div>
-                    <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#27ae60' }}>
+                    <div style={{ fontSize: '2.25rem', fontWeight: '900', color: 'var(--success-color)', letterSpacing: '-0.02em' }}>
                         {totalOrders}
                     </div>
                 </Card>
-                <Card style={{ padding: '1.5rem', textAlign: 'center', borderTop: '4px solid #8e44ad' }}>
-                    <div style={{ fontSize: '0.9rem', color: '#666', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <Card style={{ padding: '1.75rem', textAlign: 'center', borderTop: '4px solid var(--secondary-hover)', boxShadow: 'var(--shadow-md)', borderRadius: 'var(--radius-lg)' }}>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.75rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                         <CalendarCheck size={16} /> Días con Cierre
                     </div>
-                    <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#8e44ad' }}>
+                    <div style={{ fontSize: '2.25rem', fontWeight: '900', color: 'var(--primary-color)', letterSpacing: '-0.02em' }}>
                         {closures.length}
                     </div>
                 </Card>
@@ -178,31 +178,33 @@ export function ReportesPage() {
                 </div>
 
                 {closures.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>
+                    <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)', fontWeight: '600' }}>
                         No se encontraron cierres en el rango seleccionado.
                     </div>
                 ) : (
                     <div style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                             <thead>
-                                <tr style={{ borderBottom: '2px solid #eee', textAlign: 'left' }}>
-                                    <th style={{ padding: '0.75rem' }}>Fecha</th>
-                                    <th style={{ padding: '0.75rem' }}>Pedidos</th>
-                                    <th style={{ padding: '0.75rem' }}>Total</th>
-                                    <th style={{ padding: '0.75rem' }}>Cerrado por</th>
+                                <tr style={{ borderBottom: '2px solid var(--divider-color)', textAlign: 'left' }}>
+                                    <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800', fontSize: '0.9rem', textTransform: 'uppercase' }}>Fecha</th>
+                                    <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800', fontSize: '0.9rem', textTransform: 'uppercase' }}>Pedidos</th>
+                                    <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800', fontSize: '0.9rem', textTransform: 'uppercase' }}>Total</th>
+                                    <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800', fontSize: '0.9rem', textTransform: 'uppercase' }}>Responsable</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {closures.map(closure => (
-                                    <tr key={closure.id} style={{ borderBottom: '1px solid #eee' }}>
-                                        <td style={{ padding: '0.75rem' }}>
+                                    <tr key={closure.id} style={{ borderBottom: '1px solid var(--divider-color)', transition: 'background-color 0.2s' }}
+                                        onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--background-color)'}
+                                        onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
+                                        <td style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '600' }}>
                                             {format(parseISO(closure.date), 'dd MMM yyyy', { locale: es })}
                                         </td>
-                                        <td style={{ padding: '0.75rem' }}>{closure.orderCount}</td>
-                                        <td style={{ padding: '0.75rem', fontWeight: 'bold' }}>
+                                        <td style={{ padding: '1rem', color: 'var(--text-secondary)', fontWeight: '600' }}>{closure.orderCount}</td>
+                                        <td style={{ padding: '1rem', color: 'var(--primary-color)', fontWeight: '800', fontSize: '1.1rem' }}>
                                             S/ {closure.totalSales.toFixed(2)}
                                         </td>
-                                        <td style={{ padding: '0.75rem', color: '#666' }}>
+                                        <td style={{ padding: '1rem', color: 'var(--text-secondary)', fontWeight: '500' }}>
                                             {closure.createdByName || 'Admin'}
                                         </td>
                                     </tr>

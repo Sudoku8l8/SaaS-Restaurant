@@ -60,9 +60,12 @@ export function SuperAdminPage() {
 
     if (!isAuthenticated) {
         return (
-            <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#2c3e50' }}>
-                <Card style={{ padding: '2rem', width: '300px' }}>
-                    <h2 style={{ textAlign: 'center', marginBottom: '1rem' }}>SuperAdmin</h2>
+            <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--primary-hover)' }}>
+                <Card style={{ padding: '2.5rem', width: '360px', borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-lg)' }}>
+                    <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+                        <h2 style={{ color: 'var(--text-primary)', fontWeight: '800', margin: 0 }}>SuperAdmin</h2>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Gestión Maestra de Restaurantes</p>
+                    </div>
                     <form onSubmit={handleLogin}>
                         <Input
                             type="password"
@@ -70,9 +73,9 @@ export function SuperAdminPage() {
                             value={password}
                             onChange={e => setPassword(e.target.value)}
                             fullWidth
-                            style={{ marginBottom: '1rem' }}
+                            style={{ marginBottom: '1.5rem' }}
                         />
-                        <Button type="submit" fullWidth>Entrar</Button>
+                        <Button type="submit" fullWidth style={{ background: 'var(--primary-color)', fontWeight: '800' }}>Acceder al Panel</Button>
                     </form>
                 </Card>
             </div>
@@ -81,51 +84,51 @@ export function SuperAdminPage() {
 
     return (
         <div className="container mt-md">
-            <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+            <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
                 <div>
-                    <h1>🦸 SuperAdmin Dashboard</h1>
-                    <p>Gestión Global de Tenants</p>
+                    <h1 style={{ color: 'var(--text-primary)', fontWeight: '900' }}>🦸 SuperAdmin Dashboard</h1>
+                    <p style={{ color: 'var(--text-secondary)', fontWeight: '600' }}>Gestión Global de Tenants</p>
                 </div>
-                <Button variant="secondary" onClick={() => navigate('/')}>Salir</Button>
+                <Button variant="outline" onClick={() => navigate('/')}>Salir</Button>
             </header>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-                <Card style={{ padding: '1.5rem', textAlign: 'center' }}>
-                    <h3>{restaurants.length}</h3>
-                    <p>Restaurantes Totales</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
+                <Card style={{ padding: '1.75rem', textAlign: 'center', borderTop: '4px solid var(--primary-color)', boxShadow: 'var(--shadow-md)' }}>
+                    <h3 style={{ fontSize: '2.5rem', fontWeight: '900', color: 'var(--text-primary)', margin: '0.5rem 0' }}>{restaurants.length}</h3>
+                    <p style={{ color: 'var(--text-secondary)', fontWeight: '700', textTransform: 'uppercase', fontSize: '0.8rem', letterSpacing: '0.05em' }}>Restaurantes Totales</p>
                 </Card>
-                <Card style={{ padding: '1.5rem', textAlign: 'center' }}>
-                    <h3>{restaurants.filter(r => r.active).length}</h3>
-                    <p>Activos</p>
+                <Card style={{ padding: '1.75rem', textAlign: 'center', borderTop: '4px solid var(--success-color)', boxShadow: 'var(--shadow-md)' }}>
+                    <h3 style={{ fontSize: '2.5rem', fontWeight: '900', color: 'var(--success-color)', margin: '0.5rem 0' }}>{restaurants.filter(r => r.active).length}</h3>
+                    <p style={{ color: 'var(--text-secondary)', fontWeight: '700', textTransform: 'uppercase', fontSize: '0.8rem', letterSpacing: '0.05em' }}>Licencias Activas</p>
                 </Card>
-                <Card style={{ padding: '1.5rem', textAlign: 'center' }}>
-                    <h3>$0.00</h3>
-                    <p>MRR (Ingresos Mensuales)</p>
+                <Card style={{ padding: '1.75rem', textAlign: 'center', borderTop: '4px solid var(--secondary-hover)', boxShadow: 'var(--shadow-md)' }}>
+                    <h3 style={{ fontSize: '2.5rem', fontWeight: '900', color: 'var(--primary-color)', margin: '0.5rem 0' }}>S/ 0.00</h3>
+                    <p style={{ color: 'var(--text-secondary)', fontWeight: '700', textTransform: 'uppercase', fontSize: '0.8rem', letterSpacing: '0.05em' }}>Ingresos Mensuales</p>
                 </Card>
             </div>
 
-            <Card>
-                <div style={{ padding: '1rem', overflowX: 'auto' }}>
+            <Card style={{ boxShadow: 'var(--shadow-md)', borderRadius: 'var(--radius-lg)' }}>
+                <div style={{ padding: '1.5rem', overflowX: 'auto' }}>
                     {isLoading ? (
-                        <p>Cargando datos...</p>
+                        <p style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>Cargando datos...</p>
                     ) : (
                         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                             <thead>
-                                <tr style={{ borderBottom: '1px solid #eee' }}>
-                                    <th style={{ padding: '1rem' }}>Restaurante</th>
-                                    <th style={{ padding: '1rem' }}>Slug (URL)</th>
-                                    <th style={{ padding: '1rem' }}>Plan</th>
-                                    <th style={{ padding: '1rem' }}>Estado</th>
-                                    <th style={{ padding: '1rem' }}>Fecha Registro</th>
-                                    <th style={{ padding: '1rem' }}>Acciones</th>
+                                <tr style={{ borderBottom: '2px solid var(--divider-color)' }}>
+                                    <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800' }}>Restaurante</th>
+                                    <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800' }}>Ruta URL</th>
+                                    <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800' }}>Plan</th>
+                                    <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800' }}>Estado</th>
+                                    <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800' }}>Registro</th>
+                                    <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800' }}>Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {restaurants.map(rest => (
-                                    <tr key={rest.id} style={{ borderBottom: '1px solid #f5f5f5' }}>
-                                        <td style={{ padding: '1rem', fontWeight: 'bold' }}>{rest.name}</td>
+                                    <tr key={rest.id} style={{ borderBottom: '1px solid var(--divider-color)', transition: 'background-color 0.2s' }}>
+                                        <td style={{ padding: '1rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>{rest.name}</td>
                                         <td style={{ padding: '1rem' }}>
-                                            <a href={`/${rest.id}/login`} target="_blank" rel="noreferrer" style={{ color: 'blue' }}>
+                                            <a href={`/${rest.id}/login`} target="_blank" rel="noreferrer" style={{ color: 'var(--primary-color)', fontWeight: '700', textDecoration: 'none', borderBottom: '1px dashed' }}>
                                                 /{rest.id}
                                             </a>
                                         </td>
@@ -139,11 +142,11 @@ export function SuperAdminPage() {
                                                 {rest.active ? 'ACTIVO' : 'INACTIVO'}
                                             </Badge>
                                         </td>
-                                        <td style={{ padding: '1rem' }}>
+                                        <td style={{ padding: '1rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                                             {formatDate(rest.createdAt)}
                                         </td>
                                         <td style={{ padding: '1rem' }}>
-                                            <Button variant="danger" size="sm" onClick={() => handleDelete(rest.id, rest.name)}>
+                                            <Button variant="danger" size="sm" onClick={() => handleDelete(rest.id, rest.name)} style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', fontWeight: '800' }}>
                                                 Eliminar
                                             </Button>
                                         </td>

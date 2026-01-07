@@ -25,15 +25,15 @@ export function PaymentModal({ order, onClose, onConfirmPayment }: PaymentModalP
             title: 'Yape / Plin',
             description: 'Pago digital instantáneo',
             icon: <Smartphone size={22} />,
-            color: '#8B5CF6', // Keep purple for Yape but softer
-            bg: '#F5F3FF'
+            color: '#6366f1', // Indigo for better harmony with blue theme
+            bg: '#F5F5FF'
         },
         {
             id: 'card' as PaymentMethod,
             title: 'Tarjeta',
             description: 'Débito o crédito',
             icon: <CreditCard size={22} />,
-            color: 'var(--info-color)',
+            color: 'var(--text-secondary)',
             bg: 'var(--divider-color)'
         }
     ];
@@ -204,7 +204,7 @@ export function PaymentModal({ order, onClose, onConfirmPayment }: PaymentModalP
                             fontWeight: '800',
                             fontSize: '1rem',
                             cursor: method ? 'pointer' : 'not-allowed',
-                            boxShadow: method ? '0 8px 20px rgba(142, 115, 91, 0.2)' : 'none',
+                            boxShadow: method ? '0 8px 25px rgba(69, 123, 157, 0.3)' : 'none',
                             transition: 'all 0.3s'
                         }}
                     >
