@@ -219,23 +219,58 @@ export function OrderCard({ order, onEdit, onDelete }: OrderCardProps) {
                 <div style={{
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '0.75rem',
+                    gap: '1rem',
                     padding: '0.5rem 0'
                 }}>
                     {order.items.map((item, idx) => (
-                        <div key={`${item.productId}-${idx}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                                <span style={{
-                                    fontWeight: '800',
-                                    color: 'var(--primary-color)',
-                                    background: 'var(--divider-color)',
-                                    padding: '2px 6px',
-                                    borderRadius: '4px',
-                                    fontSize: '0.8rem'
-                                }}>{item.quantity}x</span>
-                                <span style={{ color: 'var(--text-primary)', fontWeight: '500', fontSize: '0.95rem' }}>{item.productName}</span>
+                        <div key={`${item.productId}-${idx}`} style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'center' }}>
+                                    <span style={{
+                                        fontWeight: '900',
+                                        color: 'white',
+                                        background: 'var(--primary-color)',
+                                        padding: '4px 10px',
+                                        borderRadius: '8px',
+                                        fontSize: '1rem',
+                                        minWidth: '38px',
+                                        textAlign: 'center',
+                                        boxShadow: 'var(--shadow-sm)'
+                                    }}>{item.quantity}x</span>
+                                    <span style={{
+                                        color: 'var(--text-primary)',
+                                        fontWeight: '800',
+                                        fontSize: '1.15rem',
+                                        lineHeight: '1.2'
+                                    }}>
+                                        {item.productName}
+                                    </span>
+                                </div>
+                                <span style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', fontWeight: '700', marginTop: '4px' }}>
+                                    S/ {item.price.toFixed(2)}
+                                </span>
                             </div>
-                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: '600' }}>S/ {item.price.toFixed(2)}</span>
+
+                            {/* Notes with highlight */}
+                            {item.notes && (
+                                <div style={{
+                                    marginLeft: '3.2rem',
+                                    backgroundColor: '#FFF9C4', // Soft yellow highlight
+                                    borderLeft: '4px solid #FBC02D',
+                                    padding: '6px 12px',
+                                    borderRadius: 'var(--radius-sm)',
+                                    fontSize: '0.9rem',
+                                    fontWeight: '700',
+                                    color: '#455A64',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    marginTop: '2px'
+                                }}>
+                                    <span style={{ fontSize: '1.1rem' }}>📝</span>
+                                    <span style={{ fontStyle: 'italic' }}>"{item.notes}"</span>
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>
