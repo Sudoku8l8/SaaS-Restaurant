@@ -1,4 +1,5 @@
 import { Card, Badge } from '@/components/shared';
+import { Table2 } from 'lucide-react';
 import type { RestaurantTable } from '@/types';
 import type { HTMLAttributes } from 'react';
 
@@ -33,15 +34,34 @@ export function TableCard({ table, onClick, style, ...props }: TableCardProps) {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                height: '140px',
-                backgroundColor: isFree ? 'var(--surface-color)' : 'var(--background-color)',
-                border: isFree ? '1px solid var(--border-color)' : `2px solid var(--${statusColors[table.status]}-color)`,
-                boxShadow: isFree ? 'var(--shadow-sm)' : 'none',
+                height: '150px',
+                backgroundColor: isFree
+                    ? 'rgba(127, 176, 105, 0.08)'  // Soft Green tint
+                    : 'rgba(220, 158, 130, 0.12)', // Soft Peach tint
+                border: isFree
+                    ? '2px solid var(--success-color)'
+                    : '3px solid var(--warning-color)',
+                boxShadow: isFree
+                    ? '0 4px 12px rgba(127, 176, 105, 0.15)'
+                    : '0 8px 20px rgba(220, 158, 130, 0.2)',
                 borderRadius: 'var(--radius-lg)',
-                transition: 'all var(--transition-speed)',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 position: 'relative',
                 overflow: 'hidden',
+                transform: 'scale(1)',
                 ...style
+            }}
+            onMouseEnter={e => {
+                e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)';
+                e.currentTarget.style.boxShadow = isFree
+                    ? '0 12px 24px rgba(127, 176, 105, 0.25)'
+                    : '0 15px 30px rgba(220, 158, 130, 0.35)';
+            }}
+            onMouseLeave={e => {
+                e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                e.currentTarget.style.boxShadow = isFree
+                    ? '0 4px 12px rgba(127, 176, 105, 0.15)'
+                    : '0 8px 20px rgba(220, 158, 130, 0.2)';
             }}
             {...props}
         >
@@ -50,32 +70,39 @@ export function TableCard({ table, onClick, style, ...props }: TableCardProps) {
                     position: 'absolute',
                     top: 0,
                     right: 0,
-                    width: '30px',
-                    height: '30px',
+                    width: '35px',
+                    height: '35px',
                     background: 'var(--warning-color)',
                     clipPath: 'polygon(100% 0, 0 0, 100% 100%)',
-                    opacity: 0.8
+                    opacity: 0.9,
+                    boxShadow: '0 0 10px rgba(0,0,0,0.1)'
                 }} />
             )}
 
-            <h3 style={{
-                fontSize: '2.5rem',
-                margin: '0',
-                fontWeight: '800',
-                color: isFree ? 'var(--text-primary)' : 'var(--text-secondary)',
-                opacity: isFree ? 1 : 0.6
-            }}>
-                {table.number}
-            </h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', transform: 'translateX(-5px)' }}>
+                <Table2 size={28} style={{ color: isFree ? 'var(--success-color)' : 'var(--warning-color)', opacity: 0.9 }} />
+                <h3 style={{
+                    fontSize: '3rem',
+                    margin: '0',
+                    fontWeight: '900',
+                    color: 'var(--text-primary)',
+                    letterSpacing: '-0.02em',
+                    lineHeight: 1
+                }}>
+                    {table.number}
+                </h3>
+            </div>
 
             <Badge
                 variant={statusColors[table.status]}
                 style={{
-                    marginTop: '0.5rem',
+                    marginTop: '0.75rem',
+                    padding: '0.35rem 0.85rem',
                     textTransform: 'uppercase',
-                    fontSize: '0.7rem',
-                    letterSpacing: '0.05em',
-                    fontWeight: '700'
+                    fontSize: '0.75rem',
+                    letterSpacing: '0.1em',
+                    fontWeight: '900',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
                 }}
             >
                 {statusLabels[table.status]}

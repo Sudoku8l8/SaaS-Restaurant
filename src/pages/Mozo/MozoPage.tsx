@@ -114,30 +114,36 @@ export function MozoPage() {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                marginBottom: 'var(--spacing-xl)',
-                flexWrap: 'wrap',
-                gap: 'var(--spacing-md)',
-                padding: 'var(--spacing-md) 0',
-                borderBottom: '1px solid var(--divider-color)'
+                marginBottom: 'var(--spacing-lg)',
+                gap: 'var(--spacing-sm)',
+                padding: 'var(--spacing-sm) 0',
+                borderBottom: '1px solid var(--divider-color)',
+                flexWrap: 'nowrap' // Prevent wrapping to keep items on same line
             }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xs)', flex: 1, minWidth: 0 }}>
                     <h1 style={{
                         margin: 0,
-                        fontSize: '1.75rem',
-                        fontWeight: '700',
+                        fontSize: '1.4rem', // Slightly smaller for better fit
+                        fontWeight: '800',
                         color: 'var(--text-primary)',
-                        fontFamily: 'var(--font-family)'
+                        fontFamily: 'var(--font-family)',
+                        lineHeight: 1.2,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
                     }}>
-                        {viewMode === 'tables' ? 'Servicio de Mesas' : 'Pedidos Para Llevar'}
+                        {viewMode === 'tables' ? 'Servicio de Mesas' : 'Para Llevar'}
                     </h1>
 
                     <div style={{
                         display: 'flex',
-                        gap: '4px',
+                        gap: '2px',
                         background: 'var(--divider-color)',
-                        padding: '4px',
+                        padding: '3px',
                         borderRadius: 'var(--radius-full)',
-                        width: 'fit-content'
+                        width: 'fit-content',
+                        transform: 'scale(0.9)', // Compact view
+                        transformOrigin: 'left'
                     }}>
                         <button
                             onClick={() => setViewMode('tables')}
@@ -145,19 +151,19 @@ export function MozoPage() {
                                 background: viewMode === 'tables' ? 'var(--surface-color)' : 'transparent',
                                 color: viewMode === 'tables' ? 'var(--primary-color)' : 'var(--text-secondary)',
                                 border: 'none',
-                                padding: '0.5rem 1.25rem',
+                                padding: '0.4rem 1rem',
                                 borderRadius: 'var(--radius-full)',
                                 cursor: 'pointer',
-                                fontWeight: '600',
-                                fontSize: '0.9rem',
-                                transition: 'all var(--transition-speed)',
+                                fontWeight: '700',
+                                fontSize: '0.8rem',
+                                transition: 'all 0.2s',
                                 boxShadow: viewMode === 'tables' ? 'var(--shadow-sm)' : 'none',
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: 'var(--spacing-sm)'
+                                gap: '6px'
                             }}
                         >
-                            <Utensils size={16} /> Mesas
+                            <Utensils size={14} /> Mesas
                         </button>
                         <button
                             onClick={() => setViewMode('takeout')}
@@ -165,19 +171,19 @@ export function MozoPage() {
                                 background: viewMode === 'takeout' ? 'var(--surface-color)' : 'transparent',
                                 color: viewMode === 'takeout' ? 'var(--primary-color)' : 'var(--text-secondary)',
                                 border: 'none',
-                                padding: '0.5rem 1.25rem',
+                                padding: '0.4rem 1rem',
                                 borderRadius: 'var(--radius-full)',
                                 cursor: 'pointer',
-                                fontWeight: '600',
-                                fontSize: '0.9rem',
-                                transition: 'all var(--transition-speed)',
+                                fontWeight: '700',
+                                fontSize: '0.8rem',
+                                transition: 'all 0.2s',
                                 boxShadow: viewMode === 'takeout' ? 'var(--shadow-sm)' : 'none',
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: 'var(--spacing-sm)'
+                                gap: '6px'
                             }}
                         >
-                            <ShoppingBag size={16} /> Para Llevar
+                            <ShoppingBag size={14} /> Llevar
                         </button>
                     </div>
                 </div>
@@ -185,18 +191,19 @@ export function MozoPage() {
                 <div style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 'var(--spacing-lg)',
+                    gap: 'var(--spacing-sm)',
                     background: 'var(--surface-color)',
-                    padding: 'var(--spacing-sm) var(--spacing-md)',
-                    borderRadius: 'var(--radius-lg)',
+                    padding: '6px 10px',
+                    borderRadius: 'var(--radius-md)',
                     boxShadow: 'var(--shadow-sm)',
-                    border: '1px solid var(--border-color)'
+                    border: '1px solid var(--border-color)',
+                    flexShrink: 0 // Don't let the user box shrink too much
                 }}>
-                    <div style={{ textAlign: 'right' }}>
-                        <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Mozo</p>
-                        <p style={{ margin: 0, color: 'var(--text-primary)', fontWeight: '600' }}>{user?.name}</p>
+                    <div style={{ textAlign: 'right', minWidth: 'fit-content' }}>
+                        <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: '800', letterSpacing: '0.05em', lineHeight: 1 }}>{user?.name}</p>
+                        <p style={{ margin: 0, color: 'var(--text-primary)', fontWeight: '700', fontSize: '0.85rem' }}>Mozo</p>
                     </div>
-                    <Button variant="outline" onClick={logout} size="sm" style={{ padding: '0.5rem 1rem' }}>
+                    <Button variant="outline" onClick={logout} size="sm" style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem', height: 'auto' }}>
                         Salir
                     </Button>
                 </div>
