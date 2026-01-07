@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Lock, ShoppingBag } from 'lucide-react';
+import { Lock, ShoppingBag, Utensils } from 'lucide-react';
 import { TableCard } from '@/components/features/TableCard';
 import { OrderModal } from '@/components/features/OrderModal';
 import { TableDetailModal } from '@/components/features/TableDetailModal';
@@ -87,66 +87,117 @@ export function MozoPage() {
             {/* Closure Banner */}
             {isClosed && (
                 <div style={{
-                    background: 'linear-gradient(135deg, #e74c3c, #c0392b)',
+                    background: 'var(--danger-color)',
                     color: 'white',
-                    padding: '1rem 1.5rem',
-                    borderRadius: '8px',
-                    marginBottom: '1.5rem',
+                    padding: 'var(--spacing-md) var(--spacing-lg)',
+                    borderRadius: 'var(--radius-md)',
+                    marginBottom: 'var(--spacing-lg)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    boxShadow: '0 4px 12px rgba(231, 76, 60, 0.3)'
+                    boxShadow: 'var(--shadow-md)',
+                    border: '1px solid rgba(255,255,255,0.1)'
                 }}>
-                    <div>
-                        <strong style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Lock size={16} /> CAJA CERRADA</strong>
-                        <p style={{ margin: 0, fontSize: '0.9rem', opacity: 0.9 }}>
-                            Las operaciones del día han sido cerradas. Solo consulta disponible.
-                        </p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
+                        <Lock size={20} />
+                        <div>
+                            <strong style={{ display: 'block', fontSize: '1rem', letterSpacing: '0.05em' }}>SISTEMA CERRADO</strong>
+                            <p style={{ margin: 0, fontSize: '0.85rem', opacity: 0.9 }}>
+                                Las operaciones han finalizado por hoy.
+                            </p>
+                        </div>
                     </div>
                 </div>
             )}
 
-            <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-                <div>
-                    <h1 style={{ marginBottom: '0.5rem' }}>{viewMode === 'tables' ? 'Mesas' : 'Pedidos Para Llevar'}</h1>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <header style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 'var(--spacing-xl)',
+                flexWrap: 'wrap',
+                gap: 'var(--spacing-md)',
+                padding: 'var(--spacing-md) 0',
+                borderBottom: '1px solid var(--divider-color)'
+            }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
+                    <h1 style={{
+                        margin: 0,
+                        fontSize: '1.75rem',
+                        fontWeight: '700',
+                        color: 'var(--text-primary)',
+                        fontFamily: 'var(--font-family)'
+                    }}>
+                        {viewMode === 'tables' ? 'Servicio de Mesas' : 'Pedidos Para Llevar'}
+                    </h1>
+
+                    <div style={{
+                        display: 'flex',
+                        gap: '4px',
+                        background: 'var(--divider-color)',
+                        padding: '4px',
+                        borderRadius: 'var(--radius-full)',
+                        width: 'fit-content'
+                    }}>
                         <button
                             onClick={() => setViewMode('tables')}
                             style={{
-                                background: viewMode === 'tables' ? 'white' : 'transparent',
-                                color: viewMode === 'tables' ? 'black' : '#aaa',
+                                background: viewMode === 'tables' ? 'var(--surface-color)' : 'transparent',
+                                color: viewMode === 'tables' ? 'var(--primary-color)' : 'var(--text-secondary)',
                                 border: 'none',
-                                padding: '0.5rem 1rem',
-                                borderRadius: '20px',
+                                padding: '0.5rem 1.25rem',
+                                borderRadius: 'var(--radius-full)',
                                 cursor: 'pointer',
-                                fontWeight: 'bold'
+                                fontWeight: '600',
+                                fontSize: '0.9rem',
+                                transition: 'all var(--transition-speed)',
+                                boxShadow: viewMode === 'tables' ? 'var(--shadow-sm)' : 'none',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 'var(--spacing-sm)'
                             }}
                         >
-                            Mesas
+                            <Utensils size={16} /> Mesas
                         </button>
                         <button
                             onClick={() => setViewMode('takeout')}
                             style={{
-                                background: viewMode === 'takeout' ? '#2563eb' : 'transparent',
-                                color: viewMode === 'takeout' ? 'white' : '#aaa',
+                                background: viewMode === 'takeout' ? 'var(--surface-color)' : 'transparent',
+                                color: viewMode === 'takeout' ? 'var(--primary-color)' : 'var(--text-secondary)',
                                 border: 'none',
-                                padding: '0.5rem 1rem',
-                                borderRadius: '20px',
+                                padding: '0.5rem 1.25rem',
+                                borderRadius: 'var(--radius-full)',
                                 cursor: 'pointer',
-                                fontWeight: 'bold',
+                                fontWeight: '600',
+                                fontSize: '0.9rem',
+                                transition: 'all var(--transition-speed)',
+                                boxShadow: viewMode === 'takeout' ? 'var(--shadow-sm)' : 'none',
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '0.5rem'
+                                gap: 'var(--spacing-sm)'
                             }}
                         >
-                            <ShoppingBag size={18} /> Para Llevar
+                            <ShoppingBag size={16} /> Para Llevar
                         </button>
                     </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <p style={{ margin: 0, color: '#aaa' }}>Hola, {user?.name}</p>
-                    <Button variant="secondary" onClick={logout}>
-                        Cerrar Sesión
+
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--spacing-lg)',
+                    background: 'var(--surface-color)',
+                    padding: 'var(--spacing-sm) var(--spacing-md)',
+                    borderRadius: 'var(--radius-lg)',
+                    boxShadow: 'var(--shadow-sm)',
+                    border: '1px solid var(--border-color)'
+                }}>
+                    <div style={{ textAlign: 'right' }}>
+                        <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Mozo</p>
+                        <p style={{ margin: 0, color: 'var(--text-primary)', fontWeight: '600' }}>{user?.name}</p>
+                    </div>
+                    <Button variant="outline" onClick={logout} size="sm" style={{ padding: '0.5rem 1rem' }}>
+                        Salir
                     </Button>
                 </div>
             </header>

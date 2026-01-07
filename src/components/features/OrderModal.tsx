@@ -141,16 +141,6 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
     };
 
     // Styles for Dark Theme Modal
-    const darkTheme = {
-        bg: '#121212',
-        surface: '#1e1e1e',
-        border: '#333333',
-        textPrimary: '#ffffff',
-        textSecondary: '#a0a0a0',
-        primary: '#2563eb', // Blue
-        danger: '#dc2626'
-    };
-
     return (
         <div style={{
             position: 'fixed',
@@ -158,44 +148,50 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.85)',
+            backgroundColor: 'rgba(44, 62, 80, 0.4)',
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
             zIndex: 1000,
-            padding: isMobile ? '0.25rem' : '2rem',
-            backdropFilter: 'blur(5px)'
+            padding: isMobile ? '0' : '2rem',
+            backdropFilter: 'blur(8px)'
         }}>
             <div style={{
                 width: '100%',
                 maxWidth: '1200px',
-                height: isMobile ? '95vh' : '90vh',
-                backgroundColor: darkTheme.bg,
-                borderRadius: '16px',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                height: isMobile ? '100dvh' : '90vh',
+                backgroundColor: 'var(--background-color)',
+                borderRadius: isMobile ? '0' : 'var(--radius-lg)',
+                boxShadow: 'var(--shadow-lg)',
                 display: 'flex',
                 flexDirection: 'column',
                 overflow: 'hidden',
-                color: darkTheme.textPrimary,
-                border: `1px solid ${darkTheme.border}`
+                color: 'var(--text-primary)',
+                border: isMobile ? 'none' : '1px solid var(--border-color)'
             }}>
-                {/* MOBILE TABS (Only visible on mobile) */}
+                {/* MOBILE TABS */}
                 {isMobile && (
-                    <div style={{ display: 'flex', borderBottom: `1px solid ${darkTheme.border}` }}>
+                    <div style={{
+                        display: 'flex',
+                        background: 'var(--surface-color)',
+                        borderBottom: '1px solid var(--border-color)',
+                        padding: '4px'
+                    }}>
                         <button
                             onClick={() => setMobileView('menu')}
                             style={{
                                 flex: 1,
                                 padding: '1rem',
-                                background: mobileView === 'menu' ? darkTheme.surface : darkTheme.bg,
-                                color: mobileView === 'menu' ? darkTheme.primary : darkTheme.textSecondary,
+                                background: mobileView === 'menu' ? 'var(--divider-color)' : 'transparent',
+                                color: mobileView === 'menu' ? 'var(--primary-color)' : 'var(--text-secondary)',
                                 border: 'none',
-                                borderBottom: mobileView === 'menu' ? `2px solid ${darkTheme.primary}` : 'none',
-                                fontWeight: 'bold',
+                                borderRadius: 'var(--radius-md) var(--radius-md) 0 0',
+                                fontWeight: '700',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                gap: '0.5rem'
+                                gap: '0.5rem',
+                                transition: 'all 0.2s'
                             }}
                         >
                             <Utensils size={18} /> Menú
@@ -205,15 +201,16 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                             style={{
                                 flex: 1,
                                 padding: '1rem',
-                                background: mobileView === 'cart' ? darkTheme.surface : darkTheme.bg,
-                                color: mobileView === 'cart' ? darkTheme.primary : darkTheme.textSecondary,
+                                background: mobileView === 'cart' ? 'var(--divider-color)' : 'transparent',
+                                color: mobileView === 'cart' ? 'var(--primary-color)' : 'var(--text-secondary)',
                                 border: 'none',
-                                borderBottom: mobileView === 'cart' ? `2px solid ${darkTheme.primary}` : 'none',
-                                fontWeight: 'bold',
+                                borderRadius: 'var(--radius-md) var(--radius-md) 0 0',
+                                fontWeight: '700',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                gap: '0.5rem'
+                                gap: '0.5rem',
+                                transition: 'all 0.2s'
                             }}
                         >
                             <ShoppingCart size={18} />
@@ -229,34 +226,44 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                         flex: isMobile ? 1 : 7,
                         display: (!isMobile || mobileView === 'menu') ? 'flex' : 'none',
                         flexDirection: 'column',
-                        padding: '1.5rem',
-                        borderRight: isMobile ? 'none' : `1px solid ${darkTheme.border}`,
-                        overflow: 'hidden'
+                        padding: isMobile ? '1rem' : '2rem',
+                        borderRight: isMobile ? 'none' : '1px solid var(--border-color)',
+                        overflow: 'hidden',
+                        background: 'var(--surface-color)'
                     }}>
 
                         {/* Header: Title & Search */}
-                        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', marginBottom: '1.5rem', gap: isMobile ? '1rem' : 0 }}>
+                        <div style={{
+                            display: 'flex',
+                            flexDirection: isMobile ? 'column' : 'row',
+                            justifyContent: 'space-between',
+                            alignItems: isMobile ? 'stretch' : 'center',
+                            marginBottom: '1.5rem',
+                            gap: '1rem'
+                        }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <h2 style={{ fontSize: '1.5rem', fontWeight: '600', margin: 0 }}>
+                                <h2 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, color: 'var(--primary-color)' }}>
                                     {orderType === 'takeout'
-                                        ? 'Nuevo Pedido (Para Llevar)'
+                                        ? 'Nuevo Pedido'
                                         : (table?.number ? `Mesa ${table.number}` : 'Nuevo Pedido')}
                                 </h2>
-                                {isMobile && <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#666', fontSize: '1.5rem' }}>×</button>}
+                                {isMobile && <button onClick={onClose} style={{ background: 'var(--divider-color)', border: 'none', color: 'var(--text-secondary)', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>}
                             </div>
 
-                            <div style={{ width: isMobile ? '100%' : '300px', position: 'relative' }}>
-                                <Search size={18} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#666' }} />
+                            <div style={{ width: isMobile ? '100%' : '350px', position: 'relative' }}>
+                                <Search size={18} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', opacity: 0.6 }} />
                                 <Input
-                                    placeholder="Buscar producto..."
+                                    placeholder="Buscar en el menú..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     style={{
-                                        background: darkTheme.surface,
-                                        border: `1px solid ${darkTheme.border}`,
-                                        color: 'white',
-                                        borderRadius: '8px',
-                                        paddingLeft: '2.5rem'
+                                        background: 'var(--background-color)',
+                                        border: '1px solid var(--border-color)',
+                                        color: 'var(--text-primary)',
+                                        borderRadius: 'var(--radius-full)',
+                                        paddingLeft: '3rem',
+                                        height: '48px',
+                                        fontSize: '0.95rem'
                                     }}
                                     fullWidth
                                 />
@@ -264,24 +271,33 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                         </div>
 
                         {/* Category Tabs */}
-                        <div style={{ display: 'flex', gap: '0.5rem', paddingBottom: '1rem', overflowX: 'auto', marginBottom: '1rem' }}>
+                        <div style={{
+                            display: 'flex',
+                            gap: '0.75rem',
+                            paddingBottom: '1rem',
+                            overflowX: 'auto',
+                            marginBottom: '1rem',
+                            scrollbarWidth: 'none'
+                        }}>
                             {categoryTabs.map(cat => (
                                 <button
                                     key={cat}
                                     onClick={() => setSelectedCategory(cat)}
                                     style={{
-                                        padding: '0.75rem 1.5rem',
-                                        borderRadius: '8px',
-                                        border: 'none',
-                                        background: selectedCategory === cat ? darkTheme.primary : darkTheme.surface,
-                                        color: 'white',
-                                        fontWeight: selectedCategory === cat ? '600' : '400',
+                                        padding: '0.6rem 1.25rem',
+                                        borderRadius: 'var(--radius-full)',
+                                        border: '1px solid',
+                                        borderColor: selectedCategory === cat ? 'var(--primary-color)' : 'var(--border-color)',
+                                        background: selectedCategory === cat ? 'var(--primary-color)' : 'transparent',
+                                        color: selectedCategory === cat ? 'white' : 'var(--text-secondary)',
+                                        fontWeight: '600',
                                         cursor: 'pointer',
                                         whiteSpace: 'nowrap',
-                                        transition: 'all 0.2s'
+                                        transition: 'all 0.2s',
+                                        fontSize: '0.85rem'
                                     }}
                                 >
-                                    {cat === 'all' ? 'Todos' : cat}
+                                    {cat === 'all' ? '🍽️ Todos' : cat}
                                 </button>
                             ))}
                         </div>
@@ -291,36 +307,45 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                             flex: 1,
                             overflowY: 'auto',
                             display: 'grid',
-                            gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : 'repeat(auto-fill, minmax(160px, 1fr))',
-                            gap: isMobile ? '0.5rem' : '1rem',
+                            gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(180px, 1fr))',
+                            gap: '1rem',
                             alignContent: 'start',
-                            paddingRight: '0.25rem'
+                            padding: '4px'
                         }}>
                             {filteredProducts?.map(product => (
                                 <div
                                     key={product.id}
                                     onClick={() => addToOrder(product)}
                                     style={{
-                                        backgroundColor: darkTheme.surface,
-                                        border: `1px solid ${darkTheme.border}`,
-                                        borderRadius: '12px',
-                                        padding: isMobile ? '0.75rem' : '1.25rem',
+                                        backgroundColor: 'var(--surface-color)',
+                                        border: '1px solid var(--border-color)',
+                                        borderRadius: 'var(--radius-lg)',
+                                        padding: '1rem',
                                         cursor: 'pointer',
-                                        position: 'relative',
                                         display: 'flex',
                                         flexDirection: 'column',
-                                        gap: '0.4rem',
-                                        transition: 'transform 0.1s, border-color 0.1s',
-                                        height: isMobile ? '110px' : '140px'
+                                        gap: '0.5rem',
+                                        transition: 'all 0.2s',
+                                        boxShadow: 'var(--shadow-sm)',
+                                        height: '140px',
+                                        justifyContent: 'space-between'
                                     }}
-                                    onMouseEnter={e => { e.currentTarget.style.borderColor = darkTheme.primary; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                                    onMouseLeave={e => { e.currentTarget.style.borderColor = darkTheme.border; e.currentTarget.style.transform = 'translateY(0)'; }}
+                                    onMouseEnter={e => {
+                                        e.currentTarget.style.borderColor = 'var(--primary-color)';
+                                        e.currentTarget.style.transform = 'translateY(-4px)';
+                                        e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                                    }}
+                                    onMouseLeave={e => {
+                                        e.currentTarget.style.borderColor = 'var(--border-color)';
+                                        e.currentTarget.style.transform = 'translateY(0)';
+                                        e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                                    }}
                                 >
                                     <div style={{
-                                        fontWeight: '600',
-                                        fontSize: isMobile ? '0.85rem' : '1rem',
-                                        color: '#fff',
-                                        lineHeight: '1.2',
+                                        fontWeight: '700',
+                                        fontSize: '0.95rem',
+                                        color: 'var(--text-primary)',
+                                        lineHeight: '1.3',
                                         display: '-webkit-box',
                                         WebkitLineClamp: 2,
                                         WebkitBoxOrient: 'vertical',
@@ -329,16 +354,21 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                         {product.name}
                                     </div>
 
-                                    <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <span style={{ color: '#60a5fa', fontWeight: 'bold', fontSize: isMobile ? '0.9rem' : '1.1rem' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{ color: 'var(--primary-color)', fontWeight: '800', fontSize: '1.1rem' }}>
                                             S/ {product.price.toFixed(2)}
                                         </span>
                                         <div style={{
-                                            width: isMobile ? '24px' : '32px',
-                                            height: isMobile ? '24px' : '32px',
-                                            borderRadius: '50%', background: '#2563eb33',
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#60a5fa',
-                                            fontSize: isMobile ? '0.8rem' : '1rem'
+                                            width: '32px',
+                                            height: '32px',
+                                            borderRadius: '50%',
+                                            background: 'var(--divider-color)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            color: 'var(--primary-color)',
+                                            fontSize: '1.2rem',
+                                            fontWeight: 'bold'
                                         }}>
                                             +
                                         </div>
@@ -352,17 +382,17 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                     <div style={{
                         flex: isMobile ? 1 : 3,
                         display: (!isMobile || mobileView === 'cart') ? 'flex' : 'none',
-                        backgroundColor: '#0f0f0f',
+                        backgroundColor: 'var(--background-color)',
                         flexDirection: 'column',
-                        borderLeft: isMobile ? 'none' : `1px solid ${darkTheme.border}`,
-                        overflow: 'hidden' // Ensure it doesn't push the modal height
+                        borderLeft: isMobile ? 'none' : '1px solid var(--border-color)',
+                        overflow: 'hidden'
                     }}>
 
-                        {/* Summary Header - Only desktop closes from here, mobile has tabs/close in menu */}
+                        {/* Summary Header */}
                         {!isMobile && (
-                            <div style={{ padding: '1.5rem', borderBottom: `1px solid ${darkTheme.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <h3 style={{ margin: 0, fontWeight: '600', fontSize: '1.2rem' }}>Resumen</h3>
-                                <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#666', cursor: 'pointer', fontSize: '1.5rem' }}>×</button>
+                            <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface-color)' }}>
+                                <h3 style={{ margin: 0, fontWeight: '700', fontSize: '1.2rem', color: 'var(--text-primary)' }}>Resumen del Pedido</h3>
+                                <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '1.5rem' }}>×</button>
                             </div>
                         )}
 
@@ -370,103 +400,128 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                         <div style={{
                             flex: 1,
                             overflowY: 'auto',
-                            padding: isMobile ? '0.75rem' : '1rem',
-                            minHeight: isMobile ? '280px' : 0, // Approx 4 items
-                            maxHeight: isMobile ? 'calc(100% - 200px)' : 'none' // Safeguard to keep footer visible
+                            padding: '1rem',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '0.75rem'
                         }}>
                             {items.length === 0 ? (
-                                <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#666', gap: '1rem' }}>
-                                    <div style={{ fontSize: '3rem', opacity: 0.2 }}>🛒</div>
-                                    <p>Selecciona productos del menú</p>
+                                <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', gap: '1rem', opacity: 0.5 }}>
+                                    <ShoppingCart size={48} strokeWidth={1} />
+                                    <p style={{ fontWeight: '500' }}>Tu carrito está vacío</p>
                                 </div>
                             ) : (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                    {items.map(item => (
-                                        <div key={item.productId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#1e1e1e', padding: '0.75rem', borderRadius: '8px' }}>
-                                            <div style={{ flex: 1 }}>
-                                                <div style={{ fontWeight: '500', marginBottom: '0.25rem' }}>{item.productName}</div>
-                                                <div style={{ fontSize: '0.85rem', color: '#888' }}>S/ {item.price.toFixed(2)} c/u</div>
-                                            </div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginLeft: '1rem' }}>
+                                items.map(item => (
+                                    <div key={item.productId} style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        backgroundColor: 'var(--surface-color)',
+                                        padding: '1rem',
+                                        borderRadius: 'var(--radius-md)',
+                                        border: '1px solid var(--border-color)',
+                                        boxShadow: 'var(--shadow-sm)'
+                                    }}>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ fontWeight: '700', color: 'var(--text-primary)', marginBottom: '2px' }}>{item.productName}</div>
+                                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>S/ {item.price.toFixed(2)} c/u</div>
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginLeft: '1rem' }}>
+                                            <div style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.5rem',
+                                                background: 'var(--background-color)',
+                                                padding: '4px',
+                                                borderRadius: 'var(--radius-sm)',
+                                                border: '1px solid var(--border-color)'
+                                            }}>
                                                 <button
                                                     onClick={() => updateQuantity(item.productId, -1)}
-                                                    style={{ width: '24px', height: '24px', borderRadius: '4px', border: '1px solid #444', background: 'transparent', color: 'white', cursor: 'pointer' }}
+                                                    style={{ width: '28px', height: '28px', borderRadius: '4px', border: 'none', background: 'transparent', color: 'var(--text-primary)', cursor: 'pointer', fontWeight: 'bold' }}
                                                 >-</button>
-                                                <span style={{ fontWeight: 'bold', minWidth: '1.5rem', textAlign: 'center' }}>{item.quantity}</span>
+                                                <span style={{ fontWeight: '800', minWidth: '1.2rem', textAlign: 'center', color: 'var(--primary-color)' }}>{item.quantity}</span>
                                                 <button
                                                     onClick={() => updateQuantity(item.productId, 1)}
-                                                    style={{ width: '24px', height: '24px', borderRadius: '4px', border: '1px solid #444', background: 'transparent', color: 'white', cursor: 'pointer' }}
+                                                    style={{ width: '28px', height: '28px', borderRadius: '4px', border: 'none', background: 'transparent', color: 'var(--text-primary)', cursor: 'pointer', fontWeight: 'bold' }}
                                                 >+</button>
-                                                <button
-                                                    onClick={() => removeFromOrder(item.productId)}
-                                                    style={{ width: '24px', height: '24px', borderRadius: '4px', border: '1px solid #dc2626', background: 'transparent', color: '#dc2626', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', marginLeft: '0.5rem' }}
-                                                >
-                                                    <Trash2 size={14} />
-                                                </button>
                                             </div>
-                                            <div style={{ fontWeight: 'bold', width: '80px', textAlign: 'right' }}>
-                                                S/ {(item.price * item.quantity).toFixed(2)}
-                                            </div>
+                                            <button
+                                                onClick={() => removeFromOrder(item.productId)}
+                                                style={{ width: '32px', height: '32px', borderRadius: '8px', border: 'none', background: 'rgba(192, 110, 82, 0.1)', color: 'var(--danger-color)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
                                         </div>
-                                    ))}
-                                </div>
+                                    </div>
+                                ))
                             )}
                         </div>
 
                         {/* Footer Actions */}
                         <div style={{
-                            padding: isMobile ? '1rem' : '1.5rem',
-                            borderTop: `1px solid ${darkTheme.border}`,
-                            backgroundColor: '#121212',
-                            marginTop: 'auto' // Pull footer to bottom
+                            padding: isMobile ? '1.25rem' : '1.5rem',
+                            borderTop: '1px solid var(--border-color)',
+                            backgroundColor: 'var(--surface-color)',
+                            marginTop: 'auto',
+                            boxShadow: '0 -4px 6px -1px rgb(0 0 0 / 0.05)'
                         }}>
-                            <div style={{ marginBottom: isMobile ? '0.75rem' : '1rem' }}>
-                                <label style={{ display: 'block', color: '#888', marginBottom: '0.25rem', fontSize: '0.9rem' }}>Nombre del Cliente (Opcional)</label>
+                            <div style={{ marginBottom: '1.25rem' }}>
+                                <label style={{ display: 'block', color: 'var(--text-secondary)', marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Identificación</label>
                                 <Input
-                                    placeholder="Ej. Juan Pérez"
+                                    placeholder="Nombre del cliente..."
                                     value={customerName}
                                     onChange={(e) => setCustomerName(e.target.value)}
                                     style={{
-                                        background: darkTheme.surface,
-                                        border: `1px solid ${darkTheme.border}`,
-                                        color: 'white',
-                                        borderRadius: '8px',
-                                        padding: isMobile ? '0.6rem' : '0.75rem'
+                                        background: 'var(--background-color)',
+                                        border: '1px solid var(--border-color)',
+                                        color: 'var(--text-primary)',
+                                        borderRadius: 'var(--radius-md)',
+                                        padding: '0.75rem 1rem',
+                                        fontSize: '0.95rem'
                                     }}
                                     fullWidth
                                 />
                             </div>
 
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: isMobile ? '1rem' : '1.5rem' }}>
-                                <span style={{ color: '#888' }}>Total:</span>
-                                <span style={{ fontSize: isMobile ? '1.5rem' : '2rem', fontWeight: 'bold', lineHeight: 1 }}>S/ {total.toFixed(2)}</span>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                                <span style={{ color: 'var(--text-secondary)', fontWeight: '600' }}>TOTAL</span>
+                                <span style={{ fontSize: '2rem', fontWeight: '900', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>S/ {total.toFixed(2)}</span>
                             </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: isMobile ? '0.75rem' : '1rem' }}>
-                                <Button
-                                    variant="outline"
-                                    onClick={onClose}
-                                    style={{
-                                        borderColor: darkTheme.danger,
-                                        color: darkTheme.danger,
-                                        height: isMobile ? '44px' : '50px'
-                                    }}
-                                >
-                                    Cancelar
-                                </Button>
+                            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 2fr', gap: '1rem' }}>
+                                {!isMobile && (
+                                    <Button
+                                        variant="outline"
+                                        onClick={onClose}
+                                        style={{ height: '54px', borderRadius: 'var(--radius-md)', fontWeight: '600' }}
+                                    >
+                                        Cancelar
+                                    </Button>
+                                )}
                                 <Button
                                     variant="primary"
                                     onClick={handleSaveOrder}
                                     disabled={items.length === 0}
                                     style={{
-                                        background: darkTheme.primary,
-                                        height: isMobile ? '44px' : '50px',
-                                        fontSize: isMobile ? '1rem' : '1.1rem',
-                                        fontWeight: 'bold'
+                                        background: 'var(--primary-color)',
+                                        height: '54px',
+                                        borderRadius: 'var(--radius-md)',
+                                        fontSize: '1.1rem',
+                                        fontWeight: '700',
+                                        boxShadow: '0 4px 12px rgba(142, 115, 91, 0.2)'
                                     }}
                                 >
-                                    {initialOrder ? 'Actualizar' : 'Crear'} Pedido
+                                    {initialOrder ? 'Confirmar Cambios' : 'Confirmar Pedido'}
                                 </Button>
+                                {isMobile && (
+                                    <button
+                                        onClick={onClose}
+                                        style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: '600', padding: '0.5rem' }}
+                                    >
+                                        Volver sin guardar
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>

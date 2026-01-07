@@ -34,21 +34,21 @@ export function OrderCard({ order, onEdit, onDelete }: OrderCardProps) {
 
     const getStatusColor = (status: OrderStatus) => {
         switch (status) {
-            case 'pending': return '#f97316'; // Orange
-            case 'in_preparation': return '#3b82f6'; // Blue
-            case 'ready': return '#22c55e'; // Green
-            case 'delivered': return '#64748b'; // Slate
-            default: return '#6b7280';
+            case 'pending': return 'var(--warning-color)';
+            case 'in_preparation': return 'var(--info-color)';
+            case 'ready': return 'var(--success-color)';
+            case 'delivered': return 'var(--text-secondary)';
+            default: return 'var(--text-secondary)';
         }
     };
 
     const getStatusLabel = (status: OrderStatus) => {
         switch (status) {
             case 'pending': return 'Pendiente';
-            case 'in_preparation': return 'En Preparación';
+            case 'in_preparation': return 'En Cocina';
             case 'ready': return 'Listo';
             case 'delivered': return 'Entregado';
-            case 'paid': return 'Pagado';
+            case 'paid': return 'Cobrado';
             case 'cancelled': return 'Cancelado';
             default: return status;
         }
@@ -62,15 +62,16 @@ export function OrderCard({ order, onEdit, onDelete }: OrderCardProps) {
                         onClick={() => handleStatusChange('in_preparation')}
                         style={{
                             flex: 1,
-                            backgroundColor: '#2563eb',
+                            backgroundColor: 'var(--info-color)',
                             color: 'white',
                             border: 'none',
-                            borderRadius: '8px',
-                            padding: '0.75rem',
-                            fontWeight: '600',
+                            borderRadius: 'var(--radius-md)',
+                            padding: '0.85rem',
+                            fontWeight: '700',
                             cursor: 'pointer',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
-                            transition: 'background 0.2s'
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem',
+                            transition: 'all 0.2s',
+                            boxShadow: '0 4px 10px rgba(113, 146, 190, 0.2)'
                         }}
                     >
                         <ChefHat size={18} /> Preparar
@@ -82,14 +83,15 @@ export function OrderCard({ order, onEdit, onDelete }: OrderCardProps) {
                         onClick={() => handleStatusChange('ready')}
                         style={{
                             flex: 1,
-                            backgroundColor: '#22c55e',
+                            backgroundColor: 'var(--success-color)',
                             color: 'white',
                             border: 'none',
-                            borderRadius: '8px',
-                            padding: '0.75rem',
-                            fontWeight: '600',
+                            borderRadius: 'var(--radius-md)',
+                            padding: '0.85rem',
+                            fontWeight: '700',
                             cursor: 'pointer',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem',
+                            boxShadow: '0 4px 10px rgba(127, 176, 105, 0.2)'
                         }}
                     >
                         <CheckCircle2 size={18} /> Marcar Listo
@@ -101,14 +103,14 @@ export function OrderCard({ order, onEdit, onDelete }: OrderCardProps) {
                         onClick={() => handleStatusChange('delivered')}
                         style={{
                             flex: 1,
-                            backgroundColor: '#64748b',
+                            backgroundColor: 'var(--text-primary)',
                             color: 'white',
                             border: 'none',
-                            borderRadius: '8px',
-                            padding: '0.75rem',
-                            fontWeight: '600',
+                            borderRadius: 'var(--radius-md)',
+                            padding: '0.85rem',
+                            fontWeight: '700',
                             cursor: 'pointer',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem'
                         }}
                     >
                         <Truck size={18} /> Entregar
@@ -120,17 +122,18 @@ export function OrderCard({ order, onEdit, onDelete }: OrderCardProps) {
                         onClick={() => setShowPaymentModal(true)}
                         style={{
                             flex: 1,
-                            backgroundColor: '#f59e0b',
+                            backgroundColor: 'var(--primary-color)',
                             color: 'white',
                             border: 'none',
-                            borderRadius: '8px',
-                            padding: '0.75rem',
-                            fontWeight: '600',
+                            borderRadius: 'var(--radius-md)',
+                            padding: '0.85rem',
+                            fontWeight: '700',
                             cursor: 'pointer',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem',
+                            boxShadow: '0 4px 10px rgba(142, 115, 91, 0.2)'
                         }}
                     >
-                        <Banknote size={18} /> Pagar
+                        <Banknote size={18} /> Cobrar Cuenta
                     </button>
                 );
             default:
@@ -141,126 +144,157 @@ export function OrderCard({ order, onEdit, onDelete }: OrderCardProps) {
     return (
         <>
             <div style={{
-                backgroundColor: '#1e1e1e', // Dark Surface
-                border: `1px solid ${order.status === 'pending' ? '#f97316' : '#333'}`, // Orange border for pending
-                borderRadius: '12px',
-                padding: '1.25rem',
+                backgroundColor: 'var(--surface-color)',
+                border: '1px solid var(--border-color)',
+                borderRadius: 'var(--radius-lg)',
+                padding: '1.5rem',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '1rem',
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3)',
+                gap: '1.25rem',
+                boxShadow: 'var(--shadow-md)',
                 position: 'relative',
-                transition: 'all 0.2s ease-in-out'
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
             }}>
                 {/* Header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center' }}>
                         <div style={{
-                            backgroundColor: '#1e3a8a', // Dark Blue bg
-                            color: '#60a5fa', // Light Blue text
-                            width: '40px',
-                            height: '40px',
-                            borderRadius: '8px',
+                            backgroundColor: 'var(--divider-color)',
+                            color: 'var(--primary-color)',
+                            width: '44px',
+                            height: '44px',
+                            borderRadius: '12px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            fontWeight: 'bold',
-                            fontSize: '1.2rem'
+                            fontWeight: '800',
+                            fontSize: '1.25rem',
+                            border: '1px solid var(--border-color)'
                         }}>
-                            {order.tableNumber}
+                            {order.tableNumber || (order.orderType === 'takeout' ? '🛍️' : '')}
                         </div>
                         <div>
-                            <h3 style={{ margin: 0, color: 'white', fontSize: '1.1rem' }}>Mesa {order.tableNumber}</h3>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: '#9ca3af', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+                            <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.1rem', fontWeight: '800' }}>
+                                {order.orderType === 'takeout' ? 'Para Llevar' : `Mesa ${order.tableNumber}`}
+                            </h3>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.15rem', fontWeight: '500' }}>
                                 <Clock size={14} />
-                                <span>{formatDistanceToNow(order.createdAt, { locale: es })}</span>
+                                <span>{formatDistanceToNow(order.createdAt, { locale: es, addSuffix: true })}</span>
                             </div>
-                            {order.customerName && (
-                                <div style={{ color: '#fbbf24', fontSize: '0.9rem', fontWeight: 'bold', marginTop: '0.25rem' }}>
-                                    {order.customerName}
-                                </div>
-                            )}
                         </div>
                     </div>
 
                     <span style={{
-                        backgroundColor: `${getStatusColor(order.status)}20`, // 20% opacity bg
+                        backgroundColor: `var(--background-color)`,
                         color: getStatusColor(order.status),
-                        padding: '0.25rem 0.75rem',
-                        borderRadius: '999px',
-                        fontSize: '0.85rem',
-                        fontWeight: '600',
-                        border: `1px solid ${getStatusColor(order.status)}40`
+                        padding: '0.4rem 0.85rem',
+                        borderRadius: 'var(--radius-full)',
+                        fontSize: '0.75rem',
+                        fontWeight: '800',
+                        border: '1px solid var(--border-color)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em'
                     }}>
                         {getStatusLabel(order.status)}
                     </span>
                 </div>
 
+                {order.customerName && (
+                    <div style={{
+                        background: 'var(--divider-color)',
+                        padding: '0.5rem 1rem',
+                        borderRadius: 'var(--radius-sm)',
+                        fontSize: '0.9rem',
+                        fontWeight: '600',
+                        color: 'var(--primary-color)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem'
+                    }}>
+                        🏷️ {order.customerName}
+                    </div>
+                )}
+
                 {/* Items */}
                 <div style={{
-                    borderTop: '1px solid #333',
-                    borderBottom: '1px solid #333',
-                    padding: '1rem 0',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '0.75rem'
+                    gap: '0.75rem',
+                    padding: '0.5rem 0'
                 }}>
                     {order.items.map((item, idx) => (
-                        <div key={`${item.productId}-${idx}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#e5e7eb' }}>
-                            <div style={{ display: 'flex', gap: '0.75rem' }}>
-                                <span style={{ fontWeight: '600', color: '#9ca3af' }}>{item.quantity}x</span>
-                                <span>{item.productName}</span>
+                        <div key={`${item.productId}-${idx}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                                <span style={{
+                                    fontWeight: '800',
+                                    color: 'var(--primary-color)',
+                                    background: 'var(--divider-color)',
+                                    padding: '2px 6px',
+                                    borderRadius: '4px',
+                                    fontSize: '0.8rem'
+                                }}>{item.quantity}x</span>
+                                <span style={{ color: 'var(--text-primary)', fontWeight: '500', fontSize: '0.95rem' }}>{item.productName}</span>
                             </div>
-                            <span style={{ color: '#6b7280' }}>S/ {item.price.toFixed(2)}</span>
+                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: '600' }}>S/ {item.price.toFixed(2)}</span>
                         </div>
                     ))}
                 </div>
 
                 {/* Footer */}
-                <div style={{ marginTop: 'auto' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                        <span style={{ color: '#9ca3af', fontWeight: '500' }}>Total:</span>
-                        <span style={{ color: 'white', fontSize: '1.25rem', fontWeight: 'bold' }}>S/ {order.total.toFixed(2)}</span>
+                <div style={{
+                    marginTop: 'auto',
+                    paddingTop: '1rem',
+                    borderTop: '1px solid var(--divider-color)'
+                }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                        <span style={{ color: 'var(--text-secondary)', fontWeight: '600', fontSize: '0.9rem' }}>TOTAL</span>
+                        <span style={{ color: 'var(--text-primary)', fontSize: '1.5rem', fontWeight: '900', letterSpacing: '-0.02em' }}>S/ {order.total.toFixed(2)}</span>
                     </div>
 
                     <div style={{ display: 'flex', gap: '0.75rem' }}>
                         <MainActionButton />
 
-                        {/* Edit Button */}
                         {onEdit && (
                             <button
                                 onClick={onEdit}
                                 style={{
-                                    border: '1px solid #7c3aed',
-                                    backgroundColor: 'rgba(124, 58, 237, 0.1)',
-                                    color: '#a78bfa',
-                                    borderRadius: '8px',
-                                    width: '42px',
+                                    border: '1px solid var(--border-color)',
+                                    backgroundColor: 'var(--surface-color)',
+                                    color: 'var(--text-secondary)',
+                                    borderRadius: 'var(--radius-md)',
+                                    width: '48px',
+                                    height: '48px',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    cursor: 'pointer'
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s'
                                 }}
+                                onMouseEnter={e => e.currentTarget.style.color = 'var(--primary-color)'}
+                                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
                             >
                                 <Pencil size={18} />
                             </button>
                         )}
 
-                        {/* Delete Button */}
                         {onDelete && (
                             <button
                                 onClick={onDelete}
                                 style={{
-                                    border: '1px solid #dc2626',
-                                    backgroundColor: 'rgba(220, 38, 38, 0.1)',
-                                    color: '#ef4444',
-                                    borderRadius: '8px',
-                                    width: '42px',
+                                    border: '1px solid var(--border-color)',
+                                    backgroundColor: 'var(--surface-color)',
+                                    color: 'var(--text-secondary)',
+                                    borderRadius: 'var(--radius-md)',
+                                    width: '48px',
+                                    height: '48px',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    cursor: 'pointer'
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s'
                                 }}
+                                onMouseEnter={e => e.currentTarget.style.color = 'var(--danger-color)'}
+                                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
                             >
                                 <Trash2 size={18} />
                             </button>
