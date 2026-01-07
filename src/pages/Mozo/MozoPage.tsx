@@ -191,13 +191,23 @@ export function MozoPage() {
                 gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
                 gap: '1.5rem'
             }}>
-                {allTables.map(table => (
-                    <TableCard
-                        key={table.id}
-                        table={table}
-                        onClick={() => handleTableClick(table)}
-                    />
-                ))}
+                {allTables.map(table => {
+                    // Find actual order status for this table
+                    const orderId = table.id.startsWith('takeout-order-')
+                        ? table.currentOrderId
+                        : activeOrders?.find(o => o.tableNumber === table.number && o.orderType === 'dine-in')?.id;
+
+                    const currentOrder = activeOrders?.find(o => o.id === orderId);
+
+                    return (
+                        <TableCard
+                            key={table.id}
+                            table={table}
+                            orderStatus={currentOrder?.status}
+                            onClick={() => handleTableClick(table)}
+                        />
+                    );
+                })}
             </div>
 
             {(isOrderModalOpen && (selectedTable || takeoutOrderType === 'takeout') && !isClosed) && (
