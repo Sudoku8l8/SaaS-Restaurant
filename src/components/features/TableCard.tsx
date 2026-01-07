@@ -1,11 +1,12 @@
 import { Card, Badge } from '@/components/shared';
 import { Table2, ShoppingBag } from 'lucide-react';
-import type { RestaurantTable } from '@/types';
+import type { RestaurantTable, OrderStatus } from '@/types';
 import type { HTMLAttributes } from 'react';
 
 interface TableCardProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onClick'> {
     table: RestaurantTable;
     onClick: (table: RestaurantTable) => void;
+    orderStatus?: OrderStatus;
 }
 
 const statusColors = {
@@ -14,13 +15,31 @@ const statusColors = {
     closed: 'neutral',
 } as const;
 
+const orderStatusLabels: Record<OrderStatus, string> = {
+    pending: 'Pendiente',
+    in_preparation: 'Preparando',
+    ready: 'Listo',
+    delivered: 'Entregado',
+    paid: 'Pagado',
+    cancelled: 'Cancelado'
+};
+
+const orderStatusVariants: Record<OrderStatus, 'warning' | 'info' | 'success' | 'error' | 'neutral'> = {
+    pending: 'warning',
+    in_preparation: 'info',
+    ready: 'success',
+    delivered: 'info',
+    paid: 'success',
+    cancelled: 'error'
+};
+
 const statusLabels = {
     free: 'Libre',
     occupied: 'Ocupada',
     closed: 'Cerrada',
 };
 
-export function TableCard({ table, onClick, style, ...props }: TableCardProps) {
+export function TableCard({ table, onClick, orderStatus, style, ...props }: TableCardProps) {
     const isNewTakeout = table.id === 'takeout-new-wildcard';
     const isActiveTakeout = table.id.startsWith('takeout-order-');
     const isTakeout = isNewTakeout || isActiveTakeout;
@@ -120,7 +139,7 @@ export function TableCard({ table, onClick, style, ...props }: TableCardProps) {
             </div>
 
             <Badge
-                variant={isTakeout ? (isNewTakeout ? 'neutral' : 'info') : statusColors[table.status]}
+                variant={isTakeout ? (isNewTakeout ? 'neutral' : (orderStatus ? orderStatusVariants[orderStatus] : 'info')) : (orderStatus ? orderStatusVariants[orderStatus] : statusColors[table.status])}
                 style={{
                     marginTop: '1rem',
                     padding: '0.35rem 0.85rem',
@@ -131,7 +150,7 @@ export function TableCard({ table, onClick, style, ...props }: TableCardProps) {
                     boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
                 }}
             >
-                {isNewTakeout ? 'Nuevo Llevar' : (isActiveTakeout ? 'En Preparación' : statusLabels[table.status])}
+                {isNewTakeout ? 'Nuevo Llevar' : (orderStatus ? orderStatusLabels[orderStatus] : statusLabels[table.status])}
             </Badge>
         </Card>
     );
