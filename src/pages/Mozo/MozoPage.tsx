@@ -241,31 +241,32 @@ export function MozoPage() {
 
                     {takeoutOrders.length === 0 ? (
                         <div style={{
-                            backgroundColor: '#1e1e1e',
-                            borderRadius: '16px',
+                            backgroundColor: 'var(--surface-color)',
+                            borderRadius: 'var(--radius-lg)',
                             padding: '4rem',
                             textAlign: 'center',
-                            border: '1px solid #333'
+                            border: '1px solid var(--border-color)',
+                            boxShadow: 'var(--shadow-sm)'
                         }}>
                             <div style={{
                                 width: '80px',
                                 height: '80px',
-                                backgroundColor: '#333',
+                                backgroundColor: 'var(--divider-color)',
                                 borderRadius: '50%',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 margin: '0 auto 1.5rem auto',
-                                color: '#666'
+                                color: 'var(--primary-color)'
                             }}>
                                 <ShoppingBag size={40} />
                             </div>
-                            <h2 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: 'white' }}>No hay pedidos para llevar</h2>
-                            <p style={{ color: '#888', marginBottom: '2rem' }}>Crea un nuevo pedido para comenzar</p>
+                            <h2 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: 'var(--text-primary)', fontWeight: '800' }}>No hay pedidos para llevar</h2>
+                            <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', fontWeight: '500' }}>Crea un nuevo pedido para comenzar</p>
                             <Button
                                 variant="primary"
                                 onClick={handleOpenTakeoutModal}
-                                style={{ backgroundColor: '#f97316', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem' }}
+                                style={{ background: 'var(--primary-color)', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.85rem 1.75rem', borderRadius: 'var(--radius-md)', fontWeight: '700' }}
                             >
                                 <ShoppingBag size={18} /> Crear Pedido
                             </Button>
@@ -280,23 +281,30 @@ export function MozoPage() {
                             <div
                                 onClick={handleOpenTakeoutModal}
                                 style={{
-                                    border: '2px dashed #444',
-                                    borderRadius: '16px',
+                                    border: '2px dashed var(--border-color)',
+                                    borderRadius: 'var(--radius-lg)',
                                     display: 'flex',
                                     flexDirection: 'column',
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     cursor: 'pointer',
-                                    minHeight: '200px',
-                                    transition: 'border-color 0.2s'
+                                    minHeight: '220px',
+                                    transition: 'all 0.2s',
+                                    backgroundColor: 'var(--surface-color)'
                                 }}
-                                onMouseEnter={e => e.currentTarget.style.borderColor = '#666'}
-                                onMouseLeave={e => e.currentTarget.style.borderColor = '#444'}
+                                onMouseEnter={e => {
+                                    e.currentTarget.style.borderColor = 'var(--primary-color)';
+                                    e.currentTarget.style.backgroundColor = 'var(--divider-color)';
+                                }}
+                                onMouseLeave={e => {
+                                    e.currentTarget.style.borderColor = 'var(--border-color)';
+                                    e.currentTarget.style.backgroundColor = 'var(--surface-color)';
+                                }}
                             >
-                                <div style={{ background: '#333', borderRadius: '50%', padding: '1rem', marginBottom: '1rem' }}>
-                                    <ShoppingBag size={24} color="#aaa" />
+                                <div style={{ background: 'var(--divider-color)', borderRadius: '50%', padding: '1rem', marginBottom: '1rem', color: 'var(--primary-color)' }}>
+                                    <ShoppingBag size={24} />
                                 </div>
-                                <span style={{ color: '#aaa', fontWeight: '500' }}>Nuevo Pedido</span>
+                                <span style={{ color: 'var(--text-primary)', fontWeight: '700' }}>Nuevo Pedido</span>
                             </div>
 
                             {/* Order Cards */}

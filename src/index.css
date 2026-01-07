@@ -13,17 +13,14 @@
   --danger-color: #C06E52;
   --info-color: #7192BE;
 
-  /* Neutral Colors */
-  --background-color: #FDFBF7;
-  /* Warm Linen */
+  /* Neutral Colors - Clean & Professional */
+  --background-color: #F9FAFB;
   --surface-color: #FFFFFF;
-  --text-primary: #2C3E50;
-  /* Deep Slate */
-  --text-secondary: #64748B;
-  /* Muted Slate */
-  --border-color: #EBE9E4;
-  /* Subtle separation */
-  --divider-color: #F1F0EC;
+  --text-primary: #111827;
+  /* Near black slate for clarity */
+  --text-secondary: #6B7280;
+  --border-color: #E5E7EB;
+  --divider-color: #F3F4F6;
 
   /* Typography */
   --font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
@@ -55,19 +52,7 @@
   --transition-speed: 0.2s;
 }
 
-/* Light theme by default, providing accessibility for dark preference if needed, 
-   but for now focusing on the requested clear/elegant look */
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Optional: Soften dark theme instead of pitch black */
-    --background-color: #1A1A1A;
-    --surface-color: #242424;
-    --text-primary: #F3F4F6;
-    --text-secondary: #9CA3AF;
-    --border-color: #313131;
-    --divider-color: #2D2D2D;
-  }
-}
+
 
 * {
   box-sizing: border-box;

@@ -148,13 +148,13 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(44, 62, 80, 0.4)',
+            backgroundColor: 'rgba(255, 255, 255, 0.7)',
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
             zIndex: 1000,
             padding: isMobile ? '0' : '2rem',
-            backdropFilter: 'blur(8px)'
+            backdropFilter: 'blur(12px)'
         }}>
             <div style={{
                 width: '100%',

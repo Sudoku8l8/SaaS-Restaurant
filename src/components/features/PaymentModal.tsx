@@ -41,8 +41,8 @@ export function PaymentModal({ order, onClose, onConfirmPayment }: PaymentModalP
     return (
         <div style={{
             position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            backgroundColor: 'rgba(44, 62, 80, 0.4)',
-            backdropFilter: 'blur(8px)',
+            backgroundColor: 'rgba(255, 255, 255, 0.7)',
+            backdropFilter: 'blur(12px)',
             display: 'flex', justifyContent: 'center', alignItems: 'center',
             zIndex: 1100,
             padding: '1rem'
