@@ -1,16 +1,16 @@
 import { useState } from 'react';
-import { Lock, ShoppingBag, Utensils } from 'lucide-react';
+import { Lock } from 'lucide-react';
 import { TableCard } from '@/components/features/TableCard';
 import { OrderModal } from '@/components/features/OrderModal';
 import { TableDetailModal } from '@/components/features/TableDetailModal';
-import { OrderCard } from '@/components/features/OrderCard';
 import { Button } from '@/components/shared';
 import { useAuth } from '@/hooks/useAuth';
 import { useTables } from '@/hooks/useTables';
 import { useOrders } from '@/hooks/useOrders';
 import { useClosureStatus } from '@/hooks/useClosureStatus';
-import { seedFirestore } from '@/services/firebase/seeders';
 import type { RestaurantTable, Order } from '@/types';
+
+export const TAKEOUT_NEW_ID = 'takeout-new-wildcard';
 
 export function MozoPage() {
     const { user, logout } = useAuth();
@@ -21,12 +21,42 @@ export function MozoPage() {
     const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [orderToEdit, setOrderToEdit] = useState<Order | undefined>(undefined);
-    const [viewMode, setViewMode] = useState<'tables' | 'takeout'>('tables');
     const [takeoutOrderType, setTakeoutOrderType] = useState<'dine-in' | 'takeout'>('dine-in');
 
     const takeoutOrders = activeOrders?.filter(o => o.orderType === 'takeout') || [];
 
+    // Synthesize the "New Takeout" Card
+    const newTakeoutCard: RestaurantTable = {
+        id: TAKEOUT_NEW_ID,
+        number: 0,
+        status: 'free',
+        restaurantId: user?.restaurantId || '',
+    };
+
+    // Synthesize cards for each ACTIVE takeout order
+    const dynamicTakeoutCards: RestaurantTable[] = takeoutOrders.map(order => ({
+        id: `takeout-order-${order.id}`,
+        number: 0, // 0 indicates it's a takeout type
+        status: 'occupied',
+        restaurantId: order.restaurantId,
+        currentOrderId: order.id, // Direct link to order
+    }));
+
     const handleTableClick = (table: RestaurantTable) => {
+        // Case: Create new Takeout
+        if (table.id === TAKEOUT_NEW_ID) {
+            handleOpenTakeoutModal();
+            return;
+        }
+
+        // Case: Edit/View existing Takeout Order from virtual table
+        if (table.id.startsWith('takeout-order-')) {
+            setSelectedTable(table);
+            setIsDetailModalOpen(true);
+            return;
+        }
+
+        // Standard Table Logic
         // Block new orders if cash box is closed
         if (isClosed && table.status === 'free') {
             alert('⚠️ Caja Cerrada\n\nNo se pueden crear nuevos pedidos hoy.\nContacta al administrador si necesitas reabrir.');
@@ -52,7 +82,6 @@ export function MozoPage() {
 
     const handleCloseDetailModal = () => {
         setIsDetailModalOpen(false);
-        setIsDetailModalOpen(false);
         setSelectedTable(null);
     };
 
@@ -60,7 +89,6 @@ export function MozoPage() {
         setOrderToEdit(order);
         setIsDetailModalOpen(false); // Close detail to open edit
         setIsOrderModalOpen(true);
-        // Determine type based on order content, though usually table-based from this flow
         setTakeoutOrderType(order.orderType || 'dine-in');
     };
 
@@ -74,13 +102,14 @@ export function MozoPage() {
         setIsOrderModalOpen(true);
     };
 
-    const handleEditTakeoutOrder = (order: Order) => {
-        setOrderToEdit(order);
-        setTakeoutOrderType('takeout');
-        setIsOrderModalOpen(true);
-    };
+    if (!tables || checkingClosure) return <div className="p-4">Cargando servicio...</div>;
 
-    if (!tables || checkingClosure) return <div className="p-4">Cargando mesas...</div>;
+    // Concatenate physical tables first, then virtual tables (Active Takeouts + New)
+    const allTables = [
+        ...[...tables].sort((a, b) => a.number - b.number),
+        ...dynamicTakeoutCards,
+        newTakeoutCard
+    ];
 
     return (
         <div className="container mt-md">
@@ -118,12 +147,12 @@ export function MozoPage() {
                 gap: 'var(--spacing-sm)',
                 padding: 'var(--spacing-sm) 0',
                 borderBottom: '1px solid var(--divider-color)',
-                flexWrap: 'nowrap' // Prevent wrapping to keep items on same line
+                flexWrap: 'nowrap'
             }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xs)', flex: 1, minWidth: 0 }}>
                     <h1 style={{
                         margin: 0,
-                        fontSize: '1.4rem', // Slightly smaller for better fit
+                        fontSize: '1.4rem',
                         fontWeight: '800',
                         color: 'var(--text-primary)',
                         fontFamily: 'var(--font-family)',
@@ -132,60 +161,8 @@ export function MozoPage() {
                         overflow: 'hidden',
                         textOverflow: 'ellipsis'
                     }}>
-                        {viewMode === 'tables' ? 'Servicio de Mesas' : 'Para Llevar'}
+                        Servicio de Mesas
                     </h1>
-
-                    <div style={{
-                        display: 'flex',
-                        gap: '2px',
-                        background: 'var(--divider-color)',
-                        padding: '3px',
-                        borderRadius: 'var(--radius-full)',
-                        width: 'fit-content',
-                        transform: 'scale(0.9)', // Compact view
-                        transformOrigin: 'left'
-                    }}>
-                        <button
-                            onClick={() => setViewMode('tables')}
-                            style={{
-                                background: viewMode === 'tables' ? 'var(--surface-color)' : 'transparent',
-                                color: viewMode === 'tables' ? 'var(--primary-color)' : 'var(--text-secondary)',
-                                border: 'none',
-                                padding: '0.4rem 1rem',
-                                borderRadius: 'var(--radius-full)',
-                                cursor: 'pointer',
-                                fontWeight: '700',
-                                fontSize: '0.8rem',
-                                transition: 'all 0.2s',
-                                boxShadow: viewMode === 'tables' ? 'var(--shadow-sm)' : 'none',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '6px'
-                            }}
-                        >
-                            <Utensils size={14} /> Mesas
-                        </button>
-                        <button
-                            onClick={() => setViewMode('takeout')}
-                            style={{
-                                background: viewMode === 'takeout' ? 'var(--surface-color)' : 'transparent',
-                                color: viewMode === 'takeout' ? 'var(--primary-color)' : 'var(--text-secondary)',
-                                border: 'none',
-                                padding: '0.4rem 1rem',
-                                borderRadius: 'var(--radius-full)',
-                                cursor: 'pointer',
-                                fontWeight: '700',
-                                fontSize: '0.8rem',
-                                transition: 'all 0.2s',
-                                boxShadow: viewMode === 'takeout' ? 'var(--shadow-sm)' : 'none',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '6px'
-                            }}
-                        >
-                            <ShoppingBag size={14} /> Llevar
-                        </button>
-                    </div>
                 </div>
 
                 <div style={{
@@ -197,7 +174,7 @@ export function MozoPage() {
                     borderRadius: 'var(--radius-md)',
                     boxShadow: 'var(--shadow-sm)',
                     border: '1px solid var(--border-color)',
-                    flexShrink: 0 // Don't let the user box shrink too much
+                    flexShrink: 0
                 }}>
                     <div style={{ textAlign: 'right', minWidth: 'fit-content' }}>
                         <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: '800', letterSpacing: '0.05em', lineHeight: 1 }}>{user?.name}</p>
@@ -209,127 +186,23 @@ export function MozoPage() {
                 </div>
             </header>
 
-            {viewMode === 'tables' ? (
-                /* TABLES GRID */
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
-                    gap: '1.5rem'
-                }}>
-                    {tables.length === 0 && (
-                        <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '2rem' }}>
-                            <p>No se encontraron mesas.</p>
-                            <Button
-                                variant="primary"
-                                onClick={() => {
-                                    localStorage.removeItem('db_seeded'); // Reset cache
-                                    seedFirestore().then(() => window.location.reload());
-                                }}
-                            >
-                                Inicializar Base de Datos (Seeder)
-                            </Button>
-                        </div>
-                    )}
-
-                    {tables.sort((a, b) => a.number - b.number).map(table => (
-                        <TableCard
-                            key={table.id}
-                            table={table}
-                            onClick={() => handleTableClick(table)}
-                        />
-                    ))}
-                </div>
-            ) : (
-                /* TAKEOUT VIEW */
-                <div style={{ marginTop: '1rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                        <span style={{ color: '#888' }}>{takeoutOrders.length} pedidos activos</span>
-                    </div>
-
-                    {takeoutOrders.length === 0 ? (
-                        <div style={{
-                            backgroundColor: 'var(--surface-color)',
-                            borderRadius: 'var(--radius-lg)',
-                            padding: '4rem',
-                            textAlign: 'center',
-                            border: '1px solid var(--border-color)',
-                            boxShadow: 'var(--shadow-sm)'
-                        }}>
-                            <div style={{
-                                width: '80px',
-                                height: '80px',
-                                backgroundColor: 'var(--divider-color)',
-                                borderRadius: '50%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                margin: '0 auto 1.5rem auto',
-                                color: 'var(--primary-color)'
-                            }}>
-                                <ShoppingBag size={40} />
-                            </div>
-                            <h2 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: 'var(--text-primary)', fontWeight: '800' }}>No hay pedidos para llevar</h2>
-                            <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', fontWeight: '500' }}>Crea un nuevo pedido para comenzar</p>
-                            <Button
-                                variant="primary"
-                                onClick={handleOpenTakeoutModal}
-                                style={{ background: 'var(--primary-color)', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.85rem 1.75rem', borderRadius: 'var(--radius-md)', fontWeight: '700' }}
-                            >
-                                <ShoppingBag size={18} /> Crear Pedido
-                            </Button>
-                        </div>
-                    ) : (
-                        <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-                            gap: '1.5rem'
-                        }}>
-                            {/* Create New Card */}
-                            <div
-                                onClick={handleOpenTakeoutModal}
-                                style={{
-                                    border: '2px dashed var(--border-color)',
-                                    borderRadius: 'var(--radius-lg)',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    cursor: 'pointer',
-                                    minHeight: '220px',
-                                    transition: 'all 0.2s',
-                                    backgroundColor: 'var(--surface-color)'
-                                }}
-                                onMouseEnter={e => {
-                                    e.currentTarget.style.borderColor = 'var(--primary-color)';
-                                    e.currentTarget.style.backgroundColor = 'var(--divider-color)';
-                                }}
-                                onMouseLeave={e => {
-                                    e.currentTarget.style.borderColor = 'var(--border-color)';
-                                    e.currentTarget.style.backgroundColor = 'var(--surface-color)';
-                                }}
-                            >
-                                <div style={{ background: 'var(--divider-color)', borderRadius: '50%', padding: '1rem', marginBottom: '1rem', color: 'var(--primary-color)' }}>
-                                    <ShoppingBag size={24} />
-                                </div>
-                                <span style={{ color: 'var(--text-primary)', fontWeight: '700' }}>Nuevo Pedido</span>
-                            </div>
-
-                            {/* Order Cards */}
-                            {takeoutOrders.map(order => (
-                                <OrderCard
-                                    key={order.id}
-                                    order={order}
-                                    onEdit={() => handleEditTakeoutOrder(order)}
-                                />
-                            ))}
-                        </div>
-                    )}
-                </div>
-            )}
+            <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+                gap: '1.5rem'
+            }}>
+                {allTables.map(table => (
+                    <TableCard
+                        key={table.id}
+                        table={table}
+                        onClick={() => handleTableClick(table)}
+                    />
+                ))}
+            </div>
 
             {(isOrderModalOpen && (selectedTable || takeoutOrderType === 'takeout') && !isClosed) && (
                 <OrderModal
-                    table={selectedTable || undefined} // Can be undefined for takeout
+                    table={selectedTable || undefined}
                     initialOrder={orderToEdit}
                     onClose={handleCloseOrderModal}
                     onOrderCreated={handleCloseOrderModal}

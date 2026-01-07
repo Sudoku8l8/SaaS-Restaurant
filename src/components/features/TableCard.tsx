@@ -1,5 +1,5 @@
 import { Card, Badge } from '@/components/shared';
-import { Table2 } from 'lucide-react';
+import { Table2, ShoppingBag } from 'lucide-react';
 import type { RestaurantTable } from '@/types';
 import type { HTMLAttributes } from 'react';
 
@@ -21,8 +21,17 @@ const statusLabels = {
 };
 
 export function TableCard({ table, onClick, style, ...props }: TableCardProps) {
+    const isNewTakeout = table.id === 'takeout-new-wildcard';
+    const isActiveTakeout = table.id.startsWith('takeout-order-');
+    const isTakeout = isNewTakeout || isActiveTakeout;
+
     const isFree = table.status === 'free';
-    const isOccupied = table.status === 'occupied';
+    const isOccupied = table.status === 'occupied' || isActiveTakeout;
+
+    // Status colors and labels specifically for takeout if needed
+    const currentStatusColor = isTakeout
+        ? (isNewTakeout ? 'var(--text-secondary)' : 'var(--primary-color)')
+        : (isFree ? 'var(--success-color)' : 'var(--warning-color)');
 
     return (
         <Card
@@ -35,15 +44,19 @@ export function TableCard({ table, onClick, style, ...props }: TableCardProps) {
                 alignItems: 'center',
                 justifyContent: 'center',
                 height: '150px',
-                backgroundColor: isFree
-                    ? 'rgba(127, 176, 105, 0.08)'  // Soft Green tint
-                    : 'rgba(220, 158, 130, 0.12)', // Soft Peach tint
-                border: isFree
-                    ? '2px solid var(--success-color)'
-                    : '3px solid var(--warning-color)',
-                boxShadow: isFree
-                    ? '0 4px 12px rgba(127, 176, 105, 0.15)'
-                    : '0 8px 20px rgba(220, 158, 130, 0.2)',
+                backgroundColor: isTakeout
+                    ? 'rgba(69, 123, 157, 0.08)' // Primary Celadon tint for takeout
+                    : (isFree
+                        ? 'rgba(127, 176, 105, 0.08)'  // Soft Green tint
+                        : 'rgba(220, 158, 130, 0.12)'), // Soft Peach tint
+                border: isTakeout
+                    ? `2px ${isNewTakeout ? 'dashed var(--border-color)' : 'solid var(--primary-color)'}`
+                    : (isFree
+                        ? '2px solid var(--success-color)'
+                        : '3px solid var(--warning-color)'),
+                boxShadow: isFree && !isActiveTakeout
+                    ? '0 4px 12px rgba(0,0,0,0.05)'
+                    : `0 8px 20px ${isTakeout ? 'rgba(69, 123, 157, 0.2)' : 'rgba(220, 158, 130, 0.2)'}`,
                 borderRadius: 'var(--radius-lg)',
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 position: 'relative',
@@ -53,19 +66,19 @@ export function TableCard({ table, onClick, style, ...props }: TableCardProps) {
             }}
             onMouseEnter={e => {
                 e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)';
-                e.currentTarget.style.boxShadow = isFree
-                    ? '0 12px 24px rgba(127, 176, 105, 0.25)'
-                    : '0 15px 30px rgba(220, 158, 130, 0.35)';
+                e.currentTarget.style.boxShadow = isFree && !isActiveTakeout
+                    ? '0 12px 24px rgba(0,0,0,0.1)'
+                    : `0 15px 30px ${isTakeout ? 'rgba(69, 123, 157, 0.3)' : 'rgba(220, 158, 130, 0.35)'}`;
             }}
             onMouseLeave={e => {
                 e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                e.currentTarget.style.boxShadow = isFree
-                    ? '0 4px 12px rgba(127, 176, 105, 0.15)'
-                    : '0 8px 20px rgba(220, 158, 130, 0.2)';
+                e.currentTarget.style.boxShadow = isFree && !isActiveTakeout
+                    ? '0 4px 12px rgba(0,0,0,0.05)'
+                    : `0 8px 20px ${isTakeout ? 'rgba(69, 123, 157, 0.2)' : 'rgba(220, 158, 130, 0.2)'}`;
             }}
             {...props}
         >
-            {isOccupied && (
+            {isOccupied && !isTakeout && (
                 <div style={{
                     position: 'absolute',
                     top: 0,
@@ -79,24 +92,37 @@ export function TableCard({ table, onClick, style, ...props }: TableCardProps) {
                 }} />
             )}
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', transform: 'translateX(-5px)' }}>
-                <Table2 size={28} style={{ color: isFree ? 'var(--success-color)' : 'var(--warning-color)', opacity: 0.9 }} />
-                <h3 style={{
-                    fontSize: '3rem',
-                    margin: '0',
-                    fontWeight: '900',
-                    color: 'var(--text-primary)',
-                    letterSpacing: '-0.02em',
-                    lineHeight: 1
-                }}>
-                    {table.number}
-                </h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', transform: isTakeout ? 'none' : 'translateX(-5px)' }}>
+                {isTakeout ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                        <ShoppingBag size={isActiveTakeout ? 40 : 32} style={{ color: currentStatusColor }} />
+                        {isActiveTakeout && (
+                            <span style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--primary-color)' }}>
+                                #{table.currentOrderId?.slice(-4).toUpperCase()}
+                            </span>
+                        )}
+                    </div>
+                ) : (
+                    <>
+                        <Table2 size={28} style={{ color: currentStatusColor, opacity: 0.9 }} />
+                        <h3 style={{
+                            fontSize: '3rem',
+                            margin: '0',
+                            fontWeight: '900',
+                            color: 'var(--text-primary)',
+                            letterSpacing: '-0.02em',
+                            lineHeight: 1
+                        }}>
+                            {table.number}
+                        </h3>
+                    </>
+                )}
             </div>
 
             <Badge
-                variant={statusColors[table.status]}
+                variant={isTakeout ? (isNewTakeout ? 'neutral' : 'info') : statusColors[table.status]}
                 style={{
-                    marginTop: '0.75rem',
+                    marginTop: '1rem',
                     padding: '0.35rem 0.85rem',
                     textTransform: 'uppercase',
                     fontSize: '0.75rem',
@@ -105,7 +131,7 @@ export function TableCard({ table, onClick, style, ...props }: TableCardProps) {
                     boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
                 }}
             >
-                {statusLabels[table.status]}
+                {isNewTakeout ? 'Nuevo Llevar' : (isActiveTakeout ? 'En Preparación' : statusLabels[table.status])}
             </Badge>
         </Card>
     );
