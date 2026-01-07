@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { db } from '@/services/firebase/config';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { useAuth } from './useAuth';
 import { format } from 'date-fns';
 
@@ -27,33 +27,30 @@ export function useClosureStatus() {
             return;
         }
 
-        const checkClosure = async () => {
-            if (!user?.restaurantId) {
-                setIsLoading(false);
-                return;
-            }
+        if (!user?.restaurantId) {
+            setIsLoading(false);
+            return;
+        }
 
-            const todayStr = format(new Date(), 'yyyy-MM-dd');
+        const todayStr = format(new Date(), 'yyyy-MM-dd');
 
-            try {
-                const q = query(
-                    collection(db, 'closures'),
-                    where('restaurantId', '==', user.restaurantId),
-                    where('date', '==', todayStr)
-                );
+        const q = query(
+            collection(db, 'closures'),
+            where('restaurantId', '==', user.restaurantId),
+            where('date', '==', todayStr)
+        );
 
-                const snapshot = await getDocs(q);
-                setIsClosed(!snapshot.empty);
-            } catch (error) {
-                console.error("Error checking closure status:", error);
-                setIsClosed(false);
-            } finally {
-                setIsLoading(false);
-            }
-        };
+        // Subscribe to real-time updates
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            setIsClosed(!snapshot.empty);
+            setIsLoading(false);
+        }, (error) => {
+            console.error("Error watching closure status:", error);
+            setIsLoading(false);
+        });
 
-        checkClosure();
-    }, [user?.restaurantId]);
+        return () => unsubscribe();
+    }, [user?.restaurantId, isDemoMode]);
 
     return { isClosed, isLoading };
 }
