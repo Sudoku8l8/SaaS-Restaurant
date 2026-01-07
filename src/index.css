@@ -7,17 +7,17 @@
   --secondary-hover: #91C9CB;
 
   /* Status Colors */
-  --success-color: #7FB069;
-  --warning-color: #DC9E82;
+  --success-color: #50c250;
+  --warning-color: #d46633;
   --danger-color: #E63946;
-  --info-color: #A8DADC;
+  --info-color: #8bd2d4;
 
   /* Neutral Colors - Clean & Professional */
-  --background-color: #F1FAEE;
+  --background-color: #eef1f3;
   --surface-color: #FFFFFF;
   --text-primary: #1D3557;
-  --text-secondary: #457B9D;
-  --border-color: #E5E7EB;
+  --text-secondary: #31729b;
+  --border-color: #fdfdfd;
   --divider-color: #F8FAF7;
 
   /* Typography */
