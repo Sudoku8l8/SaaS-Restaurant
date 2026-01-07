@@ -67,7 +67,8 @@ export function CocinaPage() {
                     gap: '0.75rem',
                     transition: 'all 0.2s',
                     boxShadow: isActive ? 'var(--shadow-md)' : 'var(--shadow-sm)',
-                    fontSize: '0.9rem'
+                    fontSize: '0.9rem',
+                    flexShrink: 0
                 }}
             >
                 {label}
@@ -158,9 +159,29 @@ export function CocinaPage() {
                 )}
 
                 {/* Filters */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
-                    <span style={{ color: 'var(--text-primary)', fontWeight: '800', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Visualización:</span>
-                    <div style={{ display: 'flex', gap: '0.85rem', flexWrap: 'wrap' }}>
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1.5rem',
+                    marginBottom: '2rem',
+                    flexWrap: 'nowrap',
+                    overflowX: 'hidden'
+                }}>
+                    <div style={{
+                        display: 'flex',
+                        gap: '0.85rem',
+                        flexWrap: 'nowrap',
+                        overflowX: 'auto',
+                        paddingBottom: '8px',
+                        msOverflowStyle: 'none',
+                        scrollbarWidth: 'none',
+                        WebkitOverflowScrolling: 'touch'
+                    }}>
+                        <style>{`
+                            div::-webkit-scrollbar {
+                                display: none;
+                            }
+                        `}</style>
                         <FilterButton status="all" label="Todos" />
                         <FilterButton status="pending" label="Pendientes" />
                         <FilterButton status="in_preparation" label="En Cocina" />
