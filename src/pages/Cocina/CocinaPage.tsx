@@ -106,7 +106,7 @@ export function CocinaPage() {
                             <ChefHat size={30} />
                         </div>
                         <div>
-                            <h1 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.5rem', fontWeight: '800', letterSpacing: '-0.01em' }}>Centro de Cocina</h1>
+                            <h1 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.5rem', fontWeight: '800', letterSpacing: '-0.01em' }}>Cocina</h1>
                             <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: '600' }}>
                                 Hola, <span style={{ color: 'var(--primary-color)' }}>{user?.name}</span> &bull; {filteredOrders.length} pedido(s) activos
                             </p>

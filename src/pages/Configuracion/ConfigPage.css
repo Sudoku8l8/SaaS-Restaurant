@@ -1,0 +1,73 @@
+.config-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.tabs-nav {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 1rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    /* Hide scrollbar for cleaner look */
+}
+
+.tabs-nav::-webkit-scrollbar {
+    display: none;
+}
+
+.tab-content {
+    background: var(--surface-color);
+    border-radius: var(--radius-md);
+    padding: 2rem;
+    min-height: 400px;
+    box-shadow: var(--shadow-sm);
+}
+
+.tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .config-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+        position: relative;
+    }
+
+    .config-header>div {
+        padding-right: 100px;
+        /* Space for Volver button */
+    }
+
+    .config-header .tab-btn {
+        position: absolute;
+        top: 0;
+        right: 0;
+    }
+
+    .tabs-nav {
+        gap: 0.5rem;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .tab-content {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .tabs-nav {
+        margin: 0 -1rem 1.5rem -1rem;
+        padding: 0 1rem 0.5rem 1rem;
+    }
+}
