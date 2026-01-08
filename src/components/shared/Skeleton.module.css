@@ -1,0 +1,55 @@
+.skeleton {
+    background: linear-gradient(90deg,
+            rgba(255, 255, 255, 0.05) 25%,
+            rgba(255, 255, 255, 0.1) 37%,
+            rgba(255, 255, 255, 0.05) 63%);
+    background-size: 400% 100%;
+    animation: skeleton-loading 1.4s ease infinite;
+    position: relative;
+    overflow: hidden;
+}
+
+@keyframes skeleton-loading {
+    0% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+.orderCardSkeleton {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    height: 180px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+.footer {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.tableSkeleton {
+    aspect-ratio: 1;
+    width: 100%;
+    min-height: 100px;
+}

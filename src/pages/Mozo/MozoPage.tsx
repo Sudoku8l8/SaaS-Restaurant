@@ -4,6 +4,7 @@ import { TableCard } from '@/components/features/TableCard';
 import { OrderModal } from '@/components/features/OrderModal';
 import { TableDetailModal } from '@/components/features/TableDetailModal';
 import { Button } from '@/components/shared';
+import { TableSkeleton } from '@/components/shared/Skeleton';
 import { useAuth } from '@/hooks/useAuth';
 import { useTables } from '@/hooks/useTables';
 import { useOrders } from '@/hooks/useOrders';
@@ -102,7 +103,22 @@ export function MozoPage() {
         setIsOrderModalOpen(true);
     };
 
-    if (!tables || checkingClosure) return <div className="p-4">Cargando servicio...</div>;
+    if (!tables || checkingClosure) {
+        return (
+            <div className="container mt-md">
+                <div style={{ height: '60px', marginBottom: 'var(--spacing-lg)', borderBottom: '1px solid var(--divider-color)' }} />
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+                    gap: '1.5rem'
+                }}>
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                        <TableSkeleton key={i} />
+                    ))}
+                </div>
+            </div>
+        );
+    }
 
     // Concatenate physical tables first, then virtual tables (Active Takeouts + New)
     const allTables = [

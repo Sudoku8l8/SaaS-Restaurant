@@ -8,6 +8,7 @@ import { useOrders } from '@/hooks/useOrders';
 import { useClosureStatus } from '@/hooks/useClosureStatus';
 import { Button } from '@/components/shared';
 import { OrderCard } from '@/components/features/OrderCard';
+import { OrderCardSkeleton } from '@/components/shared/Skeleton';
 import { OrderStatus } from '@/types';
 
 export function CocinaPage() {
@@ -19,11 +20,22 @@ export function CocinaPage() {
     const [filterStatus, setFilterStatus] = useState<OrderStatus | 'all'>('all');
     const [orderToEdit, setOrderToEdit] = useState<Order | undefined>(undefined);
 
-    if (!activeOrders) return (
-        <div style={{ minHeight: '100vh', backgroundColor: 'var(--background-color)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ fontSize: '1.2rem', color: 'var(--text-secondary)', fontWeight: '600' }}>Cargando pedidos...</div>
-        </div>
-    );
+    if (!activeOrders) {
+        return (
+            <div style={{ minHeight: '100vh', backgroundColor: 'var(--background-color)' }}>
+                <div style={{ height: '90px', backgroundColor: 'var(--surface-color)', borderBottom: '1px solid var(--border-color)', marginBottom: '2.5rem' }} />
+                <div className="container" style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))',
+                    gap: '1.5rem'
+                }}>
+                    {[1, 2, 3, 4, 5, 6].map(i => (
+                        <OrderCardSkeleton key={i} />
+                    ))}
+                </div>
+            </div>
+        );
+    }
 
     const filteredOrders = activeOrders.filter(order =>
         filterStatus === 'all' ? true : order.status === filterStatus

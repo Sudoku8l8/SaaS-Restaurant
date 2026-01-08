@@ -41,12 +41,14 @@ export function useOrders() {
                 } as Order;
             });
 
-            // Client-side sorting & filtering
+            // Client-side sorting & double-check filtering to ensure reactivity even with index issues
             const active = orders
                 .filter(o => o.status !== 'paid')
-                .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()); // Now safe because they are Dates
+                .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 
             setActiveOrders(active);
+        }, (error) => {
+            console.error("Error en useOrders (onSnapshot):", error);
         });
 
         return () => unsubscribe();
