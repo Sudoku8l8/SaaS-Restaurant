@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { PaymentModal } from '@/components/features/PaymentModal';
 import { useOrders } from '@/hooks/useOrders';
+import { useAuth } from '@/hooks/useAuth';
 import type { Order, OrderStatus, PaymentMethod } from '@/types';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -15,6 +16,7 @@ interface OrderCardProps {
 }
 
 export function OrderCard({ order, onEdit, onDelete }: OrderCardProps) {
+    const { user } = useAuth();
     const { updateOrderStatus, payOrder } = useOrders();
     const [showPaymentModal, setShowPaymentModal] = useState(false);
 
@@ -159,29 +161,47 @@ export function OrderCard({ order, onEdit, onDelete }: OrderCardProps) {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                            <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.25rem', fontWeight: '800', letterSpacing: '-0.02em' }}>
-                                Pedido #{order.id.slice(0, 6).toUpperCase()}
-                            </h3>
-
-                            {/* Ubicación / Mesa - Alineado con el título */}
-                            {order.orderType !== 'takeout' ? (
-                                <div style={{
-                                    display: 'flex', alignItems: 'center', gap: '0.35rem',
-                                    color: 'var(--text-secondary)', fontWeight: '700', fontSize: '0.85rem',
-                                    backgroundColor: 'var(--surface-color)',
-                                    border: '1px solid var(--border-color)',
-                                    padding: '1px 8px', borderRadius: '6px',
-                                }}>
-                                    <span>Mesa {order.tableNumber}</span>
-                                </div>
+                            {/* Titulo Dinámico por Rol */}
+                            {user?.role === 'chef' || user?.role === 'admin' ? (
+                                <h3 style={{ margin: 0, color: 'var(--primary-color)', fontSize: '1.4rem', fontWeight: '900', letterSpacing: '-0.02em' }}>
+                                    {order.orderType === 'takeout' ? 'PARA LLEVAR' : `MESA ${order.tableNumber}`}
+                                </h3>
                             ) : (
-                                <div style={{
-                                    color: 'var(--success-color)', fontWeight: '700', fontSize: '0.85rem',
-                                    backgroundColor: 'rgba(76, 175, 80, 0.1)',
-                                    padding: '1px 8px', borderRadius: '6px',
-                                }}>
-                                    <span>Para Llevar</span>
-                                </div>
+                                <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.25rem', fontWeight: '800', letterSpacing: '-0.02em' }}>
+                                    Pedido #{order.id.slice(0, 6).toUpperCase()}
+                                </h3>
+                            )}
+
+                            {/* Información secundaria de ubicación (Solo para otros roles si existen, mozo/admin/chef no lo ven aquí) */}
+                            {user?.role !== 'waiter' && user?.role !== 'chef' && user?.role !== 'admin' && (
+                                <>
+                                    {order.orderType !== 'takeout' ? (
+                                        <div style={{
+                                            display: 'flex', alignItems: 'center', gap: '0.35rem',
+                                            color: 'var(--text-secondary)', fontWeight: '700', fontSize: '0.85rem',
+                                            backgroundColor: 'var(--surface-color)',
+                                            border: '1px solid var(--border-color)',
+                                            padding: '1px 8px', borderRadius: '6px',
+                                        }}>
+                                            <span>Mesa {order.tableNumber}</span>
+                                        </div>
+                                    ) : (
+                                        <div style={{
+                                            color: 'var(--success-color)', fontWeight: '700', fontSize: '0.85rem',
+                                            backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                                            padding: '1px 8px', borderRadius: '6px',
+                                        }}>
+                                            <span>Para Llevar</span>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+
+                            {/* Detalle pequeño del ID para el Chef y Admin */}
+                            {(user?.role === 'chef' || user?.role === 'admin') && (
+                                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: '500' }}>
+                                    #{order.id.slice(0, 6).toUpperCase()}
+                                </span>
                             )}
                         </div>
                     </div>

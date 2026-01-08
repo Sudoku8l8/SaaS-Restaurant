@@ -19,6 +19,7 @@ export const ProtectedRoute = ({ allowedRoles }: { allowedRoles?: UserRole[] }) 
         // Redirect based on role if unauthorized
         if (user.role === UserRole.WAITER) return <Navigate to={`${basePath}/mozo`} replace />;
         if (user.role === UserRole.ADMIN) return <Navigate to={`${basePath}/admin`} replace />;
+        if (user.role === UserRole.CHEF) return <Navigate to={`${basePath}/cocina`} replace />;
         return <Navigate to={`${basePath}/login`} replace />;
     }
 

@@ -14,7 +14,7 @@ export function LoginPage() {
     useEffect(() => {
         if (user) {
             const basePath = restaurantSlug ? `/${restaurantSlug}` : '';
-            if (user.role === UserRole.ADMIN) {
+            if (user.role === UserRole.ADMIN || user.role === UserRole.CHEF) {
                 navigate(`${basePath}/cocina`);
             } else {
                 navigate(`${basePath}/mozo`);

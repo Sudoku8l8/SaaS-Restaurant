@@ -56,7 +56,7 @@ export const router = createBrowserRouter([
                     },
                     {
                         path: 'cocina',
-                        element: <ProtectedRoute allowedRoles={[UserRole.ADMIN]} />,
+                        element: <ProtectedRoute allowedRoles={[UserRole.ADMIN, UserRole.CHEF]} />,
                         children: [{ index: true, element: <CocinaPage /> }],
                     },
                     {
