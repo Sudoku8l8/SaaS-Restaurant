@@ -157,46 +157,32 @@ export function OrderCard({ order, onEdit, onDelete }: OrderCardProps) {
             }}>
                 {/* Header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center' }}>
-                        <div style={{
-                            backgroundColor: 'var(--divider-color)',
-                            color: 'var(--primary-color)',
-                            width: '44px',
-                            height: '44px',
-                            borderRadius: '12px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontWeight: '800',
-                            fontSize: '1.25rem',
-                            border: '1px solid var(--border-color)'
-                        }}>
-                            {order.tableNumber || (order.orderType === 'takeout' ? '🛍️' : '')}
-                        </div>
-                        <div>
-                            <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.1rem', fontWeight: '800' }}>
-                                Pedido #{order.id.slice(0, 6).toUpperCase()}
-                            </h3>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.15rem', fontWeight: '500' }}>
-                                <Clock size={14} />
-                                <span>{formatDistanceToNow(order.createdAt, { locale: es, addSuffix: true })}</span>
-                            </div>
-                        </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                        <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.25rem', fontWeight: '800', letterSpacing: '-0.02em' }}>
+                            Pedido #{order.id.slice(0, 6).toUpperCase()}
+                        </h3>
                     </div>
 
-                    <span style={{
-                        backgroundColor: `var(--background-color)`,
-                        color: getStatusColor(order.status),
-                        padding: '0.4rem 0.85rem',
-                        borderRadius: 'var(--radius-full)',
-                        fontSize: '0.75rem',
-                        fontWeight: '800',
-                        border: '1px solid var(--border-color)',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em'
-                    }}>
-                        {getStatusLabel(order.status)}
-                    </span>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
+                        <span style={{
+                            backgroundColor: `var(--background-color)`,
+                            color: getStatusColor(order.status),
+                            padding: '0.4rem 0.85rem',
+                            borderRadius: 'var(--radius-full)',
+                            fontSize: '0.75rem',
+                            fontWeight: '800',
+                            border: '1px solid var(--border-color)',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em'
+                        }}>
+                            {getStatusLabel(order.status)}
+                        </span>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-secondary)', fontSize: '0.75rem', fontWeight: '600' }}>
+                            <Clock size={12} />
+                            <span>{formatDistanceToNow(order.createdAt, { locale: es, addSuffix: true })}</span>
+                        </div>
+                    </div>
                 </div>
 
                 {order.customerName && (
