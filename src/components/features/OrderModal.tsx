@@ -72,6 +72,28 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
     // Get dynamic categories
     const categoryTabs = ['popular', ...categories.map(c => c.name)];
 
+    // Permission Helpers
+    const isWaiter = user?.role === 'waiter';
+
+    // Helper to check if an item can be removed
+    const canRemoveItem = (productId: string) => {
+        if (!initialOrder || !isWaiter) return true; // Admins/Chefs or new orders: can remove anything
+        // Waiters can only remove items NOT present in the initial order (newly added)
+        const inInitial = initialOrder.items.some(i => i.productId === productId);
+        return !inInitial;
+    };
+
+    // Helper to check if quantity can be decreased
+    const canDecreaseQuantity = (productId: string, currentQty: number) => {
+        if (!initialOrder || !isWaiter) return true; // Admins/Chefs or new orders: can decrease
+
+        const originalItem = initialOrder.items.find(i => i.productId === productId);
+        if (!originalItem) return true; // It's a new item, can decrease freely
+
+        // Can only decrease if current quantity is greater than original quantity
+        return currentQty > originalItem.quantity;
+    };
+
     const addToOrder = (product: Product) => {
         setItems(prev => {
             const existing = prev.find(i => i.productId === product.id);
@@ -93,12 +115,17 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
     };
 
     const removeFromOrder = (productId: string) => {
+        if (!canRemoveItem(productId)) return;
         setItems(prev => prev.filter(i => i.productId !== productId));
     };
 
     const updateQuantity = (productId: string, delta: number) => {
         setItems(prev => prev.map(i => {
             if (i.productId === productId) {
+                // Check permission for decreasing
+                if (delta < 0 && !canDecreaseQuantity(productId, i.quantity)) {
+                    return i;
+                }
                 const newQty = Math.max(1, i.quantity + delta);
                 return { ...i, quantity: newQty, subtotal: newQty * i.price };
             }
@@ -454,7 +481,13 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                             }}>
                                                 <button
                                                     onClick={() => updateQuantity(item.productId, -1)}
-                                                    style={{ width: '28px', height: '28px', borderRadius: '4px', border: 'none', background: 'transparent', color: 'var(--text-primary)', cursor: 'pointer', fontWeight: 'bold' }}
+                                                    disabled={!canDecreaseQuantity(item.productId, item.quantity)}
+                                                    style={{
+                                                        width: '28px', height: '28px', borderRadius: '4px', border: 'none', background: 'transparent',
+                                                        color: 'var(--text-primary)', fontWeight: 'bold',
+                                                        opacity: canDecreaseQuantity(item.productId, item.quantity) ? 1 : 0.3,
+                                                        cursor: canDecreaseQuantity(item.productId, item.quantity) ? 'pointer' : 'not-allowed'
+                                                    }}
                                                 >-</button>
                                                 <span style={{ fontWeight: '800', minWidth: '1.2rem', textAlign: 'center', color: 'var(--primary-color)' }}>{item.quantity}</span>
                                                 <button
@@ -464,7 +497,14 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                             </div>
                                             <button
                                                 onClick={() => removeFromOrder(item.productId)}
-                                                style={{ width: '32px', height: '32px', borderRadius: '8px', border: 'none', background: 'rgba(192, 110, 82, 0.1)', color: 'var(--danger-color)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                                disabled={!canRemoveItem(item.productId)}
+                                                style={{
+                                                    width: '32px', height: '32px', borderRadius: '8px', border: 'none',
+                                                    background: 'rgba(192, 110, 82, 0.1)', color: 'var(--danger-color)',
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                    opacity: canRemoveItem(item.productId) ? 1 : 0.3,
+                                                    cursor: canRemoveItem(item.productId) ? 'pointer' : 'not-allowed'
+                                                }}
                                             >
                                                 <Trash2 size={16} />
                                             </button>

@@ -22,6 +22,7 @@ export type PaymentMethod = (typeof PaymentMethod)[keyof typeof PaymentMethod];
 export const UserRole = {
     ADMIN: 'admin',
     WAITER: 'waiter',
+    CHEF: 'chef',
 } as const;
 export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 
