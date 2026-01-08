@@ -22,7 +22,7 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
     const { createOrder, updateOrder } = useOrders();
     const [items, setItems] = useState<OrderItem[]>(initialOrder?.items || []);
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState<string>('all');
+    const [selectedCategory, setSelectedCategory] = useState<string>('popular'); // Default to popular
     const [customerName, setCustomerName] = useState(initialOrder?.customerName || '');
     const [products, setProducts] = useState<Product[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
@@ -58,12 +58,19 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
     // Filter products
     const filteredProducts = products?.filter(p => {
         const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
+
+        let matchesCategory = false;
+        if (selectedCategory === 'popular') {
+            matchesCategory = p.isPopular === true;
+        } else {
+            matchesCategory = p.category === selectedCategory;
+        }
+
         return matchesSearch && matchesCategory;
     });
 
     // Get dynamic categories
-    const categoryTabs = ['all', ...categories.map(c => c.name)];
+    const categoryTabs = ['popular', ...categories.map(c => c.name)];
 
     const addToOrder = (product: Product) => {
         setItems(prev => {
@@ -306,7 +313,7 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                         fontSize: '0.85rem'
                                     }}
                                 >
-                                    {cat === 'all' ? '🍽️ Todos' : cat}
+                                    {cat === 'popular' ? '🔥 Populares' : cat}
                                 </button>
                             ))}
                         </div>

@@ -70,6 +70,7 @@ export interface Product {
     description?: string;
     available: boolean;
     imageUrl?: string;
+    isPopular?: boolean;
 }
 
 export interface Category {

@@ -158,9 +158,32 @@ export function OrderCard({ order, onEdit, onDelete }: OrderCardProps) {
                 {/* Header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.25rem', fontWeight: '800', letterSpacing: '-0.02em' }}>
-                            Pedido #{order.id.slice(0, 6).toUpperCase()}
-                        </h3>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                            <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.25rem', fontWeight: '800', letterSpacing: '-0.02em' }}>
+                                Pedido #{order.id.slice(0, 6).toUpperCase()}
+                            </h3>
+
+                            {/* Ubicación / Mesa - Alineado con el título */}
+                            {order.orderType !== 'takeout' ? (
+                                <div style={{
+                                    display: 'flex', alignItems: 'center', gap: '0.35rem',
+                                    color: 'var(--text-secondary)', fontWeight: '700', fontSize: '0.85rem',
+                                    backgroundColor: 'var(--surface-color)',
+                                    border: '1px solid var(--border-color)',
+                                    padding: '1px 8px', borderRadius: '6px',
+                                }}>
+                                    <span>Mesa {order.tableNumber}</span>
+                                </div>
+                            ) : (
+                                <div style={{
+                                    color: 'var(--success-color)', fontWeight: '700', fontSize: '0.85rem',
+                                    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                                    padding: '1px 8px', borderRadius: '6px',
+                                }}>
+                                    <span>Para Llevar</span>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>

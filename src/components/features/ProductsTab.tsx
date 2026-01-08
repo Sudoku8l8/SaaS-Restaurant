@@ -18,7 +18,8 @@ export function ProductsTab() {
         name: '',
         price: '',
         category: '',
-        available: true
+        available: true,
+        isPopular: false
     });
 
     useEffect(() => {
@@ -64,7 +65,8 @@ export function ProductsTab() {
                 name: formData.name,
                 price: parseFloat(formData.price),
                 category: formData.category,
-                available: formData.available
+                available: formData.available,
+                isPopular: formData.isPopular
             };
 
             if (editingProduct) {
@@ -93,7 +95,8 @@ export function ProductsTab() {
                 name: product.name,
                 price: product.price.toString(),
                 category: product.category,
-                available: product.available
+                available: product.available,
+                isPopular: product.isPopular || false
             });
         } else {
             setEditingProduct(null);
@@ -101,7 +104,8 @@ export function ProductsTab() {
                 name: '',
                 price: '',
                 category: categories.length > 0 ? categories[0].name : '',
-                available: true
+                available: true,
+                isPopular: false
             });
         }
         setIsModalOpen(true);
@@ -122,7 +126,10 @@ export function ProductsTab() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
                 {products.map(product => (
                     <Card key={product.id} style={{ padding: '1rem', position: 'relative', opacity: product.available ? 1 : 0.6 }}>
-                        <div style={{ fontWeight: 'bold' }}>{product.name}</div>
+                        <div style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            {product.name}
+                            {product.isPopular && <span title="Popular">⭐</span>}
+                        </div>
                         <div style={{ color: 'var(--color-primary)', fontSize: '1.2rem' }}>S/ {product.price.toFixed(2)}</div>
                         <div style={{ fontSize: '0.8rem', color: '#666' }}>{product.category}</div>
                         <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
@@ -179,6 +186,15 @@ export function ProductsTab() {
                                     onChange={e => setFormData({ ...formData, available: e.target.checked })}
                                 />
                                 Disponible para venta
+                            </label>
+
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={formData.isPopular}
+                                    onChange={e => setFormData({ ...formData, isPopular: e.target.checked })}
+                                />
+                                ⭐ Marcar como Popular
                             </label>
 
                             <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
