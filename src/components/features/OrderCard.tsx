@@ -175,7 +175,7 @@ export function OrderCard({ order, onEdit, onDelete }: OrderCardProps) {
                         </div>
                         <div>
                             <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.1rem', fontWeight: '800' }}>
-                                {order.orderType === 'takeout' ? 'Para Llevar' : `Mesa ${order.tableNumber}`}
+                                Pedido #{order.id.slice(0, 6).toUpperCase()}
                             </h3>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.15rem', fontWeight: '500' }}>
                                 <Clock size={14} />

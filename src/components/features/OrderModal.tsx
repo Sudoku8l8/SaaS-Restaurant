@@ -242,7 +242,7 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                             gap: '1rem'
                         }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <h2 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, color: 'var(--primary-color)' }}>
+                                <h2 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, color: 'var(--primary-color)', }}>
                                     {orderType === 'takeout'
                                         ? 'Nuevo Pedido'
                                         : (table?.number ? `Mesa ${table.number}` : 'Nuevo Pedido')}
@@ -250,22 +250,31 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                 {isMobile && <button onClick={onClose} style={{ background: 'var(--divider-color)', border: 'none', color: 'var(--text-secondary)', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>}
                             </div>
 
-                            <div style={{ width: isMobile ? '100%' : '350px', position: 'relative' }}>
-                                <Search size={18} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', opacity: 0.6 }} />
-                                <Input
+                            <div style={{ position: 'relative', width: '350px' }}>
+                                <Search
+                                    size={20}
+                                    style={{
+                                        position: 'absolute',
+                                        left: 14,
+                                        top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        color: 'var(--text-secondary)',
+                                        zIndex: 20,
+                                        pointerEvents: 'none'
+                                    }}
+                                />
+
+                                <input
                                     placeholder="Buscar en el menú..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     style={{
-                                        background: 'var(--background-color)',
-                                        border: '1px solid var(--border-color)',
-                                        color: 'var(--text-primary)',
-                                        borderRadius: 'var(--radius-full)',
-                                        paddingLeft: '3rem',
+                                        width: '100%',
                                         height: '48px',
-                                        fontSize: '0.95rem'
+                                        paddingLeft: '48px',
+                                        borderRadius: '999px',
+                                        border: '1px solid #c9c5c5ff'
                                     }}
-                                    fullWidth
                                 />
                             </div>
                         </div>
