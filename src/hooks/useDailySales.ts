@@ -12,7 +12,7 @@ export interface SalesMetrics {
     salesByPaymentMethod: Record<string, number>;
 }
 
-export function useDailySales() {
+export function useDailySales(targetDate?: Date) {
     const { user } = useAuth();
     const restaurantId = user?.restaurantId || '';
 
@@ -37,6 +37,8 @@ export function useDailySales() {
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
+            const dateToCompare = targetDate || new Date();
+
             const paidOrdersToday = snapshot.docs
                 .map(doc => {
                     const data = doc.data();
@@ -45,9 +47,10 @@ export function useDailySales() {
                 })
                 .filter(order => {
                     const isPaid = order.status === 'paid';
-                    const isToday = isSameDay(order.createdAt, new Date());
-                    return isPaid && isToday;
+                    const isTargetDay = isSameDay(order.createdAt, dateToCompare);
+                    return isPaid && isTargetDay;
                 });
+            // ... rest of the logic remains the same ...
 
             // Update Orders State
             setOrders(paidOrdersToday);

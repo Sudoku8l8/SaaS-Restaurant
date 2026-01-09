@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { format } from 'date-fns';
-import { useNavigate, useParams } from 'react-router-dom';
+import { format, parseISO } from 'date-fns';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useDailySales } from '@/hooks/useDailySales';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrders } from '@/hooks/useOrders';
@@ -14,27 +14,28 @@ import { exportDailySalesToExcel } from '@/services/exportExcel';
 export function CierreCajaPage() {
     const navigate = useNavigate();
     const { restaurantSlug } = useParams();
+    const [searchParams] = useSearchParams();
+    const dateParam = searchParams.get('date');
+    const targetDate = dateParam ? parseISO(dateParam) : new Date();
+
     const { user } = useAuth();
-    const { metrics, orders, isLoading: loadingMetrics } = useDailySales();
+    const { metrics, orders, isLoading: loadingMetrics } = useDailySales(targetDate);
     const { activeOrders } = useOrders(); // Reuse useOrders to check for pending orders
     const [isClosing, setIsClosing] = useState(false);
     const [existingClosure, setExistingClosure] = useState<boolean>(false);
     const [checkingClosure, setCheckingClosure] = useState(true);
 
-    // Check if there is already a closure for today
+    // Check if there is already a closure for the target date
     useEffect(() => {
         const checkClosure = async () => {
             if (!user?.restaurantId) return;
 
-            // We store date as string YYYY-MM-DD to easily check "day equality" or timestamp.
-            // Let's assume we store 'date' string in closure for query simplicity.
-            const todayStr = format(new Date(), 'yyyy-MM-dd');
+            const targetDateStr = format(targetDate, 'yyyy-MM-dd');
 
             const q = query(
                 collection(db, 'closures'),
                 where('restaurantId', '==', user.restaurantId),
-                where('date', '==', todayStr),
-                // limit(1) // Limits are always good
+                where('date', '==', targetDateStr),
             );
 
             try {
@@ -69,11 +70,11 @@ export function CierreCajaPage() {
 
         setIsClosing(true);
         try {
-            const todayStr = format(new Date(), 'yyyy-MM-dd');
+            const dateStr = format(targetDate, 'yyyy-MM-dd');
 
             const closureData = {
                 restaurantId: user?.restaurantId,
-                date: todayStr,
+                date: dateStr,
                 totalSales: metrics.totalSales,
                 orderCount: metrics.orderCount,
                 salesByWaiter: metrics.salesByWaiter,
@@ -86,7 +87,7 @@ export function CierreCajaPage() {
             await addDoc(collection(db, 'closures'), closureData);
 
             setExistingClosure(true);
-            alert(`✅ Caja Cerrada Correctamente\n\nFecha: ${todayStr}\nTotal: S/ ${metrics.totalSales}`);
+            alert(`✅ Caja Cerrada Correctamente\n\nFecha: ${dateStr}\nTotal: S/ ${metrics.totalSales}`);
 
         } catch (error) {
             console.error("Error creating closure:", error);
@@ -101,7 +102,7 @@ export function CierreCajaPage() {
             <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                 <div>
                     <h1>Cierre de Caja</h1>
-                    <p>Resumen del Día - {new Date().toLocaleDateString()}</p>
+                    <p>Resumen del día: <strong>{format(targetDate, 'dd/MM/yyyy')}</strong></p>
                 </div>
                 <div style={{ display: 'flex', gap: '1rem' }}>
                     <Button
@@ -134,7 +135,7 @@ export function CierreCajaPage() {
                     <CheckCircle size={22} />
                     <span style={{ fontWeight: '600' }}>
                         <strong style={{ textTransform: 'uppercase', marginRight: '0.5rem' }}>Caja Cerrada:</strong>
-                        Ya se ha realizado el cierre de hoy. Todas las operaciones están bloqueadas.
+                        Ya se ha realizado el cierre de esta fecha ({format(targetDate, 'dd/MM/yyyy')}). Todas las operaciones están bloqueadas.
                     </span>
                 </div>
             )}

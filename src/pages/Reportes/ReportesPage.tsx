@@ -31,6 +31,7 @@ export function ReportesPage() {
     // Data State
     const [closures, setClosures] = useState<ClosureRecord[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
 
     const fetchClosures = async () => {
         if (!user?.restaurantId) return;
@@ -68,6 +69,62 @@ export function ReportesPage() {
     // Calculate totals
     const totalSales = closures.reduce((sum, c) => sum + c.totalSales, 0);
     const totalOrders = closures.reduce((sum, c) => sum + c.orderCount, 0);
+
+    const handleExportHistorical = async () => {
+        if (!user?.restaurantId || closures.length === 0) return;
+
+        setIsExporting(true);
+        try {
+            // 1. Fetch orders and filter in clinical to avoid Composite Index errors
+            const q = query(
+                collection(db, 'orders'),
+                where('restaurantId', '==', user.restaurantId)
+            );
+
+            const snapshot = await getDocs(q);
+            const startRange = new Date(fromDate);
+            const endRange = new Date(toDate + 'T23:59:59');
+
+            const orders = snapshot.docs
+                .map(doc => {
+                    const data = doc.data();
+                    const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
+                    return { id: doc.id, ...data, createdAt } as any;
+                })
+                .filter(order => {
+                    const isPaid = order.status === 'paid';
+                    const isInRange = order.createdAt >= startRange && order.createdAt <= endRange;
+                    return isPaid && isInRange;
+                });
+
+            // 2. Aggregate metrics from closures
+            const summaryMetrics = {
+                totalSales,
+                orderCount: totalOrders,
+                salesByWaiter: {} as Record<string, number>,
+                salesByPaymentMethod: {} as Record<string, number>
+            };
+
+            closures.forEach(c => {
+                Object.entries(c.salesByWaiter || {}).forEach(([waiter, amount]) => {
+                    summaryMetrics.salesByWaiter[waiter] = (summaryMetrics.salesByWaiter[waiter] || 0) + amount;
+                });
+                Object.entries(c.salesByPaymentMethod || {}).forEach(([method, amount]) => {
+                    summaryMetrics.salesByPaymentMethod[method] = (summaryMetrics.salesByPaymentMethod[method] || 0) + amount;
+                });
+            });
+
+            // 3. Export
+            const periodLabel = `${format(parseISO(fromDate), 'dd/MM/yyyy')} - ${format(parseISO(toDate), 'dd/MM/yyyy')}`;
+            await exportDailySalesToExcel(summaryMetrics, orders, periodLabel);
+
+        } catch (error) {
+            console.error("Error exporting historical data:", error);
+            alert("Error al exportar los datos. Intente nuevamente.");
+        } finally {
+            setIsExporting(false);
+        }
+    };
 
     return (
         <div className="container mt-md">
@@ -146,33 +203,11 @@ export function ReportesPage() {
                         <Button
                             variant="secondary"
                             size="sm"
-                            onClick={() => {
-                                // Export summary of all closures
-                                const summaryMetrics: {
-                                    totalSales: number;
-                                    orderCount: number;
-                                    salesByWaiter: Record<string, number>;
-                                    salesByPaymentMethod: Record<string, number>;
-                                } = {
-                                    totalSales,
-                                    orderCount: totalOrders,
-                                    salesByWaiter: {},
-                                    salesByPaymentMethod: {}
-                                };
-                                // Aggregate waiter and payment data
-                                closures.forEach(c => {
-                                    Object.entries(c.salesByWaiter || {}).forEach(([waiter, amount]) => {
-                                        summaryMetrics.salesByWaiter[waiter] = (summaryMetrics.salesByWaiter[waiter] || 0) + amount;
-                                    });
-                                    Object.entries(c.salesByPaymentMethod || {}).forEach(([method, amount]) => {
-                                        summaryMetrics.salesByPaymentMethod[method] = (summaryMetrics.salesByPaymentMethod[method] || 0) + amount;
-                                    });
-                                });
-                                exportDailySalesToExcel(summaryMetrics, []);
-                            }}
+                            onClick={handleExportHistorical}
+                            disabled={isExporting}
                             style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                         >
-                            <Download size={16} /> Exportar Resumen
+                            <Download size={16} /> {isExporting ? 'Generando Excel...' : 'Exportar Detalles (Excel)'}
                         </Button>
                     )}
                 </div>

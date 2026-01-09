@@ -4,13 +4,13 @@ import { es } from 'date-fns/locale';
 import type { SalesMetrics } from '@/hooks/useDailySales';
 import type { Order } from '@/types';
 
-export const exportDailySalesToExcel = async (metrics: SalesMetrics, orders: Order[]) => {
+export const exportDailySalesToExcel = async (metrics: SalesMetrics, orders: Order[], customDateRange?: string) => {
     const workbook = new ExcelJS.Workbook();
     workbook.creator = 'Restaurant App';
     workbook.created = new Date();
 
-    const dateStr = format(new Date(), 'dd/MM/yyyy', { locale: es });
-    const filename = `Ventas_${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
+    const dateStr = customDateRange || format(new Date(), 'dd/MM/yyyy', { locale: es });
+    const filename = customDateRange ? `Reporte_Ventas_${customDateRange.replace(/\//g, '-')}.xlsx` : `Ventas_${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
 
     // ==========================================
     // SHEET 1: RESUMEN
@@ -22,7 +22,7 @@ export const exportDailySalesToExcel = async (metrics: SalesMetrics, orders: Ord
     // Title
     wsSummary.mergeCells('A1:B1');
     const titleCell = wsSummary.getCell('A1');
-    titleCell.value = `Resumen de Ventas - ${dateStr}`;
+    titleCell.value = customDateRange ? `Reporte de Ventas: ${customDateRange}` : `Resumen de Ventas - ${dateStr}`;
     titleCell.font = { name: 'Arial', size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
     titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2c3e50' } };
     titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
