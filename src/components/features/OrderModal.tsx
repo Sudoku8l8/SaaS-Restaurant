@@ -28,6 +28,7 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
     const [categories, setCategories] = useState<Category[]>([]);
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
     const [mobileView, setMobileView] = useState<'menu' | 'cart'>('menu');
+    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -136,8 +137,9 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
     const total = items.reduce((sum, item) => sum + item.subtotal, 0);
 
     const handleSaveOrder = async () => {
-        if (!user || items.length === 0) return;
+        if (!user || items.length === 0 || isSaving) return;
 
+        setIsSaving(true);
         try {
             if (initialOrder) {
                 // Update Order
@@ -171,6 +173,7 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
         } catch (err: any) {
             console.error('Failed to save order:', err);
             alert(`Error al guardar el pedido: ${err.message || 'Desconocido'}`);
+            setIsSaving(false);
         }
     };
 
@@ -558,17 +561,18 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                 <Button
                                     variant="primary"
                                     onClick={handleSaveOrder}
-                                    disabled={items.length === 0}
+                                    disabled={items.length === 0 || isSaving}
                                     style={{
                                         background: 'var(--primary-color)',
                                         height: '54px',
                                         borderRadius: 'var(--radius-md)',
                                         fontSize: '1.1rem',
                                         fontWeight: '700',
-                                        boxShadow: '0 4px 12px rgba(142, 115, 91, 0.2)'
+                                        boxShadow: '0 4px 12px rgba(142, 115, 91, 0.2)',
+                                        opacity: isSaving ? 0.7 : 1
                                     }}
                                 >
-                                    {initialOrder ? 'Confirmar Cambios' : 'Confirmar Pedido'}
+                                    {isSaving ? 'Guardando...' : (initialOrder ? 'Confirmar Cambios' : 'Confirmar Pedido')}
                                 </Button>
                                 {isMobile && (
                                     <button
