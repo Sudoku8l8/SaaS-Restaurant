@@ -218,19 +218,24 @@ class PrinterService {
     }
 
     private sendToRawBT(data: Uint8Array) {
-        // Convert to base64
-        let binary = '';
-        const bytes = new Uint8Array(data);
-        const len = bytes.byteLength;
-        for (let i = 0; i < len; i++) {
-            binary += String.fromCharCode(bytes[i]);
-        }
-        const base64 = window.btoa(binary);
+        try {
+            // Convert to base64
+            let binary = '';
+            const bytes = new Uint8Array(data);
+            const len = bytes.byteLength;
+            for (let i = 0; i < len; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            const base64 = window.btoa(binary);
 
-        // Standard RawBT intent for base64 commands
-        // This explicitly tells RawBT that the data is base64 and should be processed as print commands
-        const url = `intent:#Intent;action=ru.a402d.rawbtprinter.intent.action.PRINT;S.base64=${base64};end;`;
-        window.location.href = url;
+            // Updated RawBT intent for base64 commands
+            // Adding package name explicitly to help Android find the app
+            const url = `intent:#Intent;action=ru.a402d.rawbtprinter.intent.action.PRINT;S.base64=${base64};package=ru.a402d.rawbtprinter;end;`;
+
+            window.location.href = url;
+        } catch (err: any) {
+            alert('Error en RawBT: ' + err.message);
+        }
     }
 }
 
