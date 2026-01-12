@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ShoppingCart, Utensils, Search, Trash2, Printer } from 'lucide-react';
+import { ShoppingCart, Utensils, Search, Trash2, Printer, MessageSquare } from 'lucide-react';
 import { db } from '@/services/firebase/config';
 import { collection, query, where } from 'firebase/firestore';
 import { Button, Input } from '@/components/shared';
@@ -133,6 +133,16 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
             }
             return i;
         }));
+    };
+
+    const handleUpdateNote = (productId: string) => {
+        const item = items.find(i => i.productId === productId);
+        const newNote = prompt(`Observación para ${item?.productName}:`, item?.notes || '');
+        if (newNote !== null) {
+            setItems(prev => prev.map(i =>
+                i.productId === productId ? { ...i, notes: newNote } : i
+            ));
+        }
     };
 
     const total = items.reduce((sum, item) => sum + item.subtotal, 0);
@@ -494,8 +504,39 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                         boxShadow: 'var(--shadow-sm)'
                                     }}>
                                         <div style={{ flex: 1 }}>
-                                            <div style={{ fontWeight: '700', color: 'var(--text-primary)', marginBottom: '2px' }}>{item.productName}</div>
-                                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>S/ {item.price.toFixed(2)} c/u</div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                                                <div style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{item.productName}</div>
+                                                <button
+                                                    onClick={() => handleUpdateNote(item.productId)}
+                                                    style={{
+                                                        background: 'rgba(142, 115, 91, 0.1)',
+                                                        border: 'none',
+                                                        color: 'var(--primary-color)',
+                                                        cursor: 'pointer',
+                                                        padding: '4px',
+                                                        borderRadius: '4px',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        transition: 'all 0.2s'
+                                                    }}
+                                                    title="Agregar observación"
+                                                >
+                                                    <MessageSquare size={14} />
+                                                </button>
+                                            </div>
+                                            {item.notes && (
+                                                <div style={{
+                                                    fontSize: '0.85rem',
+                                                    color: 'var(--primary-color)',
+                                                    fontStyle: 'italic',
+                                                    marginTop: '2px',
+                                                    fontWeight: '600'
+                                                }}>
+                                                    "{item.notes}"
+                                                </div>
+                                            )}
+                                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '2px' }}>S/ {item.price.toFixed(2)} c/u</div>
                                         </div>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginLeft: '1rem' }}>
                                             <div style={{
