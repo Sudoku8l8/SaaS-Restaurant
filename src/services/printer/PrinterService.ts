@@ -227,8 +227,9 @@ class PrinterService {
         }
         const base64 = window.btoa(binary);
 
-        // Create intent URL
-        const url = `intent:${base64}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;`;
+        // Standard RawBT intent for base64 commands
+        // This explicitly tells RawBT that the data is base64 and should be processed as print commands
+        const url = `intent:#Intent;action=ru.a402d.rawbtprinter.intent.action.PRINT;S.base64=${base64};end;`;
         window.location.href = url;
     }
 }
