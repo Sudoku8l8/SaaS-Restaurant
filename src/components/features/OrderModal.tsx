@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ShoppingCart, Utensils, Search, Trash2 } from 'lucide-react';
+import { ShoppingCart, Utensils, Search, Trash2, Printer, MessageSquare } from 'lucide-react';
 import { db } from '@/services/firebase/config';
 import { collection, query, where } from 'firebase/firestore';
 import { Button, Input } from '@/components/shared';
@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useOrders } from '@/hooks/useOrders';
 import { generateUUID } from '@/utils/uuid';
 import { onSnapshot } from 'firebase/firestore';
+import { printerService } from '@/services/printer/PrinterService';
 
 interface OrderModalProps {
     table?: RestaurantTable; // Optional for takeout
@@ -134,6 +135,16 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
         }));
     };
 
+    const handleUpdateNote = (productId: string) => {
+        const item = items.find(i => i.productId === productId);
+        const newNote = prompt(`Observación para ${item?.productName}:`, item?.notes || '');
+        if (newNote !== null) {
+            setItems(prev => prev.map(i =>
+                i.productId === productId ? { ...i, notes: newNote } : i
+            ));
+        }
+    };
+
     const total = items.reduce((sum, item) => sum + item.subtotal, 0);
 
     const handleSaveOrder = async () => {
@@ -141,6 +152,8 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
 
         setIsSaving(true);
         try {
+            let currentOrderId = initialOrder?.id || '';
+
             if (initialOrder) {
                 // Update Order
                 await updateOrder(initialOrder.id, {
@@ -152,6 +165,7 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
             } else {
                 // Create Order
                 const orderId = generateUUID();
+                currentOrderId = orderId;
                 await createOrder({
                     id: orderId,
                     restaurantId: user.restaurantId,
@@ -166,6 +180,27 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                     orderType,
                     ...(customerName.trim() ? { customerName: customerName.trim() } : {})
                 });
+            }
+
+            if (printerService.autoPrint) {
+                try {
+                    await printerService.printOrder({
+                        id: currentOrderId,
+                        restaurantId: user.restaurantId,
+                        tableNumber: orderType === 'takeout' ? 0 : (table?.number || 0),
+                        items,
+                        status: 'pending',
+                        total,
+                        createdAt: initialOrder ? initialOrder.createdAt : new Date(),
+                        updatedAt: new Date(),
+                        userId: user.id,
+                        userName: user.name,
+                        orderType,
+                        customerName: customerName.trim() || undefined
+                    } as Order);
+                } catch (printErr) {
+                    console.error('Auto-print failed:', printErr);
+                }
             }
 
             onOrderCreated();
@@ -469,8 +504,39 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                         boxShadow: 'var(--shadow-sm)'
                                     }}>
                                         <div style={{ flex: 1 }}>
-                                            <div style={{ fontWeight: '700', color: 'var(--text-primary)', marginBottom: '2px' }}>{item.productName}</div>
-                                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>S/ {item.price.toFixed(2)} c/u</div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                                                <div style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{item.productName}</div>
+                                                <button
+                                                    onClick={() => handleUpdateNote(item.productId)}
+                                                    style={{
+                                                        background: 'rgba(142, 115, 91, 0.1)',
+                                                        border: 'none',
+                                                        color: 'var(--primary-color)',
+                                                        cursor: 'pointer',
+                                                        padding: '4px',
+                                                        borderRadius: '4px',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        transition: 'all 0.2s'
+                                                    }}
+                                                    title="Agregar observación"
+                                                >
+                                                    <MessageSquare size={14} />
+                                                </button>
+                                            </div>
+                                            {item.notes && (
+                                                <div style={{
+                                                    fontSize: '0.85rem',
+                                                    color: 'var(--primary-color)',
+                                                    fontStyle: 'italic',
+                                                    marginTop: '2px',
+                                                    fontWeight: '600'
+                                                }}>
+                                                    "{item.notes}"
+                                                </div>
+                                            )}
+                                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '2px' }}>S/ {item.price.toFixed(2)} c/u</div>
                                         </div>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginLeft: '1rem' }}>
                                             <div style={{
@@ -573,6 +639,41 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                     }}
                                 >
                                     {isSaving ? 'Guardando...' : (initialOrder ? 'Confirmar Cambios' : 'Confirmar Pedido')}
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    onClick={async () => {
+                                        if (!printerService.isConnected) {
+                                            alert('La impresora no está conectada. Configúrala en el panel de Administración.');
+                                            return;
+                                        }
+                                        try {
+                                            await printerService.printOrder({
+                                                id: initialOrder?.id || 'new',
+                                                restaurantId: user?.restaurantId || '',
+                                                tableNumber: orderType === 'takeout' ? 0 : (table?.number || 0),
+                                                items,
+                                                total,
+                                                createdAt: initialOrder?.createdAt || new Date(),
+                                                updatedAt: new Date(),
+                                                userId: user?.id || '',
+                                                userName: user?.name || '',
+                                                orderType,
+                                                customerName: customerName.trim() || undefined
+                                            } as Order);
+                                        } catch (err: any) {
+                                            alert(err.message || 'Error al imprimir');
+                                        }
+                                    }}
+                                    style={{
+                                        height: '54px',
+                                        gridColumn: isMobile ? '1' : 'span 2',
+                                        borderColor: 'var(--primary-color)',
+                                        color: 'var(--primary-color)',
+                                        opacity: printerService.isConnected ? 1 : 0.6
+                                    }}
+                                >
+                                    <Printer size={20} style={{ marginRight: '0.5rem' }} /> Imprimir Comanda
                                 </Button>
                                 {isMobile && (
                                     <button

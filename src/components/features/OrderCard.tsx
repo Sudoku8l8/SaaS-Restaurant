@@ -6,7 +6,8 @@ import { useAuth } from '@/hooks/useAuth';
 import type { Order, OrderStatus, PaymentMethod } from '@/types';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Clock, CheckCircle2, ChefHat, Truck, Banknote, Pencil, Trash2 } from 'lucide-react';
+import { Clock, CheckCircle2, ChefHat, Truck, Banknote, Pencil, Trash2, Printer, MessageSquare } from 'lucide-react';
+import { printerService } from '@/services/printer/PrinterService';
 
 interface OrderCardProps {
     order: Order;
@@ -284,19 +285,19 @@ export function OrderCard({ order, onEdit, onDelete }: OrderCardProps) {
                             {item.notes && (
                                 <div style={{
                                     marginLeft: '3.2rem',
-                                    backgroundColor: '#FFF9C4', // Soft yellow highlight
-                                    borderLeft: '4px solid #FBC02D',
+                                    backgroundColor: 'rgba(168, 218, 220, 0.15)', // Light variant of --secondary-color
+                                    borderLeft: '4px solid var(--secondary-color)',
                                     padding: '6px 12px',
                                     borderRadius: 'var(--radius-sm)',
                                     fontSize: '0.9rem',
                                     fontWeight: '700',
-                                    color: '#455A64',
+                                    color: 'var(--text-primary)',
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '0.5rem',
                                     marginTop: '2px'
                                 }}>
-                                    <span style={{ fontSize: '1.1rem' }}>📝</span>
+                                    <MessageSquare size={14} color="var(--primary-color)" />
                                     <span style={{ fontStyle: 'italic' }}>"{item.notes}"</span>
                                 </div>
                             )}
@@ -363,6 +364,47 @@ export function OrderCard({ order, onEdit, onDelete }: OrderCardProps) {
                                 <Trash2 size={18} />
                             </button>
                         )}
+
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if (!printerService.isConnected) {
+                                    alert('La impresora no está conectada. Configúrala en el panel de Administración.');
+                                    return;
+                                }
+                                printerService.printOrder(order).catch(err => alert(err.message));
+                            }}
+                            style={{
+                                border: '1px solid var(--primary-color)',
+                                backgroundColor: 'var(--surface-color)',
+                                color: 'var(--primary-color)',
+                                borderRadius: 'var(--radius-md)',
+                                width: '48px',
+                                height: '48px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                marginLeft: 'auto',
+                                opacity: printerService.isConnected ? 1 : 0.5
+                            }}
+                            onMouseEnter={e => {
+                                if (printerService.isConnected) {
+                                    e.currentTarget.style.backgroundColor = 'var(--primary-color)';
+                                    e.currentTarget.style.color = 'white';
+                                }
+                            }}
+                            onMouseLeave={e => {
+                                if (printerService.isConnected) {
+                                    e.currentTarget.style.backgroundColor = 'var(--surface-color)';
+                                    e.currentTarget.style.color = 'var(--primary-color)';
+                                }
+                            }}
+                            title={printerService.isConnected ? 'Imprimir Comanda' : 'Impresora desconectada'}
+                        >
+                            <Printer size={18} />
+                        </button>
                     </div>
                 </div>
             </div>

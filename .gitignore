@@ -29,3 +29,4 @@ dist-ssr
 .env.local
 .env.*.local
 dev-dist
+dev-dist/sw.js

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Utensils, Users, LayoutGrid, ArrowLeft, FolderKanban, Globe } from 'lucide-react';
+import { Utensils, Users, LayoutGrid, ArrowLeft, FolderKanban, Printer, Globe } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/shared';
 
@@ -7,11 +7,12 @@ import { ProductsTab } from '@/components/features/ProductsTab';
 import { UsersTab } from '@/components/features/UsersTab';
 import { TablesTab } from '@/components/features/TablesTab';
 import { CategoriesTab } from '@/components/features/CategoriesTab';
+import { PrinterTab } from '@/components/features/PrinterTab';
 import { DigitalMenuTab } from '@/components/features/DigitalMenuTab';
 
 import './ConfigPage.css';
 
-type Tab = 'products' | 'categories' | 'users' | 'tables' | 'menu';
+type Tab = 'products' | 'categories' | 'users' | 'tables' | 'printer' | 'menu';
 
 export function ConfigPage() {
 
@@ -63,6 +64,13 @@ export function ConfigPage() {
                     <LayoutGrid size={18} /> Mesas
                 </Button>
                 <Button
+                    variant={activeTab === 'printer' ? 'primary' : 'ghost'}
+                    onClick={() => setActiveTab('printer')}
+                    className="tab-btn"
+                >
+                    <Printer size={18} /> Impresora
+                </Button>
+                <Button
                     variant={activeTab === 'menu' ? 'primary' : 'ghost'}
                     onClick={() => setActiveTab('menu')}
                     className="tab-btn"
@@ -77,6 +85,7 @@ export function ConfigPage() {
                 {activeTab === 'categories' && <CategoriesTab />}
                 {activeTab === 'users' && <UsersTab />}
                 {activeTab === 'tables' && <TablesTab />}
+                {activeTab === 'printer' && <PrinterTab />}
                 {activeTab === 'menu' && <DigitalMenuTab />}
             </div>
         </div>
