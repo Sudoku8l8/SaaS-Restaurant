@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ShoppingCart, Utensils, Search, Trash2 } from 'lucide-react';
+import { ShoppingCart, Utensils, Search, Trash2, Printer } from 'lucide-react';
 import { db } from '@/services/firebase/config';
 import { collection, query, where } from 'firebase/firestore';
 import { Button, Input } from '@/components/shared';
@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useOrders } from '@/hooks/useOrders';
 import { generateUUID } from '@/utils/uuid';
 import { onSnapshot } from 'firebase/firestore';
+import { printerService } from '@/services/printer/PrinterService';
 
 interface OrderModalProps {
     table?: RestaurantTable; // Optional for takeout
@@ -141,6 +142,8 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
 
         setIsSaving(true);
         try {
+            let currentOrderId = initialOrder?.id || '';
+
             if (initialOrder) {
                 // Update Order
                 await updateOrder(initialOrder.id, {
@@ -152,6 +155,7 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
             } else {
                 // Create Order
                 const orderId = generateUUID();
+                currentOrderId = orderId;
                 await createOrder({
                     id: orderId,
                     restaurantId: user.restaurantId,
@@ -166,6 +170,27 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                     orderType,
                     ...(customerName.trim() ? { customerName: customerName.trim() } : {})
                 });
+            }
+
+            if (printerService.autoPrint) {
+                try {
+                    await printerService.printOrder({
+                        id: currentOrderId,
+                        restaurantId: user.restaurantId,
+                        tableNumber: orderType === 'takeout' ? 0 : (table?.number || 0),
+                        items,
+                        status: 'pending',
+                        total,
+                        createdAt: initialOrder ? initialOrder.createdAt : new Date(),
+                        updatedAt: new Date(),
+                        userId: user.id,
+                        userName: user.name,
+                        orderType,
+                        customerName: customerName.trim() || undefined
+                    } as Order);
+                } catch (printErr) {
+                    console.error('Auto-print failed:', printErr);
+                }
             }
 
             onOrderCreated();
@@ -573,6 +598,41 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                     }}
                                 >
                                     {isSaving ? 'Guardando...' : (initialOrder ? 'Confirmar Cambios' : 'Confirmar Pedido')}
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    onClick={async () => {
+                                        if (!printerService.isConnected) {
+                                            alert('La impresora no está conectada. Configúrala en el panel de Administración.');
+                                            return;
+                                        }
+                                        try {
+                                            await printerService.printOrder({
+                                                id: initialOrder?.id || 'new',
+                                                restaurantId: user?.restaurantId || '',
+                                                tableNumber: orderType === 'takeout' ? 0 : (table?.number || 0),
+                                                items,
+                                                total,
+                                                createdAt: initialOrder?.createdAt || new Date(),
+                                                updatedAt: new Date(),
+                                                userId: user?.id || '',
+                                                userName: user?.name || '',
+                                                orderType,
+                                                customerName: customerName.trim() || undefined
+                                            } as Order);
+                                        } catch (err: any) {
+                                            alert(err.message || 'Error al imprimir');
+                                        }
+                                    }}
+                                    style={{
+                                        height: '54px',
+                                        gridColumn: isMobile ? '1' : 'span 2',
+                                        borderColor: 'var(--primary-color)',
+                                        color: 'var(--primary-color)',
+                                        opacity: printerService.isConnected ? 1 : 0.6
+                                    }}
+                                >
+                                    <Printer size={20} style={{ marginRight: '0.5rem' }} /> Imprimir Comanda
                                 </Button>
                                 {isMobile && (
                                     <button
