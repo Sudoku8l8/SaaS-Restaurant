@@ -51,6 +51,8 @@ export interface RestaurantConfig {
     tablesCount: number;
     currency: string;
     timezone: string;
+    menuSpanishUrl?: string;
+    menuEnglishUrl?: string;
 }
 
 export interface RestaurantTable {

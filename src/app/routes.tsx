@@ -7,6 +7,7 @@ import { ConfigPage } from '@/pages/Configuracion/ConfigPage';
 import { AdminPage } from '@/pages/Admin/AdminPage';
 import { ReportesPage } from '@/pages/Reportes/ReportesPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
+import { DigitalMenuPage } from '@/pages/Public/DigitalMenuPage';
 import { ProtectedRoute } from '@/components/shared/ProtectedRoute';
 import { UserRole } from '@/types';
 
@@ -41,6 +42,10 @@ export const router = createBrowserRouter([
             {
                 path: 'login',
                 element: <LoginPage />,
+            },
+            {
+                path: 'menu/:tableNumber?',
+                element: <DigitalMenuPage />,
             },
             {
                 element: <ProtectedRoute />,
