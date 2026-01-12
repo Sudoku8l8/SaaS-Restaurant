@@ -220,11 +220,16 @@ class PrinterService {
     private sendToRawBT(data: Uint8Array) {
         try {
             // Robust conversion to base64 for binary data
-            const base64 = btoa(String.fromCharCode(...new Uint8Array(data)));
+            // We use a loop to avoid argument limit with spread operator
+            let binary = '';
+            for (let i = 0; i < data.length; i++) {
+                binary += String.fromCharCode(data[i]);
+            }
+            const base64 = btoa(binary);
 
-            // This format uses the 'rawbt' scheme which triggered the app before
-            // but specifies the data in the 'base64' extra parameter
-            const url = `intent:#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.base64=${base64};end;`;
+            // This format combines the 'rawbt' scheme with the 'base64,' prefix in the data field
+            // The intent:DATA#Intent;scheme=rawbt format is very robust on Android browsers
+            const url = `intent:base64,${base64}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;`;
 
             window.location.href = url;
         } catch (err: any) {
