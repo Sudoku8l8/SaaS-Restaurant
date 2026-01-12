@@ -9,7 +9,7 @@ class PrinterService {
     private device: any = null;
     private characteristic: any = null; // For Bluetooth
     private endpointOut: any = null; // For USB
-    private connectionType: 'bluetooth' | 'usb' | null = null;
+    private connectionType: 'bluetooth' | 'usb' | 'external' | null = null;
     private isAutoPrintEnabled: boolean = localStorage.getItem('printer_auto_print') === 'true';
 
     // Bluetooth Connection
@@ -66,13 +66,20 @@ class PrinterService {
         }
     }
 
-    private saveDevicePreference(type: 'bluetooth' | 'usb', name: string) {
+    // External Bridge (RawBT)
+    async connectExternal() {
+        this.connectionType = 'external';
+        this.saveDevicePreference('external', 'App RawBT (Android)');
+        return true;
+    }
+
+    private saveDevicePreference(type: 'bluetooth' | 'usb' | 'external', name: string) {
         localStorage.setItem('printer_type', type);
         localStorage.setItem('printer_name', name);
     }
 
     get isConnected() {
-        return this.connectionType !== null;
+        return this.connectionType !== null || localStorage.getItem('printer_type') !== null;
     }
 
     get connectedDeviceName() {
@@ -80,7 +87,7 @@ class PrinterService {
     }
 
     get activeConnectionType() {
-        return this.connectionType;
+        return this.connectionType || localStorage.getItem('printer_type') as any;
     }
 
     setAutoPrint(enabled: boolean) {
@@ -161,7 +168,7 @@ class PrinterService {
         addText("--------------------------------\n");
 
         // Items
-        add([ESC, 0x4b, 0x01]); // Bold on (ESC E 1)
+        add([ESC, 0x45, 0x01]); // Bold on (ESC E 1)
         order.items.forEach(item => {
             const qtyText = `${item.quantity}x `.padEnd(4);
             const nameText = item.productName.substring(0, 28) + "\n";
@@ -170,7 +177,7 @@ class PrinterService {
                 addText(`  Obs: ${item.notes}\n`);
             }
         });
-        add([ESC, 0x4b, 0x00]); // Bold off
+        add([ESC, 0x45, 0x00]); // Bold off
 
         addText("--------------------------------\n");
         add([ESC, 0x61, 0x02]); // Right
@@ -194,16 +201,37 @@ class PrinterService {
     }
 
     private async sendData(data: Uint8Array) {
-        if (this.connectionType === 'bluetooth') {
+        const type = this.activeConnectionType;
+
+        if (type === 'bluetooth') {
             const CHUNK_SIZE = 20;
             for (let i = 0; i < data.length; i += CHUNK_SIZE) {
                 const chunk = data.slice(i, i + CHUNK_SIZE);
                 await this.characteristic.writeValue(chunk);
             }
-        } else if (this.connectionType === 'usb') {
+        } else if (type === 'usb') {
+            if (!this.device) await this.connectUSB();
             await this.device.transferOut(this.endpointOut.endpointNumber, data);
+        } else if (type === 'external') {
+            this.sendToRawBT(data);
         }
+    }
+
+    private sendToRawBT(data: Uint8Array) {
+        // Convert to base64
+        let binary = '';
+        const bytes = new Uint8Array(data);
+        const len = bytes.byteLength;
+        for (let i = 0; i < len; i++) {
+            binary += String.fromCharCode(bytes[i]);
+        }
+        const base64 = window.btoa(binary);
+
+        // Create intent URL
+        const url = `intent:${base64}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;`;
+        window.location.href = url;
     }
 }
 
 export const printerService = new PrinterService();
+

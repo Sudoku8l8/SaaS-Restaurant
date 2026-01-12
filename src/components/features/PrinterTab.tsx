@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bluetooth, Usb, Printer, Unlink, CheckCircle2, AlertCircle, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Bluetooth, Usb, Printer, Unlink, CheckCircle2, AlertCircle, ToggleLeft, ToggleRight, Smartphone } from 'lucide-react';
 import { Button } from '@/components/shared';
 import { printerService } from '@/services/printer/PrinterService';
 
@@ -33,6 +33,19 @@ export function PrinterTab() {
             setDeviceName(printerService.connectedDeviceName);
         } catch (err: any) {
             setError('Error al conectar USB: ' + (err.message || 'Desconocido'));
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleConnectExternal = async () => {
+        setIsLoading(true);
+        try {
+            await printerService.connectExternal();
+            setIsConnected(true);
+            setDeviceName(printerService.connectedDeviceName);
+        } catch (err: any) {
+            setError('Error al conectar app externa');
         } finally {
             setIsLoading(false);
         }
@@ -120,14 +133,22 @@ export function PrinterTab() {
                                 disabled={isLoading}
                                 style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}
                             >
-                                <Bluetooth size={18} /> Bluetooth
+                                <Bluetooth size={18} /> Bluetooth (BLE)
                             </Button>
                             <Button
                                 onClick={handleConnectUSB}
                                 disabled={isLoading}
                                 style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}
                             >
-                                <Usb size={18} /> USB
+                                <Usb size={18} /> Cable USB
+                            </Button>
+                            <Button
+                                onClick={handleConnectExternal}
+                                disabled={isLoading}
+                                style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', gridColumn: 'span 2', backgroundColor: 'var(--secondary-color)', color: 'white' }}
+                                variant="primary"
+                            >
+                                <Smartphone size={18} /> App RawBT (Bluetooth Clásico)
                             </Button>
                         </div>
                     ) : (
