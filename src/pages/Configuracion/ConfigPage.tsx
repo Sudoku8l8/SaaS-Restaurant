@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Utensils, Users, LayoutGrid, ArrowLeft, FolderKanban } from 'lucide-react';
+import { Utensils, Users, LayoutGrid, ArrowLeft, FolderKanban, Globe } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/shared';
 
@@ -7,10 +7,11 @@ import { ProductsTab } from '@/components/features/ProductsTab';
 import { UsersTab } from '@/components/features/UsersTab';
 import { TablesTab } from '@/components/features/TablesTab';
 import { CategoriesTab } from '@/components/features/CategoriesTab';
+import { DigitalMenuTab } from '@/components/features/DigitalMenuTab';
 
 import './ConfigPage.css';
 
-type Tab = 'products' | 'categories' | 'users' | 'tables';
+type Tab = 'products' | 'categories' | 'users' | 'tables' | 'menu';
 
 export function ConfigPage() {
 
@@ -61,6 +62,13 @@ export function ConfigPage() {
                 >
                     <LayoutGrid size={18} /> Mesas
                 </Button>
+                <Button
+                    variant={activeTab === 'menu' ? 'primary' : 'ghost'}
+                    onClick={() => setActiveTab('menu')}
+                    className="tab-btn"
+                >
+                    <Globe size={18} /> Menú Digital
+                </Button>
             </div>
 
             {/* Tab Content */}
@@ -69,6 +77,7 @@ export function ConfigPage() {
                 {activeTab === 'categories' && <CategoriesTab />}
                 {activeTab === 'users' && <UsersTab />}
                 {activeTab === 'tables' && <TablesTab />}
+                {activeTab === 'menu' && <DigitalMenuTab />}
             </div>
         </div>
     );
