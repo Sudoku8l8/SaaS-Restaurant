@@ -35,18 +35,20 @@ export function Hero() {
                         Gestiona pedidos, inventario y clientes desde una única plataforma. Elegante, rápido y diseñado para crecer contigo.
                     </p>
 
-                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '3.5rem' }}>
+                    <div className="hero-buttons" style={{ display: 'flex', gap: '1rem', marginBottom: '3.5rem' }}>
                         <Button
                             onClick={scrollToAuth}
                             size="lg"
-                            style={{ background: '#2563eb', color: 'white', padding: '0.8rem 2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                            className="primary-cta"
+                            style={{ background: '#2563eb', color: 'white', padding: '0.8rem 2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}
                         >
                             Prueba gratis <ChevronRight size={18} />
                         </Button>
                         <Button
                             variant="ghost"
                             size="lg"
-                            style={{ background: 'white', border: '1px solid #e5e7eb', color: '#374151', padding: '0.8rem 2rem' }}
+                            className="secondary-cta"
+                            style={{ background: 'white', border: '1px solid #e5e7eb', color: '#374151', padding: '0.8rem 2rem', justifyContent: 'center' }}
                         >
                             Ver demo
                         </Button>
@@ -125,7 +127,12 @@ export function Hero() {
                     .container { grid-template-columns: 1fr !important; gap: 3rem !important; }
                     .hero-content { text-align: center; display: flex; flex-direction: column; align-items: center; }
                     .social-proof { display: flex; flex-direction: column; align-items: center; }
-                    .hero-visual { transform: scale(0.9); }
+                    .hero-visual { transform: scale(0.9); width: 100%; max-width: 500px; margin: 0 auto; }
+                }
+                @media (max-width: 640px) {
+                    .hero-buttons { flex-direction: column; width: 100%; }
+                    .primary-cta, .secondary-cta { width: 100%; }
+                    h1 { font-size: 2.25rem !important; }
                 }
             `}</style>
         </section>

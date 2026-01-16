@@ -20,8 +20,8 @@ export function Navbar() {
             borderBottom: '1px solid rgba(0, 0, 0, 0.05)',
             padding: '1rem 0'
         }}>
-            <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#1a1a1a', display: 'flex', alignItems: 'center', gap: '2px' }}>
+            <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#1a1a1a', flexShrink: 0 }}>
                     orday<span style={{ color: '#2563eb' }}>Go</span>
                 </div>
 
@@ -31,18 +31,19 @@ export function Navbar() {
                     <a href="#contact" style={{ textDecoration: 'none', color: '#666', fontSize: '0.95rem', fontWeight: 500 }}>Contacto</a>
                 </div>
 
-                <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexShrink: 0 }}>
                     <button
                         onClick={handleLoginClick}
-                        style={{ background: 'none', border: 'none', color: '#444', fontSize: '0.95rem', fontWeight: 600, cursor: 'pointer' }}
+                        className="login-btn"
+                        style={{ background: 'none', border: 'none', color: '#444', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', padding: '0.5rem' }}
                     >
-                        Inicia sesión
+                        Ingresar
                     </button>
                     <Button
                         onClick={scrollToAuth}
-                        style={{ background: '#2563eb', padding: '0.6rem 1.5rem', borderRadius: 'var(--radius-md)' }}
+                        style={{ background: '#2563eb', padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', fontSize: '0.9rem' }}
                     >
-                        Comienza gratis
+                        Regístrate
                     </Button>
                 </div>
             </div>
@@ -50,6 +51,10 @@ export function Navbar() {
             <style>{`
                 @media (max-width: 768px) {
                     .nav-links { display: none !important; }
+                    .login-btn { display: none !important; }
+                }
+                @media (max-width: 480px) {
+                    nav .container { padding: 0 0.5rem; }
                 }
             `}</style>
         </nav>
