@@ -32,7 +32,7 @@ export async function createRestaurant({ name, slug, adminName, adminPin }: Crea
         const newRestaurant: Restaurant = {
             id: slug,
             name: name,
-            active: true,
+            active: false,
             plan: 'basic',
             createdAt: new Date(),
             config: {

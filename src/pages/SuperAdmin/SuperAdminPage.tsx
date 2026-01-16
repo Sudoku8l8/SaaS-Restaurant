@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, getDocs, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/services/firebase/config';
 import { Button, Card, Input, Badge } from '@/components/shared';
 import type { Restaurant } from '@/types';
@@ -48,6 +48,18 @@ export function SuperAdminPage() {
                 console.error("Error deleting:", error);
                 alert("Error eliminando restaurante");
             }
+        }
+    };
+
+    const toggleActive = async (id: string, currentStatus: boolean) => {
+        try {
+            await updateDoc(doc(db, 'restaurants', id), {
+                active: !currentStatus
+            });
+            setRestaurants(prev => prev.map(r => r.id === id ? { ...r, active: !currentStatus } : r));
+        } catch (error) {
+            console.error("Error updating status:", error);
+            alert("Error al actualizar estado");
         }
     };
 
@@ -145,7 +157,15 @@ export function SuperAdminPage() {
                                         <td style={{ padding: '1rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                                             {formatDate(rest.createdAt)}
                                         </td>
-                                        <td style={{ padding: '1rem' }}>
+                                        <td style={{ padding: '1rem', display: 'flex', gap: '0.5rem' }}>
+                                            <Button
+                                                variant={rest.active ? 'outline' : 'primary'}
+                                                size="sm"
+                                                onClick={() => toggleActive(rest.id, rest.active)}
+                                                style={{ fontSize: '0.75rem', fontWeight: '800' }}
+                                            >
+                                                {rest.active ? 'Desactivar' : 'Activar'}
+                                            </Button>
                                             <Button variant="danger" size="sm" onClick={() => handleDelete(rest.id, rest.name)} style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', fontWeight: '800' }}>
                                                 Eliminar
                                             </Button>
