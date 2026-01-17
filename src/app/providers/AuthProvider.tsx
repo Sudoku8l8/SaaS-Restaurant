@@ -17,7 +17,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         const checkSession = async () => {
             try {
-                const storedUserId = sessionStorage.getItem('auth_user_id');
+                const storedUserId = localStorage.getItem('auth_user_id');
                 if (storedUserId) {
                     const userRef = doc(db, 'users', storedUserId);
                     const userSnap = await getDoc(userRef);
@@ -31,7 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                             restaurantId: userData.restaurantId,
                         });
                     } else {
-                        sessionStorage.removeItem('auth_user_id');
+                        localStorage.removeItem('auth_user_id');
                     }
                 }
             } catch (err) {
@@ -80,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     restaurantId: validUser.restaurantId,
                 };
                 setUser(authUser);
-                sessionStorage.setItem('auth_user_id', matchingUserDoc.id);
+                localStorage.setItem('auth_user_id', matchingUserDoc.id);
             } else {
                 throw new Error('PIN incorrecto');
             }
@@ -94,7 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const logout = () => {
         setUser(null);
-        sessionStorage.removeItem('auth_user_id');
+        localStorage.removeItem('auth_user_id');
     };
 
     return (

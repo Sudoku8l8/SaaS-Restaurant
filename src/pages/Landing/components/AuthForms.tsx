@@ -60,6 +60,7 @@ export function AuthForms() {
                     }
                 }
 
+                localStorage.setItem('lastRestaurantSlug', slug);
                 navigate(`/${slug}/login`);
             } else {
                 setLoginError('No encontramos un restaurante con ese ID.');
