@@ -88,6 +88,27 @@ export function LoginPage() {
                     >
                         Ingresar
                     </Button>
+
+                    <button
+                        type="button"
+                        onClick={() => {
+                            localStorage.removeItem('lastRestaurantSlug');
+                            sessionStorage.removeItem('hasRedirectedToRestaurant');
+                            navigate('/');
+                        }}
+                        style={{
+                            marginTop: '0.5rem',
+                            color: 'var(--text-secondary)',
+                            fontSize: '0.85rem',
+                            textDecoration: 'underline',
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            textAlign: 'center'
+                        }}
+                    >
+                        Cambiar de Restaurante
+                    </button>
                 </form>
             </Card>
         </div>

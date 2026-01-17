@@ -11,7 +11,10 @@ export function LandingPage() {
 
     useEffect(() => {
         const lastSlug = localStorage.getItem('lastRestaurantSlug');
-        if (lastSlug) {
+        const hasRedirected = sessionStorage.getItem('hasRedirectedToRestaurant');
+
+        if (lastSlug && !hasRedirected) {
+            sessionStorage.setItem('hasRedirectedToRestaurant', 'true');
             navigate(`/${lastSlug}/login`);
         }
     }, [navigate]);
