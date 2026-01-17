@@ -8,16 +8,20 @@ import { Footer } from './components/Footer';
 
 export function LandingPage() {
     const navigate = useNavigate();
+    const lastSlug = localStorage.getItem('lastRestaurantSlug');
+    const hasRedirected = sessionStorage.getItem('hasRedirectedToRestaurant');
 
     useEffect(() => {
-        const lastSlug = localStorage.getItem('lastRestaurantSlug');
-        const hasRedirected = sessionStorage.getItem('hasRedirectedToRestaurant');
-
         if (lastSlug && !hasRedirected) {
             sessionStorage.setItem('hasRedirectedToRestaurant', 'true');
             navigate(`/${lastSlug}/login`);
         }
-    }, [navigate]);
+    }, [navigate, lastSlug, hasRedirected]);
+
+    // If we're about to redirect, show only the background to prevent flicker
+    if (lastSlug && !hasRedirected) {
+        return <div style={{ minHeight: '100vh', background: '#f8fafc' }} />;
+    }
 
     return (
         <div style={{
