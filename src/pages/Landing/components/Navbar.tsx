@@ -35,7 +35,7 @@ export function Navbar() {
                     <button
                         onClick={handleLoginClick}
                         className="login-btn"
-                        style={{ background: '#2563eb', borderRadius: 'var(--radius-md)', padding: '0.5rem 1rem', color: '#fff', fontSize: '0.9rem', cursor: 'pointer', borderColor: '#2563eb' }}
+                        style={{ background: '#2563eb', borderRadius: 'var(--radius-md)', padding: '0.7rem 1rem', color: '#fff', fontSize: '0.9rem', cursor: 'pointer', fontFamily: 'var(--font-family)', fontWeight: '500', border: 'none' }}
                     >
                         Ingresar
                     </button>

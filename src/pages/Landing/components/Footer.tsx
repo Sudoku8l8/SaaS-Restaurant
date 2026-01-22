@@ -16,7 +16,7 @@ export function Footer() {
                     marginBottom: '3rem'
                 }}>
                     <div>
-                        <h4 style={{ marginBottom: '1.5rem', fontSize: '1.25rem' }}>ordayGo</h4>
+                        <h4 style={{ marginBottom: '1.5rem', fontSize: '1.25rem' }}>OrdayGo</h4>
                         <p style={{ opacity: 0.7, lineHeight: 1.6, fontSize: '0.9rem' }}>
                             La solución definitiva para la gestión moderna de restaurantes. Eficiencia, estilo y control en un solo lugar.
                         </p>
@@ -47,7 +47,7 @@ export function Footer() {
                     opacity: 0.6,
                     fontSize: '0.85rem'
                 }}>
-                    <p>© {currentYear} ordayGo. Todos los derechos reservados.</p>
+                    <p>© {currentYear} OrdayGo. Todos los derechos reservados.</p>
                 </div>
             </div>
         </footer>
