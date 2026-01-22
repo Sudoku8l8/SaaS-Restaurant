@@ -46,19 +46,8 @@ export function AuthForms() {
                     return;
                 }
 
-                // 2. Check 14-day trial (Only for basic plan)
-                if (restaurant.plan === 'basic' && restaurant.createdAt) {
-                    const createdAt = restaurant.createdAt.toDate ? restaurant.createdAt.toDate() : new Date(restaurant.createdAt);
-                    const now = new Date();
-                    const diffTime = Math.abs(now.getTime() - createdAt.getTime());
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                    if (diffDays > 14) {
-                        setLoginError('Tu periodo de prueba de 14 días ha finalizado. Contacta con ordayGo para activar tu licencia.');
-                        setLoginLoading(false);
-                        return;
-                    }
-                }
+                // 2. Check 14-day trial (Only for basic plan) -> REMOVED to use centralized TenantProvider logic
+                // if (restaurant.plan === 'basic' && restaurant.createdAt) { ... }
 
                 localStorage.setItem('lastRestaurantSlug', slug);
                 navigate(`/${slug}/login`);

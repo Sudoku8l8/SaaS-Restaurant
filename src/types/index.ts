@@ -44,6 +44,7 @@ export interface Restaurant {
     plan: 'basic' | 'premium';
     active: boolean;
     createdAt: Date;
+    subscriptionEndsAt?: Date;
     config?: RestaurantConfig;
 }
 

@@ -51,6 +51,76 @@ export function SuperAdminPage() {
         }
     };
 
+    const handleRenew = async (id: string, name: string) => {
+        const daysStr = prompt(`¿Cuántos días deseas renovar para "${name}"?`, "30");
+        if (!daysStr) return;
+
+        const days = parseInt(daysStr, 10);
+        if (isNaN(days) || days <= 0) {
+            alert("Por favor ingresa un número válido de días.");
+            return;
+        }
+
+        if (confirm(`¿Confirmas renovar "${name}" por ${days} días?`)) {
+            try {
+                // Calculate new end date based on CURRENT TIME (if expired) or EXISTING END DATE (if active)?
+                // For simplicity/safety in this MVP, we always extend from NOW if expired, or add to existing if active.
+                // Actually, simplest is just: New End Date = Now + Days (Reset) OR Existing + Days.
+                // Let's do: Set SubscriptionEndsAt to Now + Days. This effectively "Unblocks" them immediately.
+
+                const newEndDate = new Date();
+                newEndDate.setDate(newEndDate.getDate() + days);
+
+                await updateDoc(doc(db, 'restaurants', id), {
+                    subscriptionEndsAt: newEndDate,
+                    active: true
+                });
+
+                setRestaurants(prev => prev.map(r => {
+                    if (r.id === id) {
+                        return { ...r, subscriptionEndsAt: newEndDate, active: true };
+                    }
+                    return r;
+                }));
+                alert(`Suscripción renovada por ${days} días.`);
+            } catch (error) {
+                console.error("Error renewing:", error);
+                alert("Error al renovar suscripción");
+            }
+        }
+    };
+
+    const getDaysRemaining = (restaurant: Restaurant) => {
+        const now = new Date();
+        let endDate: Date;
+
+        if (restaurant.subscriptionEndsAt) {
+            endDate = restaurant.subscriptionEndsAt instanceof Date ? restaurant.subscriptionEndsAt : new Date((restaurant.subscriptionEndsAt as any).seconds * 1000);
+        } else {
+            // Trial Logic (28 days from createdAt)
+            const createdAt = restaurant.createdAt instanceof Date ? restaurant.createdAt : new Date((restaurant.createdAt as any).seconds * 1000);
+            endDate = new Date(createdAt);
+            endDate.setDate(endDate.getDate() + 28);
+        }
+
+        const diffTime = endDate.getTime() - now.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 3600 * 24));
+        return diffDays;
+    };
+
+    const checkIsExpired = (restaurant: Restaurant) => {
+        const now = new Date();
+        if (restaurant.subscriptionEndsAt) {
+            const endDate = restaurant.subscriptionEndsAt instanceof Date ? restaurant.subscriptionEndsAt : new Date((restaurant.subscriptionEndsAt as any).seconds * 1000);
+            return now > endDate;
+        }
+        // Trial Logic
+        const createdAt = restaurant.createdAt instanceof Date ? restaurant.createdAt : new Date((restaurant.createdAt as any).seconds * 1000);
+        const diffTime = now.getTime() - createdAt.getTime();
+        const diffDays = diffTime / (1000 * 3600 * 24);
+        return diffDays > 28;
+    };
+
     const toggleActive = async (id: string, currentStatus: boolean) => {
         try {
             await updateDoc(doc(db, 'restaurants', id), {
@@ -131,6 +201,7 @@ export function SuperAdminPage() {
                                     <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800' }}>Ruta URL</th>
                                     <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800' }}>Plan</th>
                                     <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800' }}>Estado</th>
+                                    <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800' }}>Días Restantes</th>
                                     <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800' }}>Registro</th>
                                     <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800' }}>Acciones</th>
                                 </tr>
@@ -153,6 +224,25 @@ export function SuperAdminPage() {
                                             <Badge variant={rest.active ? 'success' : 'error'}>
                                                 {rest.active ? 'ACTIVO' : 'INACTIVO'}
                                             </Badge>
+                                            {checkIsExpired(rest) && (
+                                                <Badge variant="error" style={{ marginLeft: '0.5rem' }}>
+                                                    VENCIDO
+                                                </Badge>
+                                            )}
+                                        </td>
+                                        <td style={{ padding: '1rem' }}>
+                                            {(() => {
+                                                const days = getDaysRemaining(rest);
+                                                const isExpired = days <= 0;
+                                                return (
+                                                    <span style={{
+                                                        fontWeight: 'bold',
+                                                        color: isExpired ? 'var(--danger-color)' : (days < 5 ? 'var(--warning-color)' : 'var(--success-color)')
+                                                    }}>
+                                                        {isExpired ? '0' : days} días
+                                                    </span>
+                                                );
+                                            })()}
                                         </td>
                                         <td style={{ padding: '1rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                                             {formatDate(rest.createdAt)}
@@ -168,6 +258,9 @@ export function SuperAdminPage() {
                                             </Button>
                                             <Button variant="danger" size="sm" onClick={() => handleDelete(rest.id, rest.name)} style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', fontWeight: '800' }}>
                                                 Eliminar
+                                            </Button>
+                                            <Button variant="primary" size="sm" onClick={() => handleRenew(rest.id, rest.name)} style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', fontWeight: '800', marginLeft: '0.5rem' }}>
+                                                Renovar
                                             </Button>
                                         </td>
                                     </tr>

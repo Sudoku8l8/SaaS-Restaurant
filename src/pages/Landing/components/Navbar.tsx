@@ -22,7 +22,7 @@ export function Navbar() {
         }}>
             <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
                 <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#1a1a1a', flexShrink: 0 }}>
-                    orday<span style={{ color: '#2563eb' }}>Go</span>
+                    Orday<span style={{ color: '#2563eb' }}>Go</span>
                 </div>
 
                 <div className="nav-links" style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
@@ -35,12 +35,13 @@ export function Navbar() {
                     <button
                         onClick={handleLoginClick}
                         className="login-btn"
-                        style={{ background: 'none', border: 'none', color: '#444', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', padding: '0.5rem' }}
+                        style={{ background: '#2563eb', borderRadius: 'var(--radius-md)', padding: '0.5rem 1rem', color: '#fff', fontSize: '0.9rem', cursor: 'pointer', borderColor: '#2563eb' }}
                     >
                         Ingresar
                     </button>
                     <Button
                         onClick={scrollToAuth}
+                        className='register-btn'
                         style={{ background: '#2563eb', padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', fontSize: '0.9rem' }}
                     >
                         Regístrate
@@ -51,7 +52,7 @@ export function Navbar() {
             <style>{`
                 @media (max-width: 768px) {
                     .nav-links { display: none !important; }
-                    .login-btn { display: none !important; }
+                    .register-btn { display: none !important; }
                 }
                 @media (max-width: 480px) {
                     nav .container { padding: 0 0.5rem; }
