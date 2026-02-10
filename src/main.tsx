@@ -6,8 +6,10 @@ import { AuthProvider } from './app/providers/AuthProvider'
 import { seedFirestore } from './services/firebase/seeders'
 import './index.css'
 
-// Init DB
-seedFirestore();
+// Init DB — Only in development
+if (import.meta.env.DEV) {
+  seedFirestore();
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /superadmin
+Disallow: /*/admin
+Disallow: /*/config
+Disallow: /*/cocina
+Disallow: /*/mozo
+Disallow: /*/cierre-caja
+Disallow: /*/reportes
+
+Sitemap: https://ordaygo.site/sitemap.xml

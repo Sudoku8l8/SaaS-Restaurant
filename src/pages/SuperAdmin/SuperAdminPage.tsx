@@ -12,11 +12,12 @@ export function SuperAdminPage() {
     const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
-    // MVP Security: Simple hardcoded password check
-    // In production, this should use Firebase Auth with a specific role
+    // Security: Password from environment variable
+    // TODO: In production, migrate to Firebase Auth with a dedicated superadmin role
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
-        if (password === 'admin123') { // TODO: Move to env var
+        const superadminKey = import.meta.env.VITE_SUPERADMIN_KEY;
+        if (superadminKey && password === superadminKey) {
             setIsAuthenticated(true);
             loadRestaurants();
         } else {

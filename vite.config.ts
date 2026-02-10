@@ -9,11 +9,11 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+      includeAssets: ['vite.svg', 'pwa-192x192.png', 'pwa-512x512.png'],
       manifest: {
-        name: 'Restaurant Orders - Sistema de Pedidos',
-        short_name: 'RestaurantOrders',
-        description: 'Sistema offline-first para gestión de pedidos en restaurantes',
+        name: 'OrdayGo - Sistema de Gestión para Restaurantes',
+        short_name: 'OrdayGo',
+        description: 'Gestiona pedidos, mesas, cocina y reportes de tu restaurante desde una sola plataforma',
         theme_color: '#1976d2',
         background_color: '#ffffff',
         display: 'standalone',

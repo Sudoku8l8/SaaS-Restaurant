@@ -55,7 +55,7 @@ export function Hero() {
                     </div>
 
                     <div className="social-proof">
-                        <p style={{ fontSize: '0.9rem', color: '#2e3138ff', marginBottom: '1rem' }}>No requiere tarjeta de crédito • 14 días de prueba gratis</p>
+                        <p style={{ fontSize: '0.9rem', color: '#2e3138ff', marginBottom: '1rem' }}>No requiere tarjeta de crédito • 28 días de prueba gratis</p>
                         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', }}>
                             {['Restaurantes', 'Cafeterías', 'Pollerías', 'Delivery'].map(tag => (
                                 <span key={tag} style={{
