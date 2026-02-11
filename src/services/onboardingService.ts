@@ -2,6 +2,7 @@ import { db } from './firebase/config';
 import { doc, writeBatch, getDoc } from 'firebase/firestore';
 import { generateUUID } from '@/utils/uuid';
 import type { Restaurant } from '@/types';
+import { hashPin } from '@/utils/crypto';
 
 interface CreateRestaurantParams {
     name: string;
@@ -50,7 +51,7 @@ export async function createRestaurant({ name, slug, adminName, adminPin }: Crea
             name: adminName,
             role: 'admin',
             restaurantId: slug,
-            pinHash: adminPin, // MVP: Simple storage
+            pinHash: await hashPin(adminPin), // Secure hash storage
             active: true,
             createdAt: new Date()
         };

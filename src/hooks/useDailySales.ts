@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { db } from '@/services/firebase/config';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { useAuth } from './useAuth';
-import { isSameDay } from 'date-fns';
 import type { Order } from '@/types';
+import { ensurePeruDate, getPeruDateString } from '@/utils/dateUtils';
 
 export interface SalesMetrics {
     totalSales: number;
@@ -37,18 +37,17 @@ export function useDailySales(targetDate?: Date) {
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
-            const dateToCompare = targetDate || new Date();
+            const targetDateStr = getPeruDateString(targetDate || new Date());
 
             const paidOrdersToday = snapshot.docs
                 .map(doc => {
                     const data = doc.data();
-                    const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
-                    return { ...data, createdAt } as Order;
+                    return { ...data, createdAt: ensurePeruDate(data.createdAt) } as Order;
                 })
                 .filter(order => {
                     const isPaid = order.status === 'paid';
-                    const isTargetDay = isSameDay(order.createdAt, dateToCompare);
-                    return isPaid && isTargetDay;
+                    const orderDateStr = getPeruDateString(order.createdAt);
+                    return isPaid && (orderDateStr === targetDateStr);
                 });
             // ... rest of the logic remains the same ...
 

@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { collection, getDocs, query, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/services/firebase/config';
 import { Button, Card, Input, Badge } from '@/components/shared';
 import type { Restaurant } from '@/types';
+import { getPeruNow, formatPeruDisplay, ensurePeruDate } from '@/utils/dateUtils';
 
 export function SuperAdminPage() {
-    const navigate = useNavigate();
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState(() => {
+        return sessionStorage.getItem('superadmin_session') === 'active';
+    });
     const [password, setPassword] = useState('');
     const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -19,6 +20,7 @@ export function SuperAdminPage() {
         const superadminKey = import.meta.env.VITE_SUPERADMIN_KEY;
         if (superadminKey && password === superadminKey) {
             setIsAuthenticated(true);
+            sessionStorage.setItem('superadmin_session', 'active');
             loadRestaurants();
         } else {
             alert('Contraseña incorrecta');
@@ -64,12 +66,7 @@ export function SuperAdminPage() {
 
         if (confirm(`¿Confirmas renovar "${name}" por ${days} días?`)) {
             try {
-                // Calculate new end date based on CURRENT TIME (if expired) or EXISTING END DATE (if active)?
-                // For simplicity/safety in this MVP, we always extend from NOW if expired, or add to existing if active.
-                // Actually, simplest is just: New End Date = Now + Days (Reset) OR Existing + Days.
-                // Let's do: Set SubscriptionEndsAt to Now + Days. This effectively "Unblocks" them immediately.
-
-                const newEndDate = new Date();
+                const newEndDate = getPeruNow();
                 newEndDate.setDate(newEndDate.getDate() + days);
 
                 await updateDoc(doc(db, 'restaurants', id), {
@@ -92,14 +89,14 @@ export function SuperAdminPage() {
     };
 
     const getDaysRemaining = (restaurant: Restaurant) => {
-        const now = new Date();
+        const now = getPeruNow();
         let endDate: Date;
 
         if (restaurant.subscriptionEndsAt) {
-            endDate = restaurant.subscriptionEndsAt instanceof Date ? restaurant.subscriptionEndsAt : new Date((restaurant.subscriptionEndsAt as any).seconds * 1000);
+            endDate = ensurePeruDate(restaurant.subscriptionEndsAt);
         } else {
             // Trial Logic (28 days from createdAt)
-            const createdAt = restaurant.createdAt instanceof Date ? restaurant.createdAt : new Date((restaurant.createdAt as any).seconds * 1000);
+            const createdAt = ensurePeruDate(restaurant.createdAt);
             endDate = new Date(createdAt);
             endDate.setDate(endDate.getDate() + 28);
         }
@@ -110,13 +107,13 @@ export function SuperAdminPage() {
     };
 
     const checkIsExpired = (restaurant: Restaurant) => {
-        const now = new Date();
+        const now = getPeruNow();
         if (restaurant.subscriptionEndsAt) {
-            const endDate = restaurant.subscriptionEndsAt instanceof Date ? restaurant.subscriptionEndsAt : new Date((restaurant.subscriptionEndsAt as any).seconds * 1000);
+            const endDate = ensurePeruDate(restaurant.subscriptionEndsAt);
             return now > endDate;
         }
         // Trial Logic
-        const createdAt = restaurant.createdAt instanceof Date ? restaurant.createdAt : new Date((restaurant.createdAt as any).seconds * 1000);
+        const createdAt = ensurePeruDate(restaurant.createdAt);
         const diffTime = now.getTime() - createdAt.getTime();
         const diffDays = diffTime / (1000 * 3600 * 24);
         return diffDays > 28;
@@ -136,9 +133,7 @@ export function SuperAdminPage() {
 
     const formatDate = (date: any) => {
         if (!date) return 'N/A';
-        if (date.seconds) return new Date(date.seconds * 1000).toLocaleDateString();
-        if (date instanceof Date) return date.toLocaleDateString();
-        return 'Fecha inválida';
+        return formatPeruDisplay(ensurePeruDate(date));
     };
 
     if (!isAuthenticated) {
@@ -172,7 +167,10 @@ export function SuperAdminPage() {
                     <h1 style={{ color: 'var(--text-primary)', fontWeight: '900' }}>🦸 SuperAdmin Dashboard</h1>
                     <p style={{ color: 'var(--text-secondary)', fontWeight: '600' }}>Gestión Global de Tenants</p>
                 </div>
-                <Button variant="outline" onClick={() => navigate('/')}>Salir</Button>
+                <Button variant="outline" onClick={() => {
+                    sessionStorage.removeItem('superadmin_session');
+                    setIsAuthenticated(false);
+                }}>Salir</Button>
             </header>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>

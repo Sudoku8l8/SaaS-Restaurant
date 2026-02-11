@@ -13,6 +13,7 @@ import {
 } from 'firebase/firestore';
 import { useAuth } from './useAuth';
 import type { Order, OrderStatus, PaymentMethod } from '@/types';
+import { ensurePeruDate, getPeruNow } from '@/utils/dateUtils';
 
 export function useOrders() {
     const { user } = useAuth();
@@ -34,10 +35,10 @@ export function useOrders() {
                 return {
                     id: doc.id,
                     ...data,
-                    // Convert Firestore Timestamps to JS Dates
-                    createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt),
-                    updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date(data.createdAt),
-                    closedAt: data.closedAt?.toDate ? data.closedAt.toDate() : (data.closedAt ? new Date(data.closedAt) : undefined)
+                    // Convert Firestore Timestamps to Peru Dates
+                    createdAt: ensurePeruDate(data.createdAt),
+                    updatedAt: ensurePeruDate(data.updatedAt || data.createdAt),
+                    closedAt: data.closedAt ? ensurePeruDate(data.closedAt) : undefined
                 } as Order;
             });
 
@@ -90,7 +91,7 @@ export function useOrders() {
         const orderRef = doc(db, 'orders', orderId);
         await updateDoc(orderRef, {
             status,
-            updatedAt: new Date() // Firestore timestamp? Or JS Date? JS Date works (stored as map or string depending on config, but SDK handles conversion usually if configured, or just stores string/timestamp). Let's stick to JS Date for consistency with types.
+            updatedAt: getPeruNow()
         });
     };
 
@@ -104,8 +105,8 @@ export function useOrders() {
         batch.update(orderRef, {
             status: 'paid',
             paymentMethod,
-            closedAt: new Date(),
-            updatedAt: new Date()
+            closedAt: getPeruNow(),
+            updatedAt: getPeruNow()
         });
 
         // 2. Free Table

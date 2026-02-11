@@ -1,0 +1,63 @@
+# 🗺️ Hoja de Ruta — OrdayGo (SaaS-Restaurant)
+
+Este documento detalla todas las tareas necesarias para transformar a OrdayGo en un sistema POS profesional y escalable en el mercado peruano.
+
+---
+
+## 🛡️ FASE 1: Seguridad y Cimientos (Crítico - P0/P1)
+*El objetivo es cerrar brechas de seguridad y asegurar la estabilidad inicial.*
+
+- [x] **Dominio y SEO**: Configurar `ordaygo.site`, robots, sitemap y meta tags. (Completado)
+- [x] **Impresión POS**: Implementar recibos de venta con precios y totales. (Completado)
+- [ ] **Hasheo de PINs**: Migrar de texto plano a almacenamiento seguro (bcrypt/argon2).
+- [ ] **Seguridad Firestore**: Implementar reglas (Rules) robustas para evitar acceso público no autorizado.
+- [ ] **SuperAdmin Real**: Eliminar el password hardcodeado y mover a autenticación de Firebase.
+- [ ] **Normalización de Fechas**: Asegurar que toda la app use ISO strings para evitar errores de zona horaria.
+
+---
+
+## 🎨 FASE 2: Experiencia y Marca (Profesionalismo - P2)
+*El objetivo es que la app se sienta como un producto premium y confiable.*
+
+- [ ] **Error Handling**: Implementar `React Error Boundary` global para evitar pantallas blancas.
+- [ ] **Loading States**: Agregar skeletons o splash screens elegantes durante la carga de datos.
+- [ ] **Notificaciones (Toasts)**: Feedback visual profesional para cada acción (Ej: "Pedido enviado a cocina").
+- [ ] **PWA Elite**: Generar íconos personalizados de OrdayGo (no genéricos) y corregir manifest.
+- [ ] **Landing Page**:
+  - [ ] Página de Precios (Pricing) clara.
+  - [ ] Políticas de Privacidad y Términos de Servicio reales.
+  - [ ] Formulario de contacto/soporte funcional.
+
+---
+
+## ⚙️ FASE 3: Operaciones POS Avanzadas (Diferenciación - P2)
+*Funciones que los restaurantes realmente necesitan para su día a día.*
+
+- [ ] **Mapa de Mesas Visual**: Interfaz gráfica para ver disponibilidad y estado de mesas.
+- [ ] **Arqueo de Caja**:
+  - [ ] Registro de Apertura con monto inicial.
+  - [ ] Registro de Salidas de dinero (gastos de caja chica).
+  - [ ] Cierre de turno con reporte de diferencias.
+- [ ] **Control de Stock Básico**: Inventario simple por producto con alertas de "Poco stock".
+- [ ] **Modificadores de platos**: Soporte para platos con opciones (Ej: "Término de la carne", "Con/Sin cebolla").
+
+---
+
+## 🚀 FASE 4: Crecimiento y Escalamiento Elite (SaaS - P3)
+*Para competir con los grandes y escalar a cientos de clientes.*
+
+- [ ] **SUNAT (Facturación Electrónica)**: Integración con PSE para Boletas y Facturas.
+- [ ] **Dashboard de Inteligencia (BI)**: Gráficos de ventas, ticket promedio y platos estrella.
+- [ ] **Gestión de Insumos (Recetas)**: Descuento automático de stock de ingredientes por cada plato vendido.
+- [ ] **Pasarela de Pagos SaaS**: Automatizar el cobro de la suscripción (usando Stripe o Niubiz).
+- [ ] **Email Marketing**: Automatizar correos de bienvenida y recordatorios de renovación.
+
+---
+
+## 📊 Resumen de Estado
+| Fase | Estado | Progreso |
+|------|--------|----------|
+| 1. Cimientos | 🟠 En Proceso | 40% |
+| 2. Experiencia | ⚪ Pendiente | 0% |
+| 3. Operaciones | ⚪ Pendiente | 0% |
+| 4. Escalamiento | ⚪ Pendiente | 0% |

@@ -1,12 +1,9 @@
-import {
-    useState,
-    useEffect,
-    type ReactNode,
-} from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { db } from '@/services/firebase/config';
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
 import type { AuthUser, User } from '@/types';
 import { AuthContext } from './AuthContext';
+import { hashPin } from '@/utils/crypto';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<AuthUser | null>(null);
@@ -48,33 +45,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsLoading(true);
         setError(null);
         try {
-            // Check against Firestore
+            if (!expectedRestaurantId) {
+                throw new Error('ID de restaurante requerido');
+            }
+
+            // 1. Fetch users for this specific restaurant
             const usersRef = collection(db, 'users');
-            const q = query(usersRef, where('pinHash', '==', pin));
+            const q = query(usersRef, where('restaurantId', '==', expectedRestaurantId));
             const querySnapshot = await getDocs(q);
 
-            if (!querySnapshot.empty) {
-                // Find user that matches the PIN AND the restaurant
-                const matchingUserDoc = querySnapshot.docs.find(doc => {
-                    const data = doc.data() as User;
-                    // If expectedRestaurantId is provided, we MUST match it.
-                    // If not (legacy/superadmin login?), we might allow any (but risky).
-                    // For SaaS, we strictly enforce it.
-                    if (expectedRestaurantId) {
-                        return data.restaurantId === expectedRestaurantId;
-                    }
-                    return true;
-                });
+            if (querySnapshot.empty) {
+                throw new Error('Restaurante no tiene usuarios configurados');
+            }
 
-                if (!matchingUserDoc) {
-                    // PIN exists but not for this restaurant
-                    throw new Error('PIN incorrecto para este restaurante');
+            // 2. Hash the input PIN for comparison
+            const inputHash = await hashPin(pin);
+
+            // 3. Find the matching user
+            let matchingUserDoc = null;
+            let needsMigration = false;
+
+            for (const userDoc of querySnapshot.docs) {
+                const data = userDoc.data() as User;
+
+                // Try modern hash check first
+                if (data.pinHash === inputHash) {
+                    matchingUserDoc = userDoc;
+                    break;
                 }
 
+                // Try legacy plain-text check for migration
+                if (data.pinHash === pin) {
+                    matchingUserDoc = userDoc;
+                    needsMigration = true;
+                    break;
+                }
+            }
+
+            if (matchingUserDoc) {
                 const validUser = matchingUserDoc.data() as User;
 
+                // 4. Auto-migration to Hash if needed
+                if (needsMigration) {
+                    console.log('Migrating user PIN to secure hash...');
+                    await updateDoc(matchingUserDoc.ref, {
+                        pinHash: inputHash
+                    });
+                }
+
                 const authUser: AuthUser = {
-                    id: matchingUserDoc.id, // Use doc ID directly
+                    id: matchingUserDoc.id,
                     name: validUser.name,
                     role: validUser.role,
                     restaurantId: validUser.restaurantId,

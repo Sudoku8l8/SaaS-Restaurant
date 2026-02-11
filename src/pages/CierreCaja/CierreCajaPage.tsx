@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { format, parseISO } from 'date-fns';
+import { parseISO } from 'date-fns';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useDailySales } from '@/hooks/useDailySales';
 import { useAuth } from '@/hooks/useAuth';
@@ -10,6 +10,7 @@ import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 import { db } from '@/services/firebase/config';
 
 import { exportDailySalesToExcel } from '@/services/exportExcel';
+import { getPeruDateString, getPeruNow, formatPeruDisplay } from '@/utils/dateUtils';
 
 export function CierreCajaPage() {
     const navigate = useNavigate();
@@ -17,6 +18,7 @@ export function CierreCajaPage() {
     const [searchParams] = useSearchParams();
     const dateParam = searchParams.get('date');
     const targetDate = dateParam ? parseISO(dateParam) : new Date();
+    const targetDateStr = getPeruDateString(targetDate);
 
     const { user } = useAuth();
     const { metrics, orders, isLoading: loadingMetrics } = useDailySales(targetDate);
@@ -29,8 +31,6 @@ export function CierreCajaPage() {
     useEffect(() => {
         const checkClosure = async () => {
             if (!user?.restaurantId) return;
-
-            const targetDateStr = format(targetDate, 'yyyy-MM-dd');
 
             const q = query(
                 collection(db, 'closures'),
@@ -70,16 +70,14 @@ export function CierreCajaPage() {
 
         setIsClosing(true);
         try {
-            const dateStr = format(targetDate, 'yyyy-MM-dd');
-
             const closureData = {
                 restaurantId: user?.restaurantId,
-                date: dateStr,
+                date: targetDateStr,
                 totalSales: metrics.totalSales,
                 orderCount: metrics.orderCount,
                 salesByWaiter: metrics.salesByWaiter,
                 salesByPaymentMethod: metrics.salesByPaymentMethod,
-                createdAt: new Date(),
+                createdAt: getPeruNow(),
                 createdBy: user?.id,
                 createdByName: user?.name
             };
@@ -87,7 +85,7 @@ export function CierreCajaPage() {
             await addDoc(collection(db, 'closures'), closureData);
 
             setExistingClosure(true);
-            alert(`✅ Caja Cerrada Correctamente\n\nFecha: ${dateStr}\nTotal: S/ ${metrics.totalSales}`);
+            alert(`✅ Caja Cerrada Correctamente\n\nFecha: ${targetDateStr}\nTotal: S/ ${metrics.totalSales}`);
 
         } catch (error) {
             console.error("Error creating closure:", error);
@@ -102,7 +100,7 @@ export function CierreCajaPage() {
             <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                 <div>
                     <h1>Cierre de Caja</h1>
-                    <p>Resumen del día: <strong>{format(targetDate, 'dd/MM/yyyy')}</strong></p>
+                    <p>Resumen del día: <strong>{formatPeruDisplay(targetDate)}</strong></p>
                 </div>
                 <div style={{ display: 'flex', gap: '1rem' }}>
                     <Button
@@ -135,7 +133,7 @@ export function CierreCajaPage() {
                     <CheckCircle size={22} />
                     <span style={{ fontWeight: '600' }}>
                         <strong style={{ textTransform: 'uppercase', marginRight: '0.5rem' }}>Caja Cerrada:</strong>
-                        Ya se ha realizado el cierre de esta fecha ({format(targetDate, 'dd/MM/yyyy')}). Todas las operaciones están bloqueadas.
+                        Ya se ha realizado el cierre de esta fecha ({formatPeruDisplay(targetDate)}). Todas las operaciones están bloqueadas.
                     </span>
                 </div>
             )}
