@@ -230,7 +230,7 @@ export function CocinaPage() {
                     table={getMinimalTable(orderToEdit)}
                     initialOrder={orderToEdit}
                     onClose={() => setOrderToEdit(undefined)}
-                    onOrderCreated={() => setOrderToEdit(undefined)}
+                    onOrderCreated={() => { /* Order saved, let modal handle closure */ }}
                 />
             )}
         </div>

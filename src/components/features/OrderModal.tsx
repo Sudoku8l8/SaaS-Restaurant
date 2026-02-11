@@ -710,7 +710,7 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                         opacity: isSaving ? 0.7 : 1
                                     }}
                                 >
-                                    {isSaving ? 'Guardando...' : (isSaved ? '¡Pedido Guardado!' : (initialOrder ? 'Confirmar Cambios' : 'Confirmar Pedido'))}
+                                    {isSaving ? 'Pedido Guardado' : (isSaved ? '¡Pedido Guardado!' : (initialOrder ? 'Confirmar Cambios' : 'Confirmar Pedido'))}
                                 </Button>
                                 <Button
                                     variant="outline"

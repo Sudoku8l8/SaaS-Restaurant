@@ -213,7 +213,7 @@ export function MozoPage() {
                     table={selectedTable || undefined}
                     initialOrder={orderToEdit}
                     onClose={handleCloseOrderModal}
-                    onOrderCreated={handleCloseOrderModal}
+                    onOrderCreated={() => { /* Order saved, let modal handle closure */ }}
                     orderType={takeoutOrderType}
                 />
             )}
