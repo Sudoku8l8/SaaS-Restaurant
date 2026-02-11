@@ -63,6 +63,12 @@ export interface RestaurantTable {
     status: TableStatus;
     capacity?: number;
     currentOrderId?: string;
+    // Visual Map properties
+    positionX?: number; // 0-100 percentage
+    positionY?: number; // 0-100 percentage
+    label?: string;     // Custom name like "Terraza 1"
+    width?: number;     // Relative width
+    height?: number;    // Relative height
 }
 
 export interface Product {
@@ -75,6 +81,23 @@ export interface Product {
     available: boolean;
     imageUrl?: string;
     isPopular?: boolean;
+    // Inventory & Options
+    stockCount?: number;
+    trackStock?: boolean;
+    modifiers?: ProductModifier[];
+}
+
+export interface ProductModifier {
+    id: string;
+    name: string;
+    options: ModifierOption[];
+    required?: boolean;
+    multiple?: boolean;
+}
+
+export interface ModifierOption {
+    name: string;
+    price?: number; // Extra cost
 }
 
 export interface Category {
@@ -91,6 +114,14 @@ export interface OrderItem {
     price: number;
     subtotal: number;
     notes?: string;
+    selectedOptions?: SelectedModifier[];
+}
+
+export interface SelectedModifier {
+    modifierId: string;
+    modifierName: string;
+    optionName: string;
+    price?: number;
 }
 
 export interface Order {
@@ -129,6 +160,22 @@ export interface Closure {
     createdAt: Date;
     createdBy: string;
     createdByName: string;
+    // Arqueo fields
+    openingBalance?: number;
+    expectedCash?: number;
+    actualCash?: number;
+    difference?: number;
+    expenses?: CashExpense[];
+    status: 'open' | 'closed';
+}
+
+export interface CashExpense {
+    id: string;
+    amount: number;
+    description: string;
+    category: string;
+    timestamp: Date;
+    userId: string;
 }
 
 

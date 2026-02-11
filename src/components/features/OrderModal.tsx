@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { ShoppingCart, Utensils, Search, Trash2, Printer, MessageSquare } from 'lucide-react';
 import { db } from '@/services/firebase/config';
 import { collection, query, where } from 'firebase/firestore';
-import { Button, Input } from '@/components/shared';
+import { Button, Input, Card } from '@/components/shared';
 import type { Product, OrderItem, RestaurantTable, Order, Category } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrders } from '@/hooks/useOrders';
@@ -30,6 +30,8 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
     const [mobileView, setMobileView] = useState<'menu' | 'cart'>('menu');
     const [isSaving, setIsSaving] = useState(false);
+    const [modifierProduct, setModifierProduct] = useState<Product | null>(null);
+    const [selectedModifiers, setSelectedModifiers] = useState<Record<string, string>>({});
 
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -96,12 +98,27 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
         return currentQty > originalItem.quantity;
     };
 
-    const addToOrder = (product: Product) => {
+    const addToOrder = (product: Product, overrides?: { selectedOptions: any[], price: number }) => {
+        // If product has modifiers and they aren't provided via overrides, open modifier picker
+        if (product.modifiers && product.modifiers.length > 0 && !overrides) {
+            setModifierProduct(product);
+            setSelectedModifiers({});
+            return;
+        }
+
+        const finalPrice = overrides ? overrides.price : product.price;
+        const finalOptions = overrides ? overrides.selectedOptions : [];
+
         setItems(prev => {
-            const existing = prev.find(i => i.productId === product.id);
+            // Check if exact same product with exact same options exists
+            const existing = prev.find(i =>
+                i.productId === product.id &&
+                JSON.stringify(i.selectedOptions || []) === JSON.stringify(finalOptions || [])
+            );
+
             if (existing) {
                 return prev.map(i =>
-                    i.productId === product.id
+                    (i.productId === product.id && JSON.stringify(i.selectedOptions || []) === JSON.stringify(finalOptions || []))
                         ? { ...i, quantity: i.quantity + 1, subtotal: (i.quantity + 1) * i.price }
                         : i
                 );
@@ -110,9 +127,40 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                 productId: product.id,
                 productName: product.name,
                 quantity: 1,
-                price: product.price,
-                subtotal: product.price
+                price: finalPrice,
+                subtotal: finalPrice,
+                selectedOptions: finalOptions
             }];
+        });
+
+        setModifierProduct(null);
+    };
+
+    const handleConfirmModifiers = () => {
+        if (!modifierProduct) return;
+
+        const finalOptions: any[] = [];
+        let extraPrice = 0;
+
+        modifierProduct.modifiers?.forEach(mod => {
+            const selectedOptionName = selectedModifiers[mod.id];
+            if (selectedOptionName) {
+                const option = mod.options.find(o => o.name === selectedOptionName);
+                if (option) {
+                    finalOptions.push({
+                        modifierId: mod.id,
+                        modifierName: mod.name,
+                        optionName: option.name,
+                        price: option.price
+                    });
+                    extraPrice += (option.price || 0);
+                }
+            }
+        });
+
+        addToOrder(modifierProduct, {
+            selectedOptions: finalOptions,
+            price: modifierProduct.price + extraPrice
         });
     };
 
@@ -506,6 +554,11 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                         <div style={{ flex: 1 }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                                                 <div style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{item.productName}</div>
+                                                {item.selectedOptions && item.selectedOptions.length > 0 && (
+                                                    <div style={{ fontSize: '0.75rem', color: 'var(--primary-color)', fontWeight: '600' }}>
+                                                        {item.selectedOptions.map(opt => `${opt.modifierName}: ${opt.optionName}`).join(' | ')}
+                                                    </div>
+                                                )}
                                                 <button
                                                     onClick={() => handleUpdateNote(item.productId)}
                                                     style={{
@@ -687,6 +740,69 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                         </div>
                     </div>
                 </div>
+
+                {/* MODIFIER PICKER OVERLAY */}
+                {modifierProduct && (
+                    <div style={{
+                        position: 'absolute',
+                        inset: 0,
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        zIndex: 2000,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backdropFilter: 'blur(8px)'
+                    }}>
+                        <Card style={{ width: '100%', maxWidth: '500px', padding: '2.5rem', boxShadow: 'var(--shadow-xl)' }}>
+                            <h2 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '1.5rem', color: 'var(--primary-color)' }}>
+                                Opciones para {modifierProduct.name}
+                            </h2>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginBottom: '2rem' }}>
+                                {modifierProduct.modifiers?.map(mod => (
+                                    <div key={mod.id}>
+                                        <label style={{ display: 'block', fontWeight: '700', marginBottom: '0.75rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                                            {mod.name} {mod.required && <span style={{ color: 'var(--danger-color)' }}>*</span>}
+                                        </label>
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                            {mod.options.map(opt => (
+                                                <button
+                                                    key={opt.name}
+                                                    onClick={() => setSelectedModifiers(prev => ({ ...prev, [mod.id]: opt.name }))}
+                                                    style={{
+                                                        padding: '0.6rem 1rem',
+                                                        borderRadius: 'var(--radius-md)',
+                                                        border: '2px solid',
+                                                        borderColor: selectedModifiers[mod.id] === opt.name ? 'var(--primary-color)' : 'var(--border-color)',
+                                                        backgroundColor: selectedModifiers[mod.id] === opt.name ? 'var(--primary-color)' : 'transparent',
+                                                        color: selectedModifiers[mod.id] === opt.name ? 'white' : 'var(--text-primary)',
+                                                        fontWeight: '600',
+                                                        fontSize: '0.85rem',
+                                                        cursor: 'pointer',
+                                                        transition: 'all 0.2s'
+                                                    }}
+                                                >
+                                                    {opt.name} {opt.price ? `(+S/ ${opt.price})` : ''}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '1rem' }}>
+                                <Button variant="ghost" fullWidth onClick={() => setModifierProduct(null)}>Cancelar</Button>
+                                <Button
+                                    fullWidth
+                                    onClick={handleConfirmModifiers}
+                                    disabled={modifierProduct.modifiers?.some(m => m.required && !selectedModifiers[m.id])}
+                                >
+                                    Agregar al Pedido
+                                </Button>
+                            </div>
+                        </Card>
+                    </div>
+                )}
             </div>
         </div>
     );

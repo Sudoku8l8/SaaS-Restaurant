@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Lock } from 'lucide-react';
-import { TableCard } from '@/components/features/TableCard';
 import { OrderModal } from '@/components/features/OrderModal';
 import { TableDetailModal } from '@/components/features/TableDetailModal';
+import { TableMap } from '@/components/features/TableMap';
 import { Button } from '@/components/shared';
 import { TableSkeleton } from '@/components/shared/Skeleton';
 import { useAuth } from '@/hooks/useAuth';
@@ -202,29 +202,11 @@ export function MozoPage() {
                 </div>
             </header>
 
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
-                gap: '1.5rem'
-            }}>
-                {allTables.map(table => {
-                    // Find actual order status for this table
-                    const orderId = table.id.startsWith('takeout-order-')
-                        ? table.currentOrderId
-                        : activeOrders?.find(o => o.tableNumber === table.number && o.orderType === 'dine-in')?.id;
-
-                    const currentOrder = activeOrders?.find(o => o.id === orderId);
-
-                    return (
-                        <TableCard
-                            key={table.id}
-                            table={table}
-                            orderStatus={currentOrder?.status}
-                            onClick={() => handleTableClick(table)}
-                        />
-                    );
-                })}
-            </div>
+            <TableMap
+                tables={allTables}
+                activeOrders={activeOrders}
+                onTableClick={handleTableClick}
+            />
 
             {(isOrderModalOpen && (selectedTable || takeoutOrderType === 'takeout') && !isClosed) && (
                 <OrderModal

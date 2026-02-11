@@ -1,0 +1,94 @@
+.mapContainer {
+    position: relative;
+    width: 100%;
+    min-height: 500px;
+    background: #f1f5f9;
+    border-radius: var(--radius-lg);
+    border: 2px dashed var(--divider-color);
+    overflow: auto;
+    padding: 2rem;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+.mapViewport {
+    position: relative;
+    background: white;
+    box-shadow: var(--shadow-md);
+    border-radius: var(--radius-md);
+    /* For "Map Mode", this will have fixed aspect ratio or size */
+    width: 100%;
+    max-width: 1200px;
+    height: 700px;
+}
+
+.gridMode {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1.5rem;
+    width: 100%;
+    padding: 1rem;
+}
+
+.tableContainer {
+    transition: all 0.3s ease;
+}
+
+.absoluteTable {
+    position: absolute;
+    cursor: pointer;
+}
+
+.mapControls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: white;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.legend {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.legendItem {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.dotFree {
+    background-color: var(--success-color);
+}
+
+.dotOccupied {
+    background-color: var(--warning-color);
+}
+
+.dotTakeout {
+    background-color: var(--primary-color);
+}
+
+@media (max-width: 768px) {
+    .mapViewport {
+        height: auto;
+        min-height: 400px;
+    }
+}
