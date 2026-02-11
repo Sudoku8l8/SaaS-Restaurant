@@ -13,8 +13,8 @@ export default defineConfig({
       manifest: {
         name: 'OrdayGo - Sistema de Gestión para Restaurantes',
         short_name: 'OrdayGo',
-        description: 'Gestiona pedidos, mesas, cocina y reportes de tu restaurante desde una sola plataforma',
-        theme_color: '#1976d2',
+        description: 'La plataforma POS más rápida y profesional para gestionar pedidos, cocina y reportes.',
+        theme_color: '#E63946',
         background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait',

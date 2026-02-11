@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { RouterProvider } from 'react-router-dom'
 import { router } from './app/routes'
 import { AuthProvider } from './app/providers/AuthProvider'
+import { GlobalErrorBoundary, ToastProvider } from './components/shared'
 import { seedFirestore } from './services/firebase/seeders'
 import './index.css'
 
@@ -13,9 +14,13 @@ if (import.meta.env.DEV) {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <AuthProvider>
-      <RouterProvider router={router} />
-    </AuthProvider>
+    <GlobalErrorBoundary>
+      <ToastProvider>
+        <AuthProvider>
+          <RouterProvider router={router} />
+        </AuthProvider>
+      </ToastProvider>
+    </GlobalErrorBoundary>
   </StrictMode>
 );
 ;

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { Features } from './components/Features';
+import { Pricing } from './components/Pricing';
 import { AuthForms } from './components/AuthForms';
 import { Footer } from './components/Footer';
 
@@ -33,7 +34,7 @@ export function LandingPage() {
             <Hero />
 
             <Features />
-
+            <Pricing />
             <AuthForms />
 
             <Footer />

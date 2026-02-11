@@ -25,6 +25,17 @@ export function AuthForms() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    // Listen for external mode switches (e.g., from Pricing section)
+    React.useEffect(() => {
+        const handleModeSwitch = (e: any) => {
+            if (e.detail === 'register' || e.detail === 'login') {
+                setMode(e.detail);
+            }
+        };
+        window.addEventListener('switch-auth-mode', handleModeSwitch);
+        return () => window.removeEventListener('switch-auth-mode', handleModeSwitch);
+    }, []);
+
     const handleGo = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!slug) return;

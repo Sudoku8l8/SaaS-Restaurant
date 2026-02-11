@@ -1,21 +1,22 @@
 .skeleton {
-    background: linear-gradient(90deg,
-            rgba(255, 255, 255, 0.05) 25%,
-            rgba(255, 255, 255, 0.1) 37%,
-            rgba(255, 255, 255, 0.05) 63%);
-    background-size: 400% 100%;
-    animation: skeleton-loading 1.4s ease infinite;
+    background: #f6f7f8;
+    background: linear-gradient(
+        90deg,
+        #f6f7f8 8%,
+        #edeef1 18%,
+        #f6f7f8 33%
+    );
+    background-size: 800px 104px;
+    animation: placeholderShimmer 2s linear infinite forwards;
     position: relative;
-    overflow: hidden;
 }
 
-@keyframes skeleton-loading {
+@keyframes placeholderShimmer {
     0% {
-        background-position: 100% 50%;
+        background-position: -800px 0;
     }
-
     100% {
-        background-position: 0% 50%;
+        background-position: 800px 0;
     }
 }
 

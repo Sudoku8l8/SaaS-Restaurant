@@ -22,29 +22,29 @@ export function Navbar() {
         }}>
             <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
                 <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#1a1a1a', flexShrink: 0 }}>
-                    Orday<span style={{ color: '#2563eb' }}>Go</span>
+                    Orday<span style={{ color: 'var(--primary-color)' }}>Go</span>
                 </div>
 
                 <div className="nav-links" style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
                     <a href="#features" style={{ textDecoration: 'none', color: '#666', fontSize: '0.95rem', fontWeight: 500 }}>Características</a>
+                    <a href="#pricing" style={{ textDecoration: 'none', color: '#666', fontSize: '0.95rem', fontWeight: 500 }}>Precios</a>
                     <a href="#benefits" style={{ textDecoration: 'none', color: '#666', fontSize: '0.95rem', fontWeight: 500 }}>Beneficios</a>
-                    <a href="#contact" style={{ textDecoration: 'none', color: '#666', fontSize: '0.95rem', fontWeight: 500 }}>Contacto</a>
                 </div>
 
                 <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexShrink: 0 }}>
                     <button
                         onClick={handleLoginClick}
                         className="login-btn"
-                        style={{ background: '#2563eb', borderRadius: 'var(--radius-md)', padding: '0.7rem 1rem', color: '#fff', fontSize: '0.9rem', cursor: 'pointer', fontFamily: 'var(--font-family)', fontWeight: '500', border: 'none' }}
+                        style={{ border: '1px solid var(--primary-color)', background: 'transparent', borderRadius: 'var(--radius-md)', padding: '0.7rem 1.5rem', color: 'var(--primary-color)', fontSize: '0.9rem', cursor: 'pointer', fontFamily: 'var(--font-family)', fontWeight: '700' }}
                     >
                         Ingresar
                     </button>
                     <Button
                         onClick={scrollToAuth}
                         className='register-btn'
-                        style={{ background: '#2563eb', padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', fontSize: '0.9rem' }}
+                        style={{ background: 'var(--primary-color)', padding: '0.7rem 1.5rem', borderRadius: 'var(--radius-md)', fontSize: '0.9rem', fontWeight: '700' }}
                     >
-                        Regístrate
+                        Pruébalo Gratis
                     </Button>
                 </div>
             </div>

@@ -1,10 +1,11 @@
 import { useDailySales } from '@/hooks/useDailySales';
 import { Card, Badge } from '@/components/shared';
+import { DashboardSkeleton } from '@/components/shared/Skeleton';
 
 export function SalesDashboard() {
     const { metrics, isLoading } = useDailySales();
 
-    if (isLoading) return <div className="p-4 text-center">Calculando ventas...</div>;
+    if (isLoading) return <DashboardSkeleton />;
 
     return (
         <div style={{ marginBottom: '2rem' }}>
@@ -47,7 +48,7 @@ export function SalesDashboard() {
                             {Object.entries(metrics.salesByWaiter).map(([waiter, amount]) => (
                                 <div key={waiter} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #eee', paddingBottom: '0.25rem' }}>
                                     <span>{waiter}</span>
-                                    <strong>S/ {amount.toFixed(2)}</strong>
+                                    <strong>S/ {(amount as number).toFixed(2)}</strong>
                                 </div>
                             ))}
                         </div>

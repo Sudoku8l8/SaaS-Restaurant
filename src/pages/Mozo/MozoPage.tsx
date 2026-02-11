@@ -112,7 +112,7 @@ export function MozoPage() {
                     gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
                     gap: '1.5rem'
                 }}>
-                    {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                    {[...Array(12)].map((_, i) => (
                         <TableSkeleton key={i} />
                     ))}
                 </div>

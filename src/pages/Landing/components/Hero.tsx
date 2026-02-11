@@ -16,13 +16,14 @@ export function Hero() {
                 <div className="hero-content">
                     <h1 style={{
                         fontSize: 'clamp(2.5rem, 5vw, 4.5rem)',
-                        fontWeight: 800,
-                        color: '#1a1a1a',
+                        fontWeight: 900,
+                        color: 'var(--text-primary)',
                         lineHeight: 1.1,
-                        marginBottom: '1rem'
+                        marginBottom: '1rem',
+                        letterSpacing: '-0.02em'
                     }}>
                         Todo tu restaurant <br />
-                        <span style={{ color: '#2563eb' }}>en una sola mano</span>
+                        <span style={{ color: 'var(--primary-color)' }}>en una sola mano</span>
                     </h1>
 
                     <p style={{
@@ -40,7 +41,7 @@ export function Hero() {
                             onClick={scrollToAuth}
                             size="lg"
                             className="primary-cta"
-                            style={{ background: '#2563eb', color: 'white', padding: '0.8rem 2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}
+                            style={{ background: 'var(--primary-color)', color: 'white', padding: '1rem 2.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center', fontWeight: '800', boxShadow: '0 10px 20px rgba(230, 57, 70, 0.2)' }}
                         >
                             Prueba gratis <ChevronRight size={18} />
                         </Button>
@@ -86,8 +87,8 @@ export function Hero() {
                         overflow: 'hidden'
                     }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                            <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#1f2937' }}>Pedidos en vivo</span>
-                            <span style={{ fontSize: '1.5rem', fontWeight: 800, color: '#2563eb' }}>24</span>
+                            <span style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>Pedidos en vivo</span>
+                            <span style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--primary-color)' }}>24</span>
                         </div>
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>

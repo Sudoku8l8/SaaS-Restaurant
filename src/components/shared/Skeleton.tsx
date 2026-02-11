@@ -5,13 +5,15 @@ interface SkeletonProps {
     height?: string | number;
     borderRadius?: string | number;
     className?: string;
+    style?: React.CSSProperties;
 }
 
-export function Skeleton({ width, height, borderRadius, className = '' }: SkeletonProps) {
+export function Skeleton({ width, height, borderRadius, className = '', style: customStyle = {} }: SkeletonProps) {
     const style = {
         width: typeof width === 'number' ? `${width}px` : width,
         height: typeof height === 'number' ? `${height}px` : height,
         borderRadius: typeof borderRadius === 'number' ? `${borderRadius}px` : borderRadius,
+        ...customStyle
     };
 
     return <div className={`${styles.skeleton} ${className}`} style={style} />;
@@ -38,7 +40,24 @@ export function OrderCardSkeleton() {
 export function TableSkeleton() {
     return (
         <div className={styles.tableSkeleton}>
-            <Skeleton width="100%" height="100%" borderRadius={12} />
+            <Skeleton width="100%" height="100%" borderRadius="var(--radius-lg)" />
+        </div>
+    );
+}
+
+export function DashboardSkeleton() {
+    return (
+        <div style={{ marginBottom: '2rem' }}>
+            <Skeleton width="200px" height={32} borderRadius={8} style={{ marginBottom: '1.5rem' }} />
+            <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                gap: '1rem'
+            }}>
+                <Skeleton height={120} borderRadius="var(--radius-lg)" />
+                <Skeleton height={120} borderRadius="var(--radius-lg)" />
+                <Skeleton height={120} borderRadius="var(--radius-lg)" />
+            </div>
         </div>
     );
 }
