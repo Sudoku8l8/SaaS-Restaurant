@@ -69,8 +69,15 @@ export const exportDailySalesToExcel = async (metrics: SalesMetrics, orders: Ord
     // ==========================================
     const wsDetails = workbook.addWorksheet('Detalle Pedidos');
 
+    // Sort orders by date
+    const sortedOrders = [...orders].sort((a, b) => {
+        const dateA = a.createdAt instanceof Date ? a.createdAt.getTime() : new Date(a.createdAt).getTime();
+        const dateB = b.createdAt instanceof Date ? b.createdAt.getTime() : new Date(b.createdAt).getTime();
+        return dateA - dateB;
+    });
+
     // Headers
-    const headers = ['ID', 'Hora', 'Mesa', 'Mozo', 'Items', 'Método Pago', 'Total'];
+    const headers = ['Fecha', 'Hora', 'Mesa', 'Mozo', 'Items', 'Método Pago', 'Total'];
     const headerRow = wsDetails.addRow(headers);
 
     headerRow.eachCell((cell) => {
@@ -79,20 +86,41 @@ export const exportDailySalesToExcel = async (metrics: SalesMetrics, orders: Ord
         cell.alignment = { horizontal: 'center' };
     });
 
-    // Data
-    orders.forEach(order => {
+    // Data with Day Grouping
+    let lastDateLabel = '';
+
+    sortedOrders.forEach(order => {
+        const orderDate = order.createdAt instanceof Date ? order.createdAt : new Date(order.createdAt);
+        const currentDateLabel = format(orderDate, 'dd/MM/yyyy');
+
+        // Add a separator row if the date changes (and it's not the first row)
+        if (lastDateLabel !== '' && lastDateLabel !== currentDateLabel) {
+            const separatorRow = wsDetails.addRow([]);
+            separatorRow.height = 5;
+            separatorRow.eachCell(cell => {
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEEEEEE' } };
+            });
+        }
+
         const row = wsDetails.addRow([
-            order.id.slice(0, 8),
-            format(order.createdAt, 'HH:mm'),
+            currentDateLabel,
+            format(orderDate, 'HH:mm'),
             order.tableNumber,
             order.userName || 'N/A',
-            order.items.map(i => `${i.quantity}x ${i.productName}`).join(', '),
+            order.items.map((i: any) => `${i.quantity}x ${i.productName}`).join(', '),
             order.paymentMethod || '-',
             order.total
         ]);
 
         // Currency Format for Total
         row.getCell(7).numFmt = '"S/" #,##0.00';
+
+        // Alignment for center columns
+        [1, 2, 3, 6].forEach(colIndex => {
+            row.getCell(colIndex).alignment = { horizontal: 'center' };
+        });
+
+        lastDateLabel = currentDateLabel;
     });
 
     // Auto-filter
@@ -103,7 +131,7 @@ export const exportDailySalesToExcel = async (metrics: SalesMetrics, orders: Ord
 
     // Columns Width
     wsDetails.columns = [
-        { width: 12 }, // ID
+        { width: 12 }, // Fecha
         { width: 10 }, // Hora
         { width: 10 }, // Mesa
         { width: 20 }, // Mozo

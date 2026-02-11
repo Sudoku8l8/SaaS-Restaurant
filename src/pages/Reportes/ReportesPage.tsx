@@ -126,6 +126,53 @@ export function ReportesPage() {
         }
     };
 
+    const handleExportSingleDay = async (closure: ClosureRecord) => {
+        if (!user?.restaurantId) return;
+
+        try {
+            // 1. Fetch orders for this specific day
+            const q = query(
+                collection(db, 'orders'),
+                where('restaurantId', '==', user.restaurantId)
+            );
+
+            const snapshot = await getDocs(q);
+            const date = parseISO(closure.date);
+            const startOfDay = new Date(date);
+            startOfDay.setHours(0, 0, 0, 0);
+            const endOfDay = new Date(date);
+            endOfDay.setHours(23, 59, 59, 999);
+
+            const orders = snapshot.docs
+                .map(doc => {
+                    const data = doc.data();
+                    const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
+                    return { id: doc.id, ...data, createdAt } as any;
+                })
+                .filter(order => {
+                    const isPaid = order.status === 'paid';
+                    const isInRange = order.createdAt >= startOfDay && order.createdAt <= endOfDay;
+                    return isPaid && isInRange;
+                });
+
+            // 2. Metrics for the single day
+            const metrics = {
+                totalSales: closure.totalSales,
+                orderCount: closure.orderCount,
+                salesByWaiter: closure.salesByWaiter || {},
+                salesByPaymentMethod: closure.salesByPaymentMethod || {}
+            };
+
+            // 3. Export
+            const periodLabel = format(parseISO(closure.date), 'dd/MM/yyyy');
+            await exportDailySalesToExcel(metrics, orders, periodLabel);
+
+        } catch (error) {
+            console.error("Error exporting daily data:", error);
+            alert("Error al exportar el reporte del día.");
+        }
+    };
+
     return (
         <div className="container mt-md">
             <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
@@ -225,6 +272,7 @@ export function ReportesPage() {
                                     <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800', fontSize: '0.9rem', textTransform: 'uppercase' }}>Pedidos</th>
                                     <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800', fontSize: '0.9rem', textTransform: 'uppercase' }}>Total</th>
                                     <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800', fontSize: '0.9rem', textTransform: 'uppercase' }}>Responsable</th>
+                                    <th style={{ padding: '1rem', textAlign: 'right' }}>Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -241,6 +289,17 @@ export function ReportesPage() {
                                         </td>
                                         <td style={{ padding: '1rem', color: 'var(--text-secondary)', fontWeight: '500' }}>
                                             {closure.createdByName || 'Admin'}
+                                        </td>
+                                        <td style={{ padding: '1rem', textAlign: 'right' }}>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleExportSingleDay(closure)}
+                                                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.5rem' }}
+                                                title="Exportar día a Excel"
+                                            >
+                                                <Download size={16} /> Excel
+                                            </Button>
                                         </td>
                                     </tr>
                                 ))}
