@@ -1,15 +1,18 @@
 import { useState } from 'react';
-import { X, Smartphone, Banknote, CreditCard, ShieldCheck } from 'lucide-react';
+import { X, Smartphone, Banknote, CreditCard, ShieldCheck, Printer } from 'lucide-react';
 import type { Order, PaymentMethod } from '@/types';
+import { printerService } from '@/services/printer/PrinterService';
 
 interface PaymentModalProps {
     order: Order;
     onClose: () => void;
-    onConfirmPayment: (method: PaymentMethod) => void;
+    onConfirmPayment: (method: PaymentMethod, printReceipt: boolean) => void;
 }
 
 export function PaymentModal({ order, onClose, onConfirmPayment }: PaymentModalProps) {
     const [method, setMethod] = useState<PaymentMethod | null>(null);
+    const printerConnected = printerService.isConnected;
+    const [printReceipt, setPrintReceipt] = useState(printerConnected);
 
     const methods = [
         {
@@ -191,9 +194,75 @@ export function PaymentModal({ order, onClose, onConfirmPayment }: PaymentModalP
                     flexDirection: 'column',
                     gap: '1rem'
                 }}>
+                    {/* Print Receipt Checkbox */}
+                    <label
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.75rem',
+                            padding: '0.85rem 1rem',
+                            borderRadius: 'var(--radius-md)',
+                            border: `1px solid ${printerConnected ? 'var(--border-color)' : 'var(--divider-color)'}`,
+                            backgroundColor: printReceipt ? 'rgba(69, 123, 157, 0.06)' : 'var(--surface-color)',
+                            cursor: printerConnected ? 'pointer' : 'default',
+                            opacity: printerConnected ? 1 : 0.5,
+                            transition: 'all 0.2s',
+                            userSelect: 'none'
+                        }}
+                    >
+                        <div style={{
+                            width: '20px',
+                            height: '20px',
+                            borderRadius: '4px',
+                            border: `2px solid ${printReceipt ? 'var(--primary-color)' : 'var(--text-secondary)'}`,
+                            backgroundColor: printReceipt ? 'var(--primary-color)' : 'transparent',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'all 0.2s',
+                            flexShrink: 0
+                        }}>
+                            {printReceipt && (
+                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                    <path d="M2 6L5 9L10 3" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                            )}
+                        </div>
+                        <input
+                            type="checkbox"
+                            checked={printReceipt}
+                            disabled={!printerConnected}
+                            onChange={(e) => setPrintReceipt(e.target.checked)}
+                            style={{ display: 'none' }}
+                        />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{
+                                fontWeight: '700',
+                                fontSize: '0.9rem',
+                                color: 'var(--text-primary)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem'
+                            }}>
+                                <Printer size={16} color="var(--primary-color)" />
+                                Imprimir boleta
+                            </div>
+                            {!printerConnected && (
+                                <div style={{
+                                    fontSize: '0.75rem',
+                                    color: 'var(--text-secondary)',
+                                    fontWeight: '500',
+                                    marginTop: '2px'
+                                }}>
+                                    Impresora no conectada
+                                </div>
+                            )}
+                        </div>
+                    </label>
+
                     <button
                         disabled={!method}
-                        onClick={() => method && onConfirmPayment(method)}
+                        onClick={() => method && onConfirmPayment(method, printReceipt)}
                         style={{
                             width: '100%',
                             padding: '1.1rem',

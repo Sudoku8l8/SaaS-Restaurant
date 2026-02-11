@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { PaymentModal } from '@/components/features/PaymentModal';
 import { useOrders } from '@/hooks/useOrders';
 import { useAuth } from '@/hooks/useAuth';
+import { useTenant } from '@/app/providers/TenantProvider';
 import type { Order, OrderStatus, PaymentMethod } from '@/types';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -18,6 +19,7 @@ interface OrderCardProps {
 
 export function OrderCard({ order, onEdit, onDelete }: OrderCardProps) {
     const { user } = useAuth();
+    const { tenant } = useTenant();
     const { updateOrderStatus, payOrder } = useOrders();
     const [showPaymentModal, setShowPaymentModal] = useState(false);
 
@@ -25,9 +27,17 @@ export function OrderCard({ order, onEdit, onDelete }: OrderCardProps) {
         updateOrderStatus(order.id, newStatus);
     };
 
-    const handlePayment = async (method: PaymentMethod) => {
+    const handlePayment = async (method: PaymentMethod, shouldPrintReceipt: boolean) => {
         try {
             await payOrder(order.id, method);
+            if (shouldPrintReceipt && printerService.isConnected) {
+                try {
+                    await printerService.printReceipt(order, tenant?.name || 'Restaurante', method);
+                } catch (printError) {
+                    console.error('Error printing receipt:', printError);
+                    // Don't block payment flow if printing fails
+                }
+            }
             setShowPaymentModal(false);
         } catch (error) {
             console.error('Payment failed', error);
