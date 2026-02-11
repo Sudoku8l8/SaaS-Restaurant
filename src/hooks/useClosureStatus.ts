@@ -37,7 +37,8 @@ export function useClosureStatus() {
         const q = query(
             collection(db, 'closures'),
             where('restaurantId', '==', user.restaurantId),
-            where('date', '==', todayStr)
+            where('date', '==', todayStr),
+            where('status', '==', 'closed')
         );
 
         // Subscribe to real-time updates
