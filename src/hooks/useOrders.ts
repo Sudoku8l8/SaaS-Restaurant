@@ -56,35 +56,45 @@ export function useOrders() {
     }, [restaurantId]);
 
     const createOrder = async (order: Order) => {
-        // Use setDoc with the provided ID since we generate it in Modal
-        // Or addDoc if we want auto-ID. The Modal generates a UUID, so setDoc is better to keep that ID.
-        const orderRef = doc(db, 'orders', order.id);
+        const { runTransaction, doc, collection, query, where, limit, getDocs, increment } = await import('firebase/firestore');
+        const { getPeruDateString } = await import('@/utils/dateUtils');
 
-        const batch = writeBatch(db);
-        batch.set(orderRef, order);
+        await runTransaction(db, async (transaction) => {
+            const dateStr = getPeruDateString(order.createdAt);
+            const counterRef = doc(db, `restaurants/${restaurantId}/dailyCounters/${dateStr}`);
+            const counterSnap = await transaction.get(counterRef);
 
-        // Update table to occupied
-        // We need to find the table doc by restaurantId + number
-        // OR we just use a consistent ID format for tables like 'restId_tableNum'.
-        // My seeder used 'table-N'. Let's find it.
-        const tablesRef = collection(db, 'tables');
-        const q = query(
-            tablesRef,
-            where('restaurantId', '==', restaurantId),
-            where('number', '==', order.tableNumber),
-            limit(1)
-        );
-        const tableSnap = await getDocs(q);
+            let dailyNumber = 1;
+            if (counterSnap.exists()) {
+                dailyNumber = counterSnap.data().count + 1;
+                transaction.update(counterRef, { count: increment(1) });
+            } else {
+                transaction.set(counterRef, { count: 1 });
+            }
 
-        if (!tableSnap.empty) {
-            const tableDoc = tableSnap.docs[0];
-            batch.update(tableDoc.ref, {
-                status: 'occupied',
-                currentOrderId: order.id
-            });
-        }
+            // Assign daily number to order
+            const orderWithNumber = { ...order, dailyNumber };
+            const orderRef = doc(db, 'orders', order.id);
+            transaction.set(orderRef, orderWithNumber);
 
-        await batch.commit();
+            // Find and update table status
+            const tablesRef = collection(db, 'tables');
+            const q = query(
+                tablesRef,
+                where('restaurantId', '==', restaurantId),
+                where('number', '==', order.tableNumber),
+                limit(1)
+            );
+            const tableSnap = await getDocs(q);
+
+            if (!tableSnap.empty) {
+                const tableDoc = tableSnap.docs[0];
+                transaction.update(tableDoc.ref, {
+                    status: 'occupied',
+                    currentOrderId: order.id
+                });
+            }
+        });
     };
 
     const updateOrderStatus = async (orderId: string, status: OrderStatus) => {

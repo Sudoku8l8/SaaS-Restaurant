@@ -167,7 +167,7 @@ class PrinterService {
         // Header
         add([ESC, 0x61, 0x01]); // Center
         add([GS, 0x21, 0x11]); // Double Size
-        addText("COMANDA\n");
+        addText(`COMANDA ${order.dailyNumber || ''}\n`);
         add([GS, 0x21, 0x00]); // Normal Size
 
         add([ESC, 0x61, 0x00]); // Left

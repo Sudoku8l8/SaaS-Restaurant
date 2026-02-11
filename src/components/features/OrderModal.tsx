@@ -9,6 +9,7 @@ import { useOrders } from '@/hooks/useOrders';
 import { generateUUID } from '@/utils/uuid';
 import { onSnapshot } from 'firebase/firestore';
 import { printerService } from '@/services/printer/PrinterService';
+import { ensurePeruDate } from '@/utils/dateUtils';
 
 interface OrderModalProps {
     table?: RestaurantTable; // Optional for takeout
@@ -232,20 +233,27 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
 
             if (printerService.autoPrint) {
                 try {
-                    await printerService.printOrder({
-                        id: currentOrderId,
-                        restaurantId: user.restaurantId,
-                        tableNumber: orderType === 'takeout' ? 0 : (table?.number || 0),
-                        items,
-                        status: 'pending',
-                        total,
-                        createdAt: initialOrder ? initialOrder.createdAt : new Date(),
-                        updatedAt: new Date(),
-                        userId: user.id,
-                        userName: user.name,
-                        orderType,
-                        customerName: customerName.trim() || undefined
-                    } as Order);
+                    // Fetch the updated order with dailyNumber
+                    const { getDoc, doc } = await import('firebase/firestore');
+                    const updatedOrderSnap = await getDoc(doc(db, 'orders', currentOrderId));
+                    const orderToPrint = updatedOrderSnap.exists()
+                        ? { ...updatedOrderSnap.data(), id: currentOrderId, createdAt: ensurePeruDate(updatedOrderSnap.data().createdAt) } as Order
+                        : {
+                            id: currentOrderId,
+                            restaurantId: user.restaurantId,
+                            tableNumber: orderType === 'takeout' ? 0 : (table?.number || 0),
+                            items,
+                            status: 'pending',
+                            total,
+                            createdAt: initialOrder ? initialOrder.createdAt : new Date(),
+                            updatedAt: new Date(),
+                            userId: user.id,
+                            userName: user.name,
+                            orderType,
+                            customerName: customerName.trim() || undefined
+                        } as Order;
+
+                    await printerService.printOrder(orderToPrint);
                 } catch (printErr) {
                     console.error('Auto-print failed:', printErr);
                 }

@@ -139,6 +139,7 @@ export interface Order {
     userName: string;
     orderType: 'dine-in' | 'takeout';
     customerName?: string;
+    dailyNumber?: number;
     statusHistory?: StatusChange[];
 }
 
