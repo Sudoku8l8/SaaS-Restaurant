@@ -1,11 +1,12 @@
 import { Card, Badge } from '@/components/shared';
-import { Table2, ShoppingBag } from 'lucide-react';
+import { Table2, ShoppingBag, X } from 'lucide-react';
 import type { RestaurantTable, OrderStatus } from '@/types';
 import type { HTMLAttributes } from 'react';
 
 interface TableCardProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onClick'> {
     table: RestaurantTable;
     onClick: (table: RestaurantTable) => void;
+    onDelete?: (id: string) => void;
     orderStatus?: OrderStatus;
 }
 
@@ -39,7 +40,7 @@ const statusLabels = {
     closed: 'Cerrada',
 };
 
-export function TableCard({ table, onClick, orderStatus, style, ...props }: TableCardProps) {
+export function TableCard({ table, onClick, onDelete, orderStatus, style, ...props }: TableCardProps) {
     const isNewTakeout = table.id === 'takeout-new-wildcard';
     const isActiveTakeout = table.id.startsWith('takeout-order-');
     const isTakeout = isNewTakeout || isActiveTakeout;
@@ -97,6 +98,36 @@ export function TableCard({ table, onClick, orderStatus, style, ...props }: Tabl
             }}
             {...props}
         >
+            {onDelete && (
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(table.id);
+                    }}
+                    style={{
+                        position: 'absolute',
+                        top: '8px',
+                        right: '8px',
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '50%',
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        border: 'none',
+                        color: 'var(--danger-color)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 10,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
+                >
+                    <X size={14} />
+                </button>
+            )}
+
             {isOccupied && !isTakeout && (
                 <div style={{
                     position: 'absolute',

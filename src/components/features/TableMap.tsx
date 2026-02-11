@@ -10,6 +10,7 @@ interface TableMapProps {
     activeOrders: Order[];
     onTableClick: (table: RestaurantTable) => void;
     onUpdateTable?: (id: string, updates: Partial<RestaurantTable>) => void;
+    onDeleteTable?: (id: string, number: number) => void;
     onAddTable?: () => void;
     isEditable?: boolean;
 }
@@ -19,6 +20,7 @@ export function TableMap({
     activeOrders,
     onTableClick,
     onUpdateTable,
+    onDeleteTable,
     onAddTable,
     isEditable = false
 }: TableMapProps) {
@@ -26,19 +28,26 @@ export function TableMap({
     const [zoom, setZoom] = useState(1);
     const [draggingTableId, setDraggingTableId] = useState<string | null>(null);
 
-    const handleMouseDown = (_e: React.MouseEvent, tableId: string) => {
+    const handleStartDragging = (tableId: string) => {
         if (!isEditable) return;
         setDraggingTableId(tableId);
     };
 
-    const handleMouseMove = (e: React.MouseEvent) => {
+    const handleMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
         if (!isEditable || !draggingTableId || !onUpdateTable) return;
 
+        // Prevent default only for touch to avoid scrolling
+        if ('touches' in e) {
+            // Touch items
+        }
+
         const viewport = e.currentTarget.getBoundingClientRect();
+        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
 
         // Calculate relative position in percentage
-        const x = ((e.clientX - viewport.left) / viewport.width) * 100;
-        const y = ((e.clientY - viewport.top) / viewport.height) * 100;
+        const x = ((clientX - viewport.left) / viewport.width) * 100;
+        const y = ((clientY - viewport.top) / viewport.height) * 100;
 
         // Clamp values between 0 and 95 (to keep inside)
         const posX = Math.min(Math.max(0, x), 95);
@@ -50,7 +59,7 @@ export function TableMap({
         });
     };
 
-    const handleMouseUp = () => {
+    const handleStopDragging = () => {
         setDraggingTableId(null);
     };
 
@@ -144,11 +153,15 @@ export function TableMap({
                             style={{
                                 transform: `scale(${zoom})`,
                                 transformOrigin: 'top center',
-                                cursor: draggingTableId ? 'grabbing' : 'crosshair'
+                                cursor: draggingTableId ? 'grabbing' : 'crosshair',
+                                touchAction: 'none'
                             }}
                             onMouseMove={handleMouseMove}
-                            onMouseUp={handleMouseUp}
-                            onMouseLeave={handleMouseUp}
+                            onMouseUp={handleStopDragging}
+                            onMouseLeave={handleStopDragging}
+                            onTouchMove={handleMouseMove}
+                            onTouchEnd={handleStopDragging}
+                            onTouchCancel={handleStopDragging}
                         >
                             {physicalTables.map(table => {
                                 const order = getTableOrder(table.number);
@@ -161,7 +174,8 @@ export function TableMap({
                                     opacity: draggingTableId === table.id ? 0.8 : 1,
                                     border: isEditable ? '2px dashed var(--primary-color)' : 'none',
                                     padding: isEditable ? '4px' : '0',
-                                    cursor: isEditable ? 'grab' : 'pointer'
+                                    cursor: isEditable ? 'grab' : 'pointer',
+                                    touchAction: 'none'
                                 };
 
                                 return (
@@ -169,11 +183,13 @@ export function TableMap({
                                         key={table.id}
                                         className={styles.absoluteTable}
                                         style={style}
-                                        onMouseDown={(e) => handleMouseDown(e, table.id)}
+                                        onMouseDown={() => handleStartDragging(table.id)}
+                                        onTouchStart={() => handleStartDragging(table.id)}
                                     >
                                         <TableCard
                                             table={table}
                                             onClick={onTableClick}
+                                            onDelete={onDeleteTable ? (id) => onDeleteTable(id, table.number) : undefined}
                                             orderStatus={order?.status}
                                             style={{ width: '100%', height: '100%' }}
                                         />
@@ -203,6 +219,7 @@ export function TableMap({
                                 key={table.id}
                                 table={table}
                                 onClick={onTableClick}
+                                onDelete={onDeleteTable ? (id) => onDeleteTable(id, table.number) : undefined}
                                 orderStatus={order?.status}
                             />
                         );

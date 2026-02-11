@@ -31,6 +31,8 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
     const [mobileView, setMobileView] = useState<'menu' | 'cart'>('menu');
     const [isSaving, setIsSaving] = useState(false);
+    const [isSaved, setIsSaved] = useState(false);
+    const [lastSavedOrder, setLastSavedOrder] = useState<Order | null>(null);
     const [modifierProduct, setModifierProduct] = useState<Product | null>(null);
     const [selectedModifiers, setSelectedModifiers] = useState<Record<string, string>>({});
 
@@ -254,13 +256,22 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                         } as Order;
 
                     await printerService.printOrder(orderToPrint);
+                    setLastSavedOrder(orderToPrint);
                 } catch (printErr) {
                     console.error('Auto-print failed:', printErr);
                 }
+            } else {
+                // If not auto-printing, still fetch to have the full object for manual Print button
+                const { getDoc, doc } = await import('firebase/firestore');
+                const updatedOrderSnap = await getDoc(doc(db, 'orders', currentOrderId));
+                if (updatedOrderSnap.exists()) {
+                    setLastSavedOrder({ ...updatedOrderSnap.data(), id: currentOrderId, createdAt: ensurePeruDate(updatedOrderSnap.data().createdAt) } as Order);
+                }
             }
 
+            setIsSaved(true);
             onOrderCreated();
-            onClose();
+            // onClose(); // Modal no longer closes here
         } catch (err: any) {
             console.error('Failed to save order:', err);
             alert(`Error al guardar el pedido: ${err.message || 'Desconocido'}`);
@@ -688,28 +699,29 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                 <Button
                                     variant="primary"
                                     onClick={handleSaveOrder}
-                                    disabled={items.length === 0 || isSaving}
+                                    disabled={items.length === 0 || isSaving || isSaved}
                                     style={{
-                                        background: 'var(--primary-color)',
+                                        background: isSaved ? 'var(--success-color)' : 'var(--primary-color)',
                                         height: '54px',
                                         borderRadius: 'var(--radius-md)',
                                         fontSize: '1.1rem',
                                         fontWeight: '700',
-                                        boxShadow: '0 4px 12px rgba(142, 115, 91, 0.2)',
+                                        boxShadow: isSaved ? 'none' : '0 4px 12px rgba(142, 115, 91, 0.2)',
                                         opacity: isSaving ? 0.7 : 1
                                     }}
                                 >
-                                    {isSaving ? 'Guardando...' : (initialOrder ? 'Confirmar Cambios' : 'Confirmar Pedido')}
+                                    {isSaving ? 'Guardando...' : (isSaved ? '¡Pedido Guardado!' : (initialOrder ? 'Confirmar Cambios' : 'Confirmar Pedido'))}
                                 </Button>
                                 <Button
                                     variant="outline"
+                                    disabled={!isSaved && !initialOrder}
                                     onClick={async () => {
                                         if (!printerService.isConnected) {
                                             alert('La impresora no está conectada. Configúrala en el panel de Administración.');
                                             return;
                                         }
                                         try {
-                                            await printerService.printOrder({
+                                            const orderToPrint = lastSavedOrder || {
                                                 id: initialOrder?.id || 'new',
                                                 restaurantId: user?.restaurantId || '',
                                                 tableNumber: orderType === 'takeout' ? 0 : (table?.number || 0),
@@ -721,7 +733,11 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                                 userName: user?.name || '',
                                                 orderType,
                                                 customerName: customerName.trim() || undefined
-                                            } as Order);
+                                            } as Order;
+
+                                            await printerService.printOrder(orderToPrint);
+                                            // Close automatically after printing
+                                            onClose();
                                         } catch (err: any) {
                                             alert(err.message || 'Error al imprimir');
                                         }
@@ -729,9 +745,10 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                     style={{
                                         height: '54px',
                                         gridColumn: isMobile ? '1' : 'span 2',
-                                        borderColor: 'var(--primary-color)',
-                                        color: 'var(--primary-color)',
-                                        opacity: printerService.isConnected ? 1 : 0.6
+                                        borderColor: (isSaved || initialOrder) ? 'var(--primary-color)' : 'var(--border-color)',
+                                        color: (isSaved || initialOrder) ? 'var(--primary-color)' : 'var(--text-secondary)',
+                                        opacity: (isSaved || initialOrder) ? 1 : 0.5,
+                                        cursor: (isSaved || initialOrder) ? 'pointer' : 'not-allowed'
                                     }}
                                 >
                                     <Printer size={20} style={{ marginRight: '0.5rem' }} /> Imprimir Comanda
