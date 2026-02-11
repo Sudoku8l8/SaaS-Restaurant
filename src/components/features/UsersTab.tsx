@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button, Input, Card, Badge } from '@/components/shared';
 import { Trash2 } from 'lucide-react';
 import type { User } from '@/types';
+import { hashPin } from '@/utils/crypto';
 
 export function UsersTab() {
     const { user: currentUser } = useAuth();
@@ -50,7 +51,7 @@ export function UsersTab() {
             const userData = {
                 restaurantId: currentUser?.restaurantId,
                 name: formData.name,
-                pinHash: formData.pin, // Storing plain PIN for MVP compatibility as per AuthProvider
+                pinHash: await hashPin(formData.pin), // Secure hash storage
                 role: formData.role
             };
 
