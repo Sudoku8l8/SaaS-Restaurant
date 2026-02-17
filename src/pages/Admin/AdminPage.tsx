@@ -2,13 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChefHat, DollarSign, BarChart3, Settings, AlertTriangle, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useOrderCreation } from '@/hooks/useOrderCreation';
 import { Button, Card } from '@/components/shared';
-import { OrderFAB } from '@/components/shared/OrderFAB';
 import { SalesDashboard } from '@/components/features/SalesDashboard';
-import { TableSelectorModal } from '@/components/features/TableSelectorModal';
-import { OrderModal } from '@/components/features/OrderModal';
-import { TableDetailModal } from '@/components/features/TableDetailModal';
 import { usePendingClosures } from '@/hooks/usePendingClosures';
 
 export function AdminPage() {
@@ -17,9 +12,6 @@ export function AdminPage() {
     const { restaurantSlug } = useParams<{ restaurantSlug: string }>();
     const { pendingClosures, isLoading: loadingPending } = usePendingClosures();
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-
-    // Order creation flow (reusable hook)
-    const orderCreation = useOrderCreation();
 
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -143,37 +135,6 @@ export function AdminPage() {
                     <p style={{ color: '#666', fontSize: '0.9rem' }}>Productos, Usuarios, Mesas</p>
                 </Card>
             </div>
-
-            {/* --- Order Creation Flow (FAB + Modals) --- */}
-            <OrderFAB onClick={orderCreation.handleFABClick} />
-
-            {orderCreation.showTableSelector && (
-                <TableSelectorModal
-                    tables={orderCreation.allTables}
-                    activeOrders={orderCreation.activeOrders}
-                    onTableClick={orderCreation.handleTableClick}
-                    onClose={orderCreation.handleCloseTableSelector}
-                />
-            )}
-
-            {orderCreation.isOrderModalOpen && (orderCreation.selectedTable || orderCreation.takeoutOrderType === 'takeout') && !orderCreation.isClosed && (
-                <OrderModal
-                    table={orderCreation.selectedTable || undefined}
-                    initialOrder={orderCreation.orderToEdit}
-                    onClose={orderCreation.handleCloseOrderModal}
-                    onOrderCreated={() => { /* handled */ }}
-                    orderType={orderCreation.takeoutOrderType}
-                />
-            )}
-
-            {orderCreation.isDetailModalOpen && orderCreation.selectedTable && (
-                <TableDetailModal
-                    table={orderCreation.selectedTable}
-                    onClose={orderCreation.handleCloseDetailModal}
-                    onEdit={orderCreation.handleEditOrder}
-                />
-            )}
         </div>
     );
 }
-

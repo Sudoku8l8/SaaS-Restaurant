@@ -1,0 +1,525 @@
+/* ============================================
+   TablesTab — Floor-based Table Management
+   ============================================ */
+
+.tablesContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* ---- Floor Selector Bar ---- */
+.floorBar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: var(--surface-color);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.floorBar::-webkit-scrollbar {
+    display: none;
+}
+
+.floorTab {
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: var(--radius-md);
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    background: transparent;
+    color: var(--text-secondary);
+    font-family: var(--font-family);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.floorTab:hover {
+    background: var(--divider-color);
+    color: var(--text-primary);
+}
+
+.floorTabActive {
+    background: var(--primary-color);
+    color: white;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}
+
+.floorTabActive:hover {
+    background: var(--primary-hover);
+    color: white;
+}
+
+.floorTabCount {
+    background: rgba(255, 255, 255, 0.25);
+    padding: 1px 7px;
+    border-radius: var(--radius-full);
+    font-size: 0.7rem;
+    font-weight: 800;
+    min-width: 20px;
+    text-align: center;
+}
+
+.floorTabCountInactive {
+    background: var(--divider-color);
+    color: var(--text-primary);
+}
+
+.addFloorBtn {
+    padding: 0.5rem 1rem;
+    border: 2px dashed var(--border-color);
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    transition: all 0.2s;
+    font-family: var(--font-family);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.addFloorBtn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    background: rgba(37, 99, 235, 0.05);
+}
+
+/* ---- Toolbar ---- */
+.toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.toolbarTitle {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.toolbarTitle h3 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.toolbarTitle p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.addForm {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.addForm input {
+    padding: 0.55rem 0.85rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    font-family: var(--font-family);
+    background: var(--surface-color);
+    color: var(--text-primary);
+    font-weight: 600;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.addForm input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.addForm input::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.7;
+}
+
+/* ---- Table Grid ---- */
+.tableGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1rem;
+    animation: fadeInGrid 0.3s ease-out;
+}
+
+@keyframes fadeInGrid {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.tableItem {
+    position: relative;
+    background: var(--surface-color);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    min-height: 140px;
+    justify-content: center;
+}
+
+.tableItem:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    border-color: var(--primary-color);
+}
+
+.tableItemFree {
+    border-color: var(--success-color);
+    background: rgba(80, 194, 80, 0.04);
+}
+
+.tableItemOccupied {
+    border-color: var(--warning-color);
+    background: rgba(212, 102, 51, 0.06);
+}
+
+.tableNumber {
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: var(--text-primary);
+    line-height: 1;
+    letter-spacing: -0.02em;
+}
+
+.tableLabel {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: center;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tableCapacity {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.tableStatus {
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 2px 10px;
+    border-radius: var(--radius-full);
+}
+
+.statusFree {
+    background: rgba(80, 194, 80, 0.12);
+    color: var(--success-color);
+}
+
+.statusOccupied {
+    background: rgba(212, 102, 51, 0.12);
+    color: var(--warning-color);
+}
+
+/* Action buttons overlay */
+.tableActions {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.tableItem:hover .tableActions {
+    opacity: 1;
+}
+
+.actionBtn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    font-family: var(--font-family);
+}
+
+.editBtn {
+    background: rgba(37, 99, 235, 0.1);
+    color: var(--primary-color);
+}
+
+.editBtn:hover {
+    background: rgba(37, 99, 235, 0.2);
+}
+
+.deleteBtn {
+    background: rgba(230, 57, 70, 0.1);
+    color: var(--danger-color);
+}
+
+.deleteBtn:hover {
+    background: rgba(230, 57, 70, 0.2);
+}
+
+/* ---- Edit Modal ---- */
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+    animation: fadeInGrid 0.2s ease-out;
+}
+
+.modalContent {
+    background: var(--surface-color);
+    border-radius: var(--radius-lg);
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+}
+
+.modalHeader {
+    padding: 1.25rem 1.5rem;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modalHeader h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 800;
+}
+
+.modalCloseBtn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.modalCloseBtn:hover {
+    background: rgba(255, 255, 255, 0.35);
+}
+
+.modalBody {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.formGroup label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.formGroup input,
+.formGroup select {
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    font-family: var(--font-family);
+    color: var(--text-primary);
+    background: var(--surface-color);
+    font-weight: 600;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.formGroup input:focus,
+.formGroup select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.modalFooter {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+}
+
+/* ---- Empty State ---- */
+.emptyState {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-secondary);
+    background: var(--surface-color);
+    border-radius: var(--radius-lg);
+    border: 2px dashed var(--border-color);
+}
+
+.emptyState h4 {
+    margin: 1rem 0 0.5rem;
+    color: var(--text-primary);
+    font-weight: 800;
+    font-size: 1.1rem;
+}
+
+.emptyState p {
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+/* ---- Floor Input ---- */
+.floorInput {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.floorInput input {
+    padding: 0.45rem 0.7rem;
+    border: 1px solid var(--primary-color);
+    border-radius: var(--radius-md);
+    font-size: 0.8rem;
+    font-family: var(--font-family);
+    width: 130px;
+    outline: none;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.floorInput button {
+    padding: 0.45rem;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    font-family: var(--font-family);
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+    .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .addForm {
+        justify-content: stretch;
+    }
+
+    .addForm input {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .tableGrid {
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 0.75rem;
+    }
+
+    .tableItem {
+        min-height: 120px;
+        padding: 1rem 0.75rem;
+    }
+
+    .tableNumber {
+        font-size: 1.8rem;
+    }
+
+    .tableActions {
+        opacity: 1;
+    }
+}
+
+@media (max-width: 480px) {
+    .tableGrid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.6rem;
+    }
+
+    .tableItem {
+        min-height: 110px;
+    }
+
+    .tableNumber {
+        font-size: 1.6rem;
+    }
+
+    .floorBar {
+        padding: 0.35rem;
+    }
+
+    .floorTab {
+        padding: 0.5rem 0.9rem;
+        font-size: 0.8rem;
+    }
+}

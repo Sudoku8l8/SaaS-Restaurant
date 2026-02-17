@@ -62,6 +62,7 @@ export interface RestaurantTable {
     number: number;
     status: TableStatus;
     capacity?: number;
+    floor?: string;       // Floor/plant name e.g. "Principal", "Terraza"
     currentOrderId?: string;
     // Visual Map properties
     positionX?: number; // 0-100 percentage

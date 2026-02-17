@@ -1,61 +1,83 @@
-.mapContainer {
-    position: relative;
-    width: 100%;
-    min-height: 500px;
-    background: #f1f5f9;
-    border-radius: var(--radius-lg);
-    border: 2px dashed var(--divider-color);
-    overflow: auto;
-    padding: 2rem;
+/* TableMap.module.css - Floor-based Layout */
+
+.container {
     display: flex;
-    align-items: flex-start;
-    justify-content: center;
-}
-
-.mapViewport {
-    position: relative;
-    background: white;
-    box-shadow: var(--shadow-md);
-    border-radius: var(--radius-md);
-    /* For "Map Mode", this will have fixed aspect ratio or size */
-    width: 100%;
-    max-width: 1200px;
-    height: 700px;
-}
-
-.gridMode {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    flex-direction: column;
     gap: 1.5rem;
     width: 100%;
-    padding: 1rem;
 }
 
-.tableContainer {
-    transition: all 0.3s ease;
-}
-
-.absoluteTable {
-    position: absolute;
-    cursor: pointer;
-}
-
-.mapControls {
+/* ---- Floor Logic ---- */
+.floorTabsWrapper {
     display: flex;
-    gap: 1rem;
-    margin-bottom: 2rem;
-    padding: 1rem;
-    background: white;
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-sm);
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 0.5rem;
+    padding-bottom: 0.5rem;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    border-bottom: 1px solid var(--divider-color);
+}
+
+.floorTabsWrapper::-webkit-scrollbar {
+    display: none;
+}
+
+.floorTab {
+    padding: 0.6rem 1.2rem;
+    border: none;
+    background: var(--surface-color);
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+    border-bottom: 3px solid transparent;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-family);
+}
+
+.floorTab:hover {
+    color: var(--primary-color);
+    background: rgba(37, 99, 235, 0.05);
+}
+
+.floorTabActive {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+    background: rgba(37, 99, 235, 0.08);
+}
+
+.floorCount {
+    background: rgba(0, 0, 0, 0.08);
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+.floorTabActive .floorCount {
+    background: var(--primary-color);
+    color: white;
+}
+
+/* ---- Legend & Controls ---- */
+.controlsBar {
+    display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
 }
 
 .legend {
     display: flex;
-    gap: 1.5rem;
+    gap: 1.25rem;
     flex-wrap: wrap;
 }
 
@@ -63,14 +85,14 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     font-weight: 600;
     color: var(--text-secondary);
 }
 
 .dot {
-    width: 12px;
-    height: 12px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
 }
 
@@ -86,9 +108,69 @@
     background-color: var(--primary-color);
 }
 
+/* ---- Grid ---- */
+.gridContainer {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1.25rem;
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ---- Section Headers ---- */
+.sectionTitle {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 1.5rem 0 0.75rem 0;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid var(--divider-color);
+    width: 100%;
+}
+
+.emptyState {
+    text-align: center;
+    padding: 3rem 1rem;
+    background: var(--surface-color);
+    border-radius: var(--radius-lg);
+    border: 2px dashed var(--divider-color);
+    color: var(--text-secondary);
+    grid-column: 1 / -1;
+}
+
+.emptyState h3 {
+    margin: 0.5rem 0;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+}
+
+/* ---- Responsive ---- */
 @media (max-width: 768px) {
-    .mapViewport {
-        height: auto;
-        min-height: 400px;
+    .gridContainer {
+        gap: 0.75rem;
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    }
+
+    .floorTab {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+    }
+
+    .controlsBar {
+        flex-direction: column-reverse;
+        align-items: stretch;
     }
 }
