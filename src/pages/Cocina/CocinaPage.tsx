@@ -2,11 +2,15 @@ import { useState } from 'react';
 import { Lock, ShieldCheck, ChefHat } from 'lucide-react';
 import type { RestaurantTable, Order } from '@/types';
 import { OrderModal } from '@/components/features/OrderModal';
+import { TableDetailModal } from '@/components/features/TableDetailModal';
+import { TableSelectorModal } from '@/components/features/TableSelectorModal';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrders } from '@/hooks/useOrders';
 import { useClosureStatus } from '@/hooks/useClosureStatus';
+import { useOrderCreation } from '@/hooks/useOrderCreation';
 import { Button } from '@/components/shared';
+import { OrderFAB } from '@/components/shared/OrderFAB';
 import { OrderCard } from '@/components/features/OrderCard';
 import { OrderCardSkeleton } from '@/components/shared/Skeleton';
 import { OrderStatus } from '@/types';
@@ -18,6 +22,9 @@ export function CocinaPage() {
     const { activeOrders, deleteOrder } = useOrders();
     const { isClosed } = useClosureStatus();
     const [filterStatus, setFilterStatus] = useState<OrderStatus | 'all'>('all');
+
+    // Order creation flow (reusable hook)
+    const orderCreation = useOrderCreation();
     const [orderToEdit, setOrderToEdit] = useState<Order | undefined>(undefined);
 
     if (!activeOrders) {
@@ -231,6 +238,36 @@ export function CocinaPage() {
                     initialOrder={orderToEdit}
                     onClose={() => setOrderToEdit(undefined)}
                     onOrderCreated={() => { /* Order saved, let modal handle closure */ }}
+                />
+            )}
+
+            {/* --- Order Creation Flow (FAB + Modals) --- */}
+            <OrderFAB onClick={orderCreation.handleFABClick} />
+
+            {orderCreation.showTableSelector && (
+                <TableSelectorModal
+                    tables={orderCreation.allTables}
+                    activeOrders={orderCreation.activeOrders}
+                    onTableClick={orderCreation.handleTableClick}
+                    onClose={orderCreation.handleCloseTableSelector}
+                />
+            )}
+
+            {orderCreation.isOrderModalOpen && (orderCreation.selectedTable || orderCreation.takeoutOrderType === 'takeout') && !orderCreation.isClosed && (
+                <OrderModal
+                    table={orderCreation.selectedTable || undefined}
+                    initialOrder={orderCreation.orderToEdit}
+                    onClose={orderCreation.handleCloseOrderModal}
+                    onOrderCreated={() => { /* handled */ }}
+                    orderType={orderCreation.takeoutOrderType}
+                />
+            )}
+
+            {orderCreation.isDetailModalOpen && orderCreation.selectedTable && (
+                <TableDetailModal
+                    table={orderCreation.selectedTable}
+                    onClose={orderCreation.handleCloseDetailModal}
+                    onEdit={orderCreation.handleEditOrder}
                 />
             )}
         </div>
