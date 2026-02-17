@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react';
 import { db } from '@/services/firebase/config';
-import { collection, query, where, onSnapshot, addDoc, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, addDoc, doc, deleteDoc, updateDoc, getDocs } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
 import { Button, Input, Card, Badge } from '@/components/shared';
-import { Trash2 } from 'lucide-react';
-import type { User } from '@/types';
+import { Trash2, Pencil } from 'lucide-react';
 import { hashPin } from '@/utils/crypto';
+import type { User } from '@/types';
 
 export function UsersTab() {
     const { user: currentUser } = useAuth();
     const [users, setUsers] = useState<User[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingUserId, setEditingUserId] = useState<string | null>(null);
 
     // Form State
     const [formData, setFormData] = useState<{
@@ -48,18 +49,40 @@ export function UsersTab() {
                 return;
             }
 
+            const newHash = await hashPin(formData.pin);
+
+            // Collision Check
+            const usersRef = collection(db, 'users');
+            const q = query(usersRef, where('restaurantId', '==', currentUser?.restaurantId));
+            const querySnapshot = await getDocs(q);
+
+            const collision = querySnapshot.docs.some(doc => {
+                if (editingUserId && doc.id === editingUserId) return false;
+                const data = doc.data();
+                return data.pinHash === newHash || data.pinHash === formData.pin;
+            });
+
+            if (collision) {
+                alert("Este PIN ya está en uso por otro miembro del equipo.");
+                return;
+            }
+
             const userData = {
                 restaurantId: currentUser?.restaurantId,
                 name: formData.name,
-                pinHash: await hashPin(formData.pin), // Secure hash storage
+                pinHash: newHash,
                 role: formData.role
             };
 
-            await addDoc(collection(db, 'users'), userData);
+            if (editingUserId) {
+                await updateDoc(doc(db, 'users', editingUserId), userData);
+            } else {
+                await addDoc(collection(db, 'users'), userData);
+            }
             closeModal();
         } catch (error) {
             console.error(error);
-            alert("Error al crear usuario");
+            alert(`Error al ${editingUserId ? 'editar' : 'crear'} usuario`);
         }
     };
 
@@ -73,13 +96,24 @@ export function UsersTab() {
         }
     };
 
-    const openModal = () => {
-        setFormData({ name: '', pin: '', role: 'waiter' });
+    const openModal = (user?: User) => {
+        if (user) {
+            setFormData({
+                name: user.name,
+                pin: '', // Don't show old PIN for security
+                role: user.role as any
+            });
+            setEditingUserId(user.id);
+        } else {
+            setFormData({ name: '', pin: '', role: 'waiter' });
+            setEditingUserId(null);
+        }
         setIsModalOpen(true);
     };
 
     const closeModal = () => {
         setIsModalOpen(false);
+        setEditingUserId(null);
     };
 
     const getRoleBadge = (role: string) => {
@@ -94,40 +128,47 @@ export function UsersTab() {
         <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
                 <h3>Equipo ({users.length})</h3>
-                <Button onClick={openModal}>+ Nuevo Usuario</Button>
+                <Button onClick={() => openModal()}>+ Nuevo Usuario</Button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
                 {users.map(u => (
                     <Card key={u.id} style={{ padding: '1rem', borderLeft: u.role === 'admin' ? '5px solid var(--color-primary)' : u.role === 'chef' ? '5px solid var(--warning-color)' : '5px solid #ccc' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                            <div>
+                            <div style={{ flex: 1 }}>
                                 <div style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>{u.name}</div>
                                 <div style={{ marginTop: '0.5rem' }}>
                                     {getRoleBadge(u.role)}
                                 </div>
-                                {/* Only show PIN preview for Admin context if needed, but usually better to hide. 
-                                    Showing it here for Admin convenience in MVP */}
                                 <div style={{ marginTop: '0.5rem', color: '#666', fontSize: '0.9rem' }}>
                                     PIN: ••••
                                 </div>
                             </div>
-                            {u.id !== currentUser?.id && (
-                                <Button size="sm" variant="danger" onClick={() => handleDelete(u.id)}><Trash2 size={16} /></Button>
-                            )}
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                {u.role !== 'admin' && (
+                                    <Button size="sm" variant="outline" onClick={() => openModal(u)}>
+                                        <Pencil size={16} />
+                                    </Button>
+                                )}
+                                {u.id !== currentUser?.id && (
+                                    <Button size="sm" variant="danger" onClick={() => handleDelete(u.id)}>
+                                        <Trash2 size={16} />
+                                    </Button>
+                                )}
+                            </div>
                         </div>
                     </Card>
                 ))}
             </div>
 
-            {/* Create Modal */}
+            {/* Modal */}
             {isModalOpen && (
                 <div style={{
                     position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
                     background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
                 }}>
                     <Card style={{ padding: '2rem', width: '400px', maxWidth: '90%' }}>
-                        <h2>Nuevo Usuario</h2>
+                        <h2>{editingUserId ? 'Editar Usuario' : 'Nuevo Usuario'}</h2>
                         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                             <Input
                                 label="Nombre Completo"
@@ -136,8 +177,8 @@ export function UsersTab() {
                                 required
                             />
                             <Input
-                                label="PIN de Acceso (4 dígitos)"
-                                type="number"
+                                label=" PIN de Acceso (4 dígitos)"
+                                type="password"
                                 maxLength={4}
                                 value={formData.pin}
                                 onChange={e => setFormData({ ...formData, pin: e.target.value })}
@@ -148,7 +189,7 @@ export function UsersTab() {
                                 <select
                                     style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid #ddd' }}
                                     value={formData.role}
-                                    onChange={e => setFormData({ ...formData, role: e.target.value as 'admin' | 'waiter' | 'chef' })}
+                                    onChange={e => setFormData({ ...formData, role: e.target.value as any })}
                                 >
                                     <option value="waiter">Mozo</option>
                                     <option value="chef">Cocinero</option>
@@ -158,7 +199,7 @@ export function UsersTab() {
 
                             <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
                                 <Button type="button" variant="ghost" onClick={closeModal} fullWidth>Cancelar</Button>
-                                <Button type="submit" fullWidth>Crear Usuario</Button>
+                                <Button type="submit" fullWidth>{editingUserId ? 'Actualizar' : 'Crear'} Usuario</Button>
                             </div>
                         </form>
                     </Card>

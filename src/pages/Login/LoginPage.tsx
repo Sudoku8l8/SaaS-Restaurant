@@ -89,26 +89,46 @@ export function LoginPage() {
                         Ingresar
                     </Button>
 
-                    <button
-                        type="button"
-                        onClick={() => {
-                            localStorage.removeItem('lastRestaurantSlug');
-                            sessionStorage.removeItem('hasRedirectedToRestaurant');
-                            navigate('/');
-                        }}
-                        style={{
-                            marginTop: '0.5rem',
-                            color: 'var(--text-secondary)',
-                            fontSize: '0.85rem',
-                            textDecoration: 'underline',
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer',
-                            textAlign: 'center'
-                        }}
-                    >
-                        Cambiar de Restaurante
-                    </button>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                const waLink = "https://wa.me/+51932703548?text=Hola,%20necesito%20ayuda%20para%20recuperar%20mi%20PIN%20de%20acceso";
+                                window.open(waLink, '_blank');
+                            }}
+                            style={{
+                                color: 'var(--primary-color)',
+                                fontSize: '0.9rem',
+                                fontWeight: '600',
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                textDecoration: 'underline'
+                            }}
+                        >
+                            ¿Olvidaste tu PIN?
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => {
+                                localStorage.removeItem('lastRestaurantSlug');
+                                sessionStorage.removeItem('hasRedirectedToRestaurant');
+                                navigate('/');
+                            }}
+                            style={{
+                                color: 'var(--text-secondary)',
+                                fontSize: '0.85rem',
+                                textDecoration: 'underline',
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                textAlign: 'center'
+                            }}
+                        >
+                            Cambiar de Restaurante
+                        </button>
+                    </div>
                 </form>
             </Card>
         </div>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Utensils, Users, LayoutGrid, ArrowLeft, FolderKanban, Printer, Globe } from 'lucide-react';
+import { Utensils, Users, LayoutGrid, ArrowLeft, FolderKanban, Printer, Globe, Shield } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/shared';
 
@@ -9,10 +9,11 @@ import { TablesTab } from '@/components/features/TablesTab';
 import { CategoriesTab } from '@/components/features/CategoriesTab';
 import { PrinterTab } from '@/components/features/PrinterTab';
 import { DigitalMenuTab } from '@/components/features/DigitalMenuTab';
+import { SecurityTab } from '@/components/features/SecurityTab';
 
 import './ConfigPage.css';
 
-type Tab = 'products' | 'categories' | 'users' | 'tables' | 'printer' | 'menu';
+type Tab = 'products' | 'categories' | 'users' | 'tables' | 'printer' | 'menu' | 'security';
 
 export function ConfigPage() {
 
@@ -77,6 +78,13 @@ export function ConfigPage() {
                 >
                     <Globe size={18} /> Menú Digital
                 </Button>
+                <Button
+                    variant={activeTab === 'security' ? 'primary' : 'ghost'}
+                    onClick={() => setActiveTab('security')}
+                    className="tab-btn"
+                >
+                    <Shield size={18} /> Seguridad
+                </Button>
             </div>
 
             {/* Tab Content */}
@@ -87,6 +95,7 @@ export function ConfigPage() {
                 {activeTab === 'tables' && <TablesTab />}
                 {activeTab === 'printer' && <PrinterTab />}
                 {activeTab === 'menu' && <DigitalMenuTab />}
+                {activeTab === 'security' && <SecurityTab />}
             </div>
         </div>
     );

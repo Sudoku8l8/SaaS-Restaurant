@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { collection, getDocs, query, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, deleteDoc, doc, updateDoc, where } from 'firebase/firestore';
 import { db } from '@/services/firebase/config';
 import { Button, Card, Input, Badge } from '@/components/shared';
 import type { Restaurant } from '@/types';
 import { getPeruNow, formatPeruDisplay, ensurePeruDate } from '@/utils/dateUtils';
+import { hashPin } from '@/utils/crypto';
 
 export function SuperAdminPage() {
     const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -46,7 +47,7 @@ export function SuperAdminPage() {
         if (confirm(`¿ESTÁS SEGURO? Esto eliminará el acceso al restaurante "${name}". (Nota: No borra las sub-colecciones en este MVP)`)) {
             try {
                 await deleteDoc(doc(db, 'restaurants', id));
-                setRestaurants(prev => prev.filter(r => r.id !== id));
+                setRestaurants(prev => prev.filter((r: Restaurant) => r.id !== id));
             } catch (error) {
                 console.error("Error deleting:", error);
                 alert("Error eliminando restaurante");
@@ -74,7 +75,7 @@ export function SuperAdminPage() {
                     active: true
                 });
 
-                setRestaurants(prev => prev.map(r => {
+                setRestaurants((prev: Restaurant[]) => prev.map((r: Restaurant) => {
                     if (r.id === id) {
                         return { ...r, subscriptionEndsAt: newEndDate, active: true };
                     }
@@ -119,12 +120,51 @@ export function SuperAdminPage() {
         return diffDays > 28;
     };
 
+    const handleResetPin = async (restaurantId: string, name: string) => {
+        const newPin = prompt(`Ingresa el nuevo PIN de 4 dígitos para el administrador de "${name}":`, "1234");
+        if (!newPin) return;
+
+        if (newPin.length !== 4 || !/^\d+$/.test(newPin)) {
+            alert("El PIN debe ser de exactamente 4 dígitos numéricos.");
+            return;
+        }
+
+        if (confirm(`¿Confirmas resetear el PIN del administrador de "${name}" a "${newPin}"?`)) {
+            try {
+                // Find the admin user for this restaurant
+                const usersRef = collection(db, 'users');
+                const q = query(usersRef,
+                    where('restaurantId', '==', restaurantId),
+                    where('role', '==', 'admin')
+                );
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    alert("No se encontró ningún usuario Administrador para este restaurante.");
+                    return;
+                }
+
+                const hashedPin = await hashPin(newPin);
+                const adminDoc = querySnapshot.docs[0];
+
+                await updateDoc(doc(db, 'users', adminDoc.id), {
+                    pinHash: hashedPin
+                });
+
+                alert(`PIN reseteado con éxito para "${name}".`);
+            } catch (error) {
+                console.error("Error resetting PIN:", error);
+                alert("Error al resetear el PIN");
+            }
+        }
+    };
+
     const toggleActive = async (id: string, currentStatus: boolean) => {
         try {
             await updateDoc(doc(db, 'restaurants', id), {
                 active: !currentStatus
             });
-            setRestaurants(prev => prev.map(r => r.id === id ? { ...r, active: !currentStatus } : r));
+            setRestaurants((prev: Restaurant[]) => prev.map((r: Restaurant) => r.id === id ? { ...r, active: !currentStatus } : r));
         } catch (error) {
             console.error("Error updating status:", error);
             alert("Error al actualizar estado");
@@ -258,8 +298,16 @@ export function SuperAdminPage() {
                                             <Button variant="danger" size="sm" onClick={() => handleDelete(rest.id, rest.name)} style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', fontWeight: '800' }}>
                                                 Eliminar
                                             </Button>
-                                            <Button variant="primary" size="sm" onClick={() => handleRenew(rest.id, rest.name)} style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', fontWeight: '800', marginLeft: '0.5rem' }}>
+                                            <Button variant="primary" size="sm" onClick={() => handleRenew(rest.id, rest.name)} style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', fontWeight: '800' }}>
                                                 Renovar
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => handleResetPin(rest.id, rest.name)}
+                                                style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', fontWeight: '800', border: '1px solid var(--danger-color)', color: 'var(--danger-color)' }}
+                                            >
+                                                Reset PIN
                                             </Button>
                                         </td>
                                     </tr>

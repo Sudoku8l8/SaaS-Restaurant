@@ -93,7 +93,7 @@ export function AuthForms() {
         });
 
         if (result.success) {
-            alert('¡Restaurante registrado! Tu cuenta está pendiente de aprobación. Podrás usar el sistema por 14 días una vez activada.');
+            alert('¡Restaurante registrado! Tu cuenta está pendiente de aprobación. Podrás usar el sistema por 28 días una vez activada.');
             setMode('login');
         } else {
             setError(result.error || 'Error desconocido');
