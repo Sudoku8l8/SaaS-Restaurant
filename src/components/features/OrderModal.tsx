@@ -36,6 +36,15 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
     const [modifierProduct, setModifierProduct] = useState<Product | null>(null);
     const [selectedModifiers, setSelectedModifiers] = useState<Record<string, string>>({});
 
+    // Track confirmed items to prevent deletion exploit
+    const [confirmedProductIds, setConfirmedProductIds] = useState<Set<string>>(() => {
+        const ids = new Set<string>();
+        if (initialOrder?.items) {
+            initialOrder.items.forEach(i => ids.add(i.productId));
+        }
+        return ids;
+    });
+
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth <= 768);
         window.addEventListener('resize', handleResize);
@@ -84,10 +93,16 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
 
     // Helper to check if an item can be removed
     const canRemoveItem = (productId: string) => {
-        if (!initialOrder || !isWaiter) return true; // Admins/Chefs or new orders: can remove anything
-        // Waiters can only remove items NOT present in the initial order (newly added)
-        const inInitial = initialOrder.items.some(i => i.productId === productId);
-        return !inInitial;
+        // If user is Admin/Chef, they can always remove
+        if (!isWaiter) return true;
+
+        // Waiters cannot remove items that are in the confirmed set
+        if (confirmedProductIds.has(productId)) {
+            return false;
+        }
+
+        // Default to allowing removal for new items
+        return true;
     };
 
     // Helper to check if quantity can be decreased
@@ -270,6 +285,14 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
             }
 
             setIsSaved(true);
+
+            // Immediately lock the confirmed items in the UI to prevent exploit
+            setConfirmedProductIds(prev => {
+                const next = new Set(prev);
+                items.forEach(i => next.add(i.productId));
+                return next;
+            });
+
             onOrderCreated();
             // onClose(); // Modal no longer closes here
         } catch (err: any) {
@@ -644,7 +667,8 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                                     background: 'rgba(192, 110, 82, 0.1)', color: 'var(--danger-color)',
                                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                                                     opacity: canRemoveItem(item.productId) ? 1 : 0.3,
-                                                    cursor: canRemoveItem(item.productId) ? 'pointer' : 'not-allowed'
+                                                    cursor: canRemoveItem(item.productId) ? 'pointer' : 'not-allowed',
+                                                    visibility: (!canRemoveItem(item.productId) && isWaiter) ? 'hidden' : 'visible'
                                                 }}
                                             >
                                                 <Trash2 size={16} />
