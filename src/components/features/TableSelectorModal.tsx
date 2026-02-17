@@ -124,33 +124,45 @@ export function TableSelectorModal({
                 {/* Floor Tabs */}
                 <div style={{
                     display: 'flex',
-                    gap: '0.5rem',
-                    padding: '0.75rem 1rem',
+                    gap: '0.75rem',
+                    padding: '1rem 1.5rem 0.5rem 1.5rem',
                     background: 'var(--surface-color)',
                     borderBottom: '1px solid var(--border-color)',
                     overflowX: 'auto',
                     scrollbarWidth: 'none',
+                    alignItems: 'center'
                 }}>
-                    <Layers size={16} style={{ color: 'var(--text-secondary)', alignSelf: 'center' }} />
+                    <Layers size={18} style={{ color: 'var(--text-secondary)', marginRight: '0.5rem' }} />
                     {floorNames.map(floor => (
                         <button
                             key={floor}
                             onClick={() => setActiveFloor(floor)}
                             style={{
-                                padding: '0.4rem 0.9rem',
-                                border: 'none',
-                                background: currentFloor === floor ? 'rgba(37, 99, 235, 0.1)' : 'transparent',
-                                color: currentFloor === floor ? 'var(--primary-color)' : 'var(--text-secondary)',
-                                borderRadius: 'var(--radius-md)',
-                                fontSize: '0.85rem',
+                                padding: '0.5rem 1rem',
+                                border: '1px solid transparent',
+                                background: currentFloor === floor ? 'var(--primary-color)' : 'rgba(0,0,0,0.03)',
+                                color: currentFloor === floor ? 'white' : 'var(--text-secondary)',
+                                borderRadius: '999px',
+                                fontSize: '0.9rem',
                                 fontWeight: '700',
                                 cursor: 'pointer',
                                 whiteSpace: 'nowrap',
                                 transition: 'all 0.2s',
-                                borderBottom: currentFloor === floor ? '2px solid var(--primary-color)' : '2px solid transparent'
+                                boxShadow: currentFloor === floor ? '0 4px 10px rgba(37, 99, 235, 0.3)' : 'none',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px'
                             }}
                         >
-                            {floor} ({countByFloor(floor)})
+                            {floor}
+                            <span style={{
+                                background: currentFloor === floor ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)',
+                                padding: '2px 8px',
+                                borderRadius: '10px',
+                                fontSize: '0.75rem',
+                            }}>
+                                {countByFloor(floor)}
+                            </span>
                         </button>
                     ))}
                 </div>
@@ -176,6 +188,7 @@ export function TableSelectorModal({
                                 gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
                                 gap: '1rem',
                                 marginBottom: '2rem',
+                                padding: '0.5rem' // Added padding for shadows
                             }}>
                                 {floorTables.map(table => {
                                     const order = getTableOrder(table);
@@ -216,6 +229,7 @@ export function TableSelectorModal({
                                 display: 'grid',
                                 gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
                                 gap: '1rem',
+                                padding: '0.5rem' // Added padding for shadows
                             }}>
                                 {takeoutCards.map(table => {
                                     const order = getTableOrder(table);
