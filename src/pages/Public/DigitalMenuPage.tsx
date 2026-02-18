@@ -75,14 +75,33 @@ export function DigitalMenuPage() {
     const navRef = useRef<HTMLDivElement>(null);
 
     const accentColor = tenant?.config?.menuAccentColor || '#c8a96e';
+    const bgColor = tenant?.config?.menuBgColor || '#ffffff';
+    const fontFamily = tenant?.config?.menuFontFamily || 'inter';
 
-    // Set CSS variable for accent color
+    const FONT_MAP: Record<string, string> = {
+        inter: "'Inter', sans-serif",
+        playfair: "'Playfair Display', serif",
+        cormorant: "'Cormorant Garamond', serif",
+        'dm-serif': "'DM Serif Display', serif",
+        josefin: "'Josefin Sans', sans-serif",
+        lato: "'Lato', sans-serif",
+        merriweather: "'Merriweather', serif",
+        poppins: "'Poppins', sans-serif",
+    };
+
+    // Apply theme CSS variables scoped to this page only
     useEffect(() => {
-        document.documentElement.style.setProperty('--menu-accent', accentColor);
+        const root = document.documentElement;
+        root.style.setProperty('--menu-accent', accentColor);
+        root.style.setProperty('--menu-bg', bgColor);
+        root.style.setProperty('--menu-font', FONT_MAP[fontFamily] ?? FONT_MAP.inter);
         return () => {
-            document.documentElement.style.removeProperty('--menu-accent');
+            root.style.removeProperty('--menu-accent');
+            root.style.removeProperty('--menu-bg');
+            root.style.removeProperty('--menu-font');
         };
-    }, [accentColor]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [accentColor, bgColor, fontFamily]);
 
     // IntersectionObserver to highlight active category
     useEffect(() => {
@@ -232,8 +251,10 @@ export function DigitalMenuPage() {
                             className={styles.categorySection}
                             ref={el => { sectionRefs.current[cat.id] = el; }}
                         >
-                            <p className={styles.categoryLabel}>{cat.name.toUpperCase()}</p>
-                            <h2 className={styles.categoryTitle}>{cat.name}</h2>
+                            <div className={styles.categoryHeader}>
+                                <span className={styles.categoryAccentBar} />
+                                <h2 className={styles.categoryTitle}>{cat.name}</h2>
+                            </div>
 
                             <div className={styles.productList}>
                                 {cat.products.map(product => (

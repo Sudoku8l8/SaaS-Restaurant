@@ -8,7 +8,7 @@ import { UsersTab } from '@/components/features/UsersTab';
 import { TablesTab } from '@/components/features/TablesTab';
 import { CategoriesTab } from '@/components/features/CategoriesTab';
 import { PrinterTab } from '@/components/features/PrinterTab';
-import { DigitalMenuTab } from '@/components/features/DigitalMenuTab';
+import { DigitalMenuConfigPage } from '@/pages/Configuracion/DigitalMenuConfigPage';
 import { SecurityTab } from '@/components/features/SecurityTab';
 
 import './ConfigPage.css';
@@ -94,7 +94,7 @@ export function ConfigPage() {
                 {activeTab === 'users' && <UsersTab />}
                 {activeTab === 'tables' && <TablesTab />}
                 {activeTab === 'printer' && <PrinterTab />}
-                {activeTab === 'menu' && <DigitalMenuTab />}
+                {activeTab === 'menu' && <DigitalMenuConfigPage />}
                 {activeTab === 'security' && <SecurityTab />}
             </div>
         </div>

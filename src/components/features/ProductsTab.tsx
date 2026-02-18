@@ -18,6 +18,7 @@ export function ProductsTab() {
         name: '',
         price: '',
         category: '',
+        description: '',
         available: true,
         isPopular: false
     });
@@ -65,6 +66,7 @@ export function ProductsTab() {
                 name: formData.name,
                 price: parseFloat(formData.price),
                 category: formData.category,
+                description: formData.description.trim(),
                 available: formData.available,
                 isPopular: formData.isPopular
             };
@@ -95,6 +97,7 @@ export function ProductsTab() {
                 name: product.name,
                 price: product.price.toString(),
                 category: product.category,
+                description: product.description || '',
                 available: product.available,
                 isPopular: product.isPopular || false
             });
@@ -104,6 +107,7 @@ export function ProductsTab() {
                 name: '',
                 price: '',
                 category: categories.length > 0 ? categories[0].name : '',
+                description: '',
                 available: true,
                 isPopular: false
             });
@@ -132,6 +136,11 @@ export function ProductsTab() {
                         </div>
                         <div style={{ color: 'var(--color-primary)', fontSize: '1.2rem' }}>S/ {product.price.toFixed(2)}</div>
                         <div style={{ fontSize: '0.8rem', color: '#666' }}>{product.category}</div>
+                        {product.description && (
+                            <div style={{ fontSize: '0.78rem', color: '#999', fontStyle: 'italic', marginTop: '0.3rem', lineHeight: 1.4 }}>
+                                {product.description}
+                            </div>
+                        )}
                         <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
                             <Button size="sm" variant="outline" onClick={() => openModal(product)}><Edit2 size={14} className="mr-1" /> Editar</Button>
                             <Button size="sm" variant="danger" onClick={() => handleDelete(product.id)}><Trash2 size={14} /></Button>
@@ -164,6 +173,35 @@ export function ProductsTab() {
                                 onChange={e => setFormData({ ...formData, price: e.target.value })}
                                 required
                             />
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: '700', color: 'var(--text-primary)' }}>
+                                    Descripción <span style={{ fontWeight: 400, color: 'var(--text-secondary)', fontSize: '0.8rem' }}>(opcional · aparece en cursiva en la carta)</span>
+                                </label>
+                                <textarea
+                                    value={formData.description}
+                                    onChange={e => setFormData({ ...formData, description: e.target.value })}
+                                    placeholder="Ej: Tiradito de corvina marinado en leche de tigre, ají amarillo y cilantro fresco..."
+                                    rows={3}
+                                    maxLength={200}
+                                    style={{
+                                        width: '100%',
+                                        padding: '0.6rem 0.75rem',
+                                        borderRadius: '8px',
+                                        border: '1px solid var(--divider-color)',
+                                        fontSize: '0.88rem',
+                                        fontFamily: 'inherit',
+                                        resize: 'vertical',
+                                        lineHeight: 1.5,
+                                        color: 'var(--text-primary)',
+                                        background: 'var(--background-color)',
+                                        outline: 'none',
+                                        boxSizing: 'border-box',
+                                    }}
+                                />
+                                <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', textAlign: 'right', marginTop: '0.2rem' }}>
+                                    {formData.description.length}/200
+                                </div>
+                            </div>
                             <div>
                                 <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 'bold' }}>Categoría</label>
                                 <select

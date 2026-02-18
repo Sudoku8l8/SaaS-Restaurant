@@ -4,8 +4,8 @@
 
 .page {
     min-height: 100vh;
-    background-color: #fafaf8;
-    font-family: 'Inter', sans-serif;
+    background-color: var(--menu-bg, #fafaf8);
+    font-family: var(--menu-font, 'Inter', sans-serif);
     color: #1a1a1a;
 }
 
@@ -46,7 +46,7 @@
 }
 
 .restaurantName {
-    font-family: 'Playfair Display', serif;
+    font-family: var(--menu-font, 'Playfair Display', serif);
     font-size: clamp(1.6rem, 5vw, 2.4rem);
     font-weight: 700;
     color: #1a1a1a;
@@ -112,7 +112,7 @@
     border-bottom: 2px solid transparent;
     transition: color 0.2s, border-color 0.2s;
     white-space: nowrap;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--menu-font, 'Inter', sans-serif);
     letter-spacing: 0.3px;
 }
 
@@ -138,23 +138,33 @@
     scroll-margin-top: 60px;
 }
 
-.categoryLabel {
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--menu-accent, #c8a96e);
-    margin-bottom: 0.4rem;
+/* ─── CATEGORY HEADER (single, elegant) ─── */
+.categoryHeader {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #efefef;
+}
+
+.categoryAccentBar {
+    display: block;
+    width: 4px;
+    height: 1.8rem;
+    border-radius: 4px;
+    background: var(--menu-accent, #c8a96e);
+    flex-shrink: 0;
 }
 
 .categoryTitle {
-    font-family: 'Playfair Display', serif;
-    font-size: clamp(1.6rem, 4vw, 2.2rem);
+    font-family: var(--menu-font, 'Playfair Display', serif);
+    font-size: clamp(1.3rem, 3.5vw, 1.8rem);
     font-weight: 700;
     color: #1a1a1a;
-    margin: 0 0 1.5rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid #efefef;
+    margin: 0;
+    letter-spacing: -0.3px;
+    line-height: 1.2;
 }
 
 /* ─── PRODUCT LIST ─── */
@@ -291,7 +301,7 @@
 }
 
 .emptyState h2 {
-    font-family: 'Playfair Display', serif;
+    font-family: var(--menu-font, 'Playfair Display', serif);
     font-size: 1.5rem;
     color: #ccc;
     margin-bottom: 0.5rem;

@@ -57,6 +57,8 @@ export interface RestaurantConfig {
     // Native Digital Menu
     menuNativeEnabled?: boolean;
     menuAccentColor?: string;
+    menuBgColor?: string;
+    menuFontFamily?: string;
     menuDescription?: string;
     menuAddress?: string;
     menuPhone?: string;
