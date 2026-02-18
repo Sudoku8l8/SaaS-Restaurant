@@ -5,7 +5,7 @@ import {
     addDoc, doc, deleteDoc, updateDoc, serverTimestamp, writeBatch
 } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
-import { Button, Input, Card } from '@/components/shared';
+import { Button, Input } from '@/components/shared';
 import { Trash2, FolderPlus, GripVertical, Save, Info } from 'lucide-react';
 import type { Category } from '@/types';
 
@@ -288,7 +288,7 @@ function CategoryRow({
     };
 
     return (
-        <Card
+        <div
             draggable
             onDragStart={() => onDragStart(index)}
             onDragEnter={() => { setIsDragOver(true); onDragEnter(index); }}
@@ -297,38 +297,45 @@ function CategoryRow({
             onDrop={() => setIsDragOver(false)}
             onDragEnd={() => { setIsDragOver(false); onDragEnd(); }}
             style={{
-                padding: '0.85rem 1rem',
                 display: 'flex',
+                flexDirection: 'row',
                 alignItems: 'center',
-                gap: '0.75rem',
-                border: isDragOver ? '2px solid var(--primary-color)' : '1px solid var(--divider-color)',
-                backgroundColor: isDragOver ? 'rgba(var(--primary-rgb, 37,99,235), 0.04)' : undefined,
+                gap: '0.6rem',
+                padding: '0.7rem 0.85rem',
+                borderRadius: '10px',
+                border: isDragOver
+                    ? '2px solid var(--primary-color)'
+                    : '1px solid var(--divider-color)',
+                backgroundColor: isDragOver
+                    ? 'rgba(37,99,235, 0.04)'
+                    : 'var(--surface-color)',
+                boxShadow: isDragOver ? '0 4px 16px rgba(0,0,0,0.1)' : '0 1px 3px rgba(0,0,0,0.04)',
                 cursor: 'grab',
                 transition: 'border-color 0.15s, background-color 0.15s, box-shadow 0.15s',
-                boxShadow: isDragOver ? '0 4px 16px rgba(0,0,0,0.1)' : undefined,
                 userSelect: 'none',
             }}
         >
-            {/* Drag handle */}
-            <div style={{ color: '#ccc', cursor: 'grab', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-                <GripVertical size={20} />
-            </div>
+            {/* ── Drag handle ── */}
+            <span style={{ color: '#ccc', cursor: 'grab', display: 'flex', flexShrink: 0 }}>
+                <GripVertical size={18} />
+            </span>
 
-            {/* Order number */}
-            <div style={{
-                width: '26px', height: '26px', borderRadius: '50%',
-                background: 'var(--surface-color)', border: '1px solid var(--divider-color)',
+            {/* ── Order badge ── */}
+            <span style={{
+                width: '22px', height: '22px', borderRadius: '50%',
+                background: 'var(--background-color)',
+                border: '1px solid var(--divider-color)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-secondary)',
+                fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-secondary)',
                 flexShrink: 0,
             }}>
                 {index + 1}
-            </div>
+            </span>
 
-            {/* Name / edit input */}
+            {/* ── Name / inline edit ── */}
             <div style={{ flex: 1, minWidth: 0 }}>
                 {editing ? (
-                    <form onSubmit={handleEditSubmit} style={{ display: 'flex', gap: '0.4rem' }}>
+                    <form onSubmit={handleEditSubmit} style={{ display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
                         <input
                             ref={inputRef}
                             value={editName}
@@ -336,18 +343,30 @@ function CategoryRow({
                             onKeyDown={handleEditKeyDown}
                             autoFocus
                             style={{
-                                flex: 1, padding: '0.35rem 0.6rem', fontSize: '0.95rem',
+                                flex: 1, padding: '0.3rem 0.55rem', fontSize: '0.9rem',
                                 border: '1.5px solid var(--primary-color)', borderRadius: '6px',
                                 outline: 'none', fontWeight: '600',
+                                background: 'var(--background-color)',
+                                color: 'var(--text-primary)',
                             }}
                         />
-                        <button type="submit" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary-color)', fontWeight: '700', fontSize: '0.85rem' }}>
+                        <button type="submit" style={{
+                            background: 'var(--primary-color)', border: 'none', cursor: 'pointer',
+                            color: '#fff', fontWeight: '700', fontSize: '0.78rem',
+                            padding: '0.3rem 0.6rem', borderRadius: '6px',
+                        }}>
                             OK
+                        </button>
+                        <button type="button" onClick={() => { setEditName(category.name); setEditing(false); }} style={{
+                            background: 'none', border: 'none', cursor: 'pointer',
+                            color: 'var(--text-secondary)', fontSize: '0.78rem', padding: '0.3rem',
+                        }}>
+                            ✕
                         </button>
                     </form>
                 ) : (
                     <span
-                        style={{ fontWeight: '600', fontSize: '1rem', cursor: 'text' }}
+                        style={{ fontWeight: '600', fontSize: '0.95rem', cursor: 'text', color: 'var(--text-primary)' }}
                         onDoubleClick={() => { setEditing(true); setEditName(category.name); }}
                         title="Doble clic para renombrar"
                     >
@@ -356,16 +375,23 @@ function CategoryRow({
                 )}
             </div>
 
-            {/* Up/Down arrows */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flexShrink: 0 }}>
+            {/* ── Up / Down arrows (horizontal pair) ── */}
+            <div style={{ display: 'flex', flexDirection: 'row', gap: '2px', flexShrink: 0 }}>
                 <button
                     onClick={onMoveUp}
                     disabled={index === 0}
                     title="Subir"
                     style={{
-                        background: 'none', border: 'none', cursor: index === 0 ? 'not-allowed' : 'pointer',
+                        width: '28px', height: '28px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: index === 0 ? 'transparent' : 'var(--background-color)',
+                        border: '1px solid',
+                        borderColor: index === 0 ? 'transparent' : 'var(--divider-color)',
+                        borderRadius: '6px',
+                        cursor: index === 0 ? 'not-allowed' : 'pointer',
                         color: index === 0 ? '#ddd' : 'var(--text-secondary)',
-                        padding: '2px 4px', lineHeight: 1, fontSize: '0.7rem',
+                        fontSize: '0.65rem', lineHeight: 1,
+                        transition: 'background 0.15s',
                     }}
                 >▲</button>
                 <button
@@ -373,23 +399,40 @@ function CategoryRow({
                     disabled={index === total - 1}
                     title="Bajar"
                     style={{
-                        background: 'none', border: 'none', cursor: index === total - 1 ? 'not-allowed' : 'pointer',
+                        width: '28px', height: '28px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: index === total - 1 ? 'transparent' : 'var(--background-color)',
+                        border: '1px solid',
+                        borderColor: index === total - 1 ? 'transparent' : 'var(--divider-color)',
+                        borderRadius: '6px',
+                        cursor: index === total - 1 ? 'not-allowed' : 'pointer',
                         color: index === total - 1 ? '#ddd' : 'var(--text-secondary)',
-                        padding: '2px 4px', lineHeight: 1, fontSize: '0.7rem',
+                        fontSize: '0.65rem', lineHeight: 1,
+                        transition: 'background 0.15s',
                     }}
                 >▼</button>
             </div>
 
-            {/* Delete */}
-            <Button
-                size="sm"
-                variant="danger"
+            {/* ── Delete ── */}
+            <button
                 onClick={onDelete}
-                style={{ padding: '0.4rem', flexShrink: 0 }}
                 title="Eliminar categoría"
+                style={{
+                    width: '32px', height: '32px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: 'rgba(220,38,38,0.08)',
+                    border: '1px solid rgba(220,38,38,0.2)',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    color: '#dc2626',
+                    flexShrink: 0,
+                    transition: 'background 0.15s',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(220,38,38,0.18)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'rgba(220,38,38,0.08)')}
             >
-                <Trash2 size={15} />
-            </Button>
-        </Card>
+                <Trash2 size={14} />
+            </button>
+        </div>
     );
 }
