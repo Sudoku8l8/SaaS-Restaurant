@@ -1,29 +1,26 @@
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTenant } from '@/app/providers/TenantProvider';
-import { Button, Card } from '@/components/shared';
-import { Utensils } from 'lucide-react';
+import { usePublicMenu } from '@/hooks/usePublicMenu';
+import { Utensils, MapPin, Phone } from 'lucide-react';
+import styles from './DigitalMenuPage.module.css';
 
-export function DigitalMenuPage() {
-    const { tableNumber } = useParams<{ tableNumber: string }>();
-    const { tenant, isLoading, error } = useTenant();
-
-    if (isLoading) return (
-        <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--background-color)' }}>
-            <p style={{ color: 'var(--primary-color)', fontWeight: 'bold' }}>Cargando Menú...</p>
+// ─── Skeleton loader for products ───────────────────────────────────────────
+function ProductSkeleton() {
+    return (
+        <div className={styles.skeletonCard}>
+            <div className={styles.skeletonCircle} />
+            <div className={styles.skeletonLines}>
+                <div className={`${styles.skeletonLine} ${styles.medium}`} />
+                <div className={`${styles.skeletonLine} ${styles.long}`} />
+                <div className={`${styles.skeletonLine} ${styles.short}`} />
+            </div>
         </div>
     );
+}
 
-    if (error || !tenant) return (
-        <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--background-color)', padding: '2rem', textAlign: 'center' }}>
-            <Card style={{ padding: '2rem' }}>
-                <h2 style={{ color: 'var(--danger-color)' }}>Restaurante no encontrado</h2>
-                <p style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>El enlace que has escaneado parece no ser válido.</p>
-            </Card>
-        </div>
-    );
-
-    const { name, logo, config } = tenant;
-
+// ─── Legacy view (external URL buttons) ─────────────────────────────────────
+function LegacyMenuView({ config, name }: { config: NonNullable<ReturnType<typeof useTenant>['tenant']>['config']; name: string }) {
     return (
         <div style={{
             minHeight: '100vh',
@@ -32,116 +29,274 @@ export function DigitalMenuPage() {
             flexDirection: 'column',
             alignItems: 'center',
             padding: '3rem 1.5rem',
-            textAlign: 'center'
+            textAlign: 'center',
+            fontFamily: 'Inter, sans-serif',
         }}>
-            {/* Header / Logo */}
-            <div style={{ marginBottom: '2.5rem' }}>
-                {logo ? (
-                    <img
-                        src={logo}
-                        alt={name}
-                        style={{
-                            width: '100px',
-                            height: '100px',
-                            objectFit: 'contain',
-                            borderRadius: '50%',
-                            marginBottom: '1rem',
-                            backgroundColor: 'white',
-                            padding: '10px',
-                            boxShadow: 'var(--shadow-md)'
-                        }}
-                    />
-                ) : (
-                    <div style={{
-                        width: '80px',
-                        height: '80px',
-                        borderRadius: '50%',
-                        backgroundColor: 'var(--primary-color)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        margin: '0 auto 1rem',
-                        color: 'white',
-                        boxShadow: 'var(--shadow-md)'
-                    }}>
-                        <Utensils size={40} />
-                    </div>
-                )}
-                <h1 style={{ fontSize: '1.8rem', fontWeight: '900', color: 'var(--text-primary)', margin: 0 }}>{name}</h1>
-                {tableNumber && (
-                    <div style={{
-                        display: 'inline-block',
-                        marginTop: '0.75rem',
-                        padding: '0.4rem 1.2rem',
-                        backgroundColor: 'var(--surface-color)',
-                        borderRadius: 'var(--radius-full)',
-                        fontSize: '0.9rem',
-                        fontWeight: '700',
-                        color: 'var(--primary-color)',
-                        boxShadow: 'var(--shadow-sm)'
-                    }}>
-                        Mesa {tableNumber}
-                    </div>
-                )}
-            </div>
-
-            <Card style={{
-                padding: '2rem',
-                width: '100%',
-                maxWidth: '420px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '1.25rem',
-                boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
-                borderRadius: 'var(--radius-lg)'
-            }}>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Nuestra Carta Digital</h2>
-
+            <h1 style={{ fontSize: '1.8rem', fontWeight: '900', marginBottom: '2rem' }}>{name}</h1>
+            <div style={{ width: '100%', maxWidth: '420px', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-primary)' }}>Nuestra Carta Digital</h2>
                 {config?.menuSpanishUrl ? (
-                    <Button
-                        variant="primary"
-                        size="lg"
-                        fullWidth
+                    <button
                         onClick={() => window.open(config.menuSpanishUrl, '_blank')}
-                        style={{ height: '70px', fontSize: '1.1rem', fontWeight: 'bold', borderRadius: 'var(--radius-md)' }}
+                        style={{ padding: '1.25rem', fontSize: '1.1rem', fontWeight: 'bold', borderRadius: '12px', border: 'none', background: 'var(--primary-color)', color: '#fff', cursor: 'pointer' }}
                     >
                         🇪🇸 Ver Carta en Español
-                    </Button>
+                    </button>
                 ) : (
-                    <div style={{ padding: '1rem', backgroundColor: 'rgba(230, 57, 70, 0.05)', borderRadius: 'var(--radius-md)', color: 'var(--danger-color)', fontSize: '0.9rem', fontWeight: '600' }}>
+                    <div style={{ padding: '1rem', background: 'rgba(230,57,70,0.05)', borderRadius: '12px', color: 'var(--danger-color)', fontSize: '0.9rem', fontWeight: '600' }}>
                         Carta en español no configurada
                     </div>
                 )}
-
                 {config?.menuEnglishUrl && (
-                    <Button
-                        variant="outline"
-                        size="lg"
-                        fullWidth
+                    <button
                         onClick={() => window.open(config.menuEnglishUrl, '_blank')}
-                        style={{
-                            height: '70px',
-                            fontSize: '1.1rem',
-                            fontWeight: 'bold',
-                            borderRadius: 'var(--radius-md)',
-                            border: '2px solid var(--primary-color)',
-                            color: 'var(--primary-color)'
-                        }}
+                        style={{ padding: '1.25rem', fontSize: '1.1rem', fontWeight: 'bold', borderRadius: '12px', border: '2px solid var(--primary-color)', background: 'transparent', color: 'var(--primary-color)', cursor: 'pointer' }}
                     >
                         🇺🇸 View Menu in English
-                    </Button>
+                    </button>
                 )}
-
-                {(!config?.menuSpanishUrl && !config?.menuEnglishUrl) && (
+                {!config?.menuSpanishUrl && !config?.menuEnglishUrl && (
                     <p style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>
                         No hay cartas configuradas actualmente. Por favor consulte con el mozo.
                     </p>
                 )}
-            </Card>
+            </div>
+        </div>
+    );
+}
 
-            <footer style={{ marginTop: 'auto', paddingTop: '4rem', color: 'var(--text-secondary)', fontSize: '0.8rem', opacity: 0.6 }}>
+// ─── Main Component ──────────────────────────────────────────────────────────
+export function DigitalMenuPage() {
+    const { tableNumber } = useParams<{ tableNumber: string }>();
+    const { tenant, isLoading: tenantLoading, error } = useTenant();
+    const { products, categories, isLoading: menuLoading } = usePublicMenu(tenant?.id);
+    const [activeCategory, setActiveCategory] = useState<string>('');
+    const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
+    const navRef = useRef<HTMLDivElement>(null);
+
+    const accentColor = tenant?.config?.menuAccentColor || '#c8a96e';
+
+    // Set CSS variable for accent color
+    useEffect(() => {
+        document.documentElement.style.setProperty('--menu-accent', accentColor);
+        return () => {
+            document.documentElement.style.removeProperty('--menu-accent');
+        };
+    }, [accentColor]);
+
+    // IntersectionObserver to highlight active category
+    useEffect(() => {
+        if (categories.length === 0) return;
+
+        const observers: IntersectionObserver[] = [];
+
+        categories.forEach(cat => {
+            const el = sectionRefs.current[cat.id];
+            if (!el) return;
+
+            const obs = new IntersectionObserver(
+                ([entry]) => {
+                    if (entry.isIntersecting) {
+                        setActiveCategory(cat.id);
+                    }
+                },
+                { rootMargin: '-20% 0px -70% 0px', threshold: 0 }
+            );
+            obs.observe(el);
+            observers.push(obs);
+        });
+
+        return () => observers.forEach(o => o.disconnect());
+    }, [categories]);
+
+    // Scroll active nav button into view
+    useEffect(() => {
+        if (!activeCategory || !navRef.current) return;
+        const btn = navRef.current.querySelector(`[data-cat="${activeCategory}"]`) as HTMLElement;
+        if (btn) {
+            btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+    }, [activeCategory]);
+
+    const scrollToCategory = (catId: string) => {
+        const el = sectionRefs.current[catId];
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    };
+
+    // ── Loading state ──
+    if (tenantLoading) {
+        return (
+            <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fafaf8' }}>
+                <p style={{ color: accentColor, fontWeight: 'bold', fontFamily: 'Inter, sans-serif' }}>Cargando Menú...</p>
+            </div>
+        );
+    }
+
+    // ── Error state ──
+    if (error || !tenant) {
+        return (
+            <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fafaf8', padding: '2rem', textAlign: 'center' }}>
+                <div>
+                    <h2 style={{ color: '#c0392b', fontFamily: 'Playfair Display, serif' }}>Restaurante no encontrado</h2>
+                    <p style={{ color: '#888', marginTop: '1rem', fontFamily: 'Inter, sans-serif' }}>El enlace que has escaneado parece no ser válido.</p>
+                </div>
+            </div>
+        );
+    }
+
+    const { name, logo, config } = tenant;
+
+    // ── Fallback to legacy view if native menu is not enabled ──
+    if (!config?.menuNativeEnabled) {
+        return <LegacyMenuView config={config} name={name} />;
+    }
+
+    // ── Group products by category ──
+    const categoriesWithProducts = categories
+        .map(cat => ({
+            ...cat,
+            products: products.filter(p => p.category === cat.name),
+        }))
+        .filter(cat => cat.products.length > 0);
+
+    const currency = config?.currency || 'S/';
+
+    return (
+        <div className={styles.page}>
+            {/* ─── HEADER ─── */}
+            <header className={styles.header}>
+                <div className={styles.logoWrapper}>
+                    {logo ? (
+                        <img src={logo} alt={name} className={styles.logoImg} />
+                    ) : (
+                        <div className={styles.logoPlaceholder}>
+                            <Utensils size={36} />
+                        </div>
+                    )}
+                </div>
+                <h1 className={styles.restaurantName}>{name}</h1>
+                {config?.menuDescription && (
+                    <p className={styles.restaurantDescription}>{config.menuDescription}</p>
+                )}
+                {tableNumber && (
+                    <div className={styles.tableBadge}>
+                        Mesa {tableNumber}
+                    </div>
+                )}
+            </header>
+
+            {/* ─── STICKY CATEGORY NAV ─── */}
+            {!menuLoading && categoriesWithProducts.length > 1 && (
+                <nav className={styles.categoryNav} ref={navRef}>
+                    <div className={styles.categoryNavInner}>
+                        {categoriesWithProducts.map(cat => (
+                            <button
+                                key={cat.id}
+                                data-cat={cat.id}
+                                className={`${styles.categoryNavBtn} ${activeCategory === cat.id ? styles.active : ''}`}
+                                onClick={() => scrollToCategory(cat.id)}
+                            >
+                                {cat.name}
+                            </button>
+                        ))}
+                    </div>
+                </nav>
+            )}
+
+            {/* ─── MAIN CONTENT ─── */}
+            <main className={styles.content}>
+                {menuLoading ? (
+                    // Skeleton
+                    <>
+                        {[1, 2, 3].map(i => (
+                            <div key={i} style={{ marginBottom: '2.5rem' }}>
+                                <div style={{ width: '30%', height: 14, background: '#ebebeb', borderRadius: 6, marginBottom: '0.5rem', animation: 'pulse 1.5s ease-in-out infinite' }} />
+                                <div style={{ width: '55%', height: 28, background: '#ebebeb', borderRadius: 6, marginBottom: '1.5rem', animation: 'pulse 1.5s ease-in-out infinite' }} />
+                                {[1, 2, 3].map(j => <ProductSkeleton key={j} />)}
+                            </div>
+                        ))}
+                    </>
+                ) : categoriesWithProducts.length === 0 ? (
+                    <div className={styles.emptyState}>
+                        <Utensils size={48} style={{ color: '#ddd', marginBottom: '1rem' }} />
+                        <h2>Carta no disponible</h2>
+                        <p>Estamos preparando nuestra carta digital. Por favor consulte con el mozo.</p>
+                    </div>
+                ) : (
+                    categoriesWithProducts.map(cat => (
+                        <section
+                            key={cat.id}
+                            id={`cat-${cat.id}`}
+                            className={styles.categorySection}
+                            ref={el => { sectionRefs.current[cat.id] = el; }}
+                        >
+                            <p className={styles.categoryLabel}>{cat.name.toUpperCase()}</p>
+                            <h2 className={styles.categoryTitle}>{cat.name}</h2>
+
+                            <div className={styles.productList}>
+                                {cat.products.map(product => (
+                                    <div
+                                        key={product.id}
+                                        className={`${styles.productCard} ${!product.available ? styles.unavailable : ''}`}
+                                    >
+                                        {/* Image */}
+                                        <div className={styles.productImageWrapper}>
+                                            {product.imageUrl ? (
+                                                <img
+                                                    src={product.imageUrl}
+                                                    alt={product.name}
+                                                    className={styles.productImage}
+                                                    loading="lazy"
+                                                />
+                                            ) : (
+                                                <span className={styles.productImagePlaceholder}>🍽️</span>
+                                            )}
+                                        </div>
+
+                                        {/* Info */}
+                                        <div className={styles.productInfo}>
+                                            <div className={styles.productNameRow}>
+                                                <h3 className={styles.productName}>{product.name}</h3>
+                                                {product.isPopular && (
+                                                    <span className={styles.popularBadge}>⭐ Popular</span>
+                                                )}
+                                                {!product.available && (
+                                                    <span className={styles.unavailableBadge}>Agotado</span>
+                                                )}
+                                            </div>
+                                            {product.description && (
+                                                <p className={styles.productDescription}>{product.description}</p>
+                                            )}
+                                        </div>
+
+                                        {/* Price */}
+                                        <div className={styles.productPrice}>
+                                            {currency} {product.price.toFixed(2)}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+                    ))
+                )}
+            </main>
+
+            {/* ─── FOOTER ─── */}
+            <footer className={styles.footer}>
+                {(config?.menuAddress || config?.menuPhone) && (
+                    <div className={styles.footerContact}>
+                        {config.menuAddress && (
+                            <span><MapPin size={14} /> {config.menuAddress}</span>
+                        )}
+                        {config.menuPhone && (
+                            <span><Phone size={14} /> {config.menuPhone}</span>
+                        )}
+                    </div>
+                )}
                 <p>© {new Date().getFullYear()} {name}</p>
-                <p style={{ marginTop: '0.25rem' }}>Powered by SaaS Restaurant</p>
+                <p className={styles.poweredBy}>Powered by OrdayGo</p>
             </footer>
         </div>
     );

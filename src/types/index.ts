@@ -54,6 +54,12 @@ export interface RestaurantConfig {
     timezone: string;
     menuSpanishUrl?: string;
     menuEnglishUrl?: string;
+    // Native Digital Menu
+    menuNativeEnabled?: boolean;
+    menuAccentColor?: string;
+    menuDescription?: string;
+    menuAddress?: string;
+    menuPhone?: string;
 }
 
 export interface RestaurantTable {

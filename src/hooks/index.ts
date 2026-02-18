@@ -2,3 +2,4 @@ export * from './useAuth';
 export * from './useOrders';
 export * from './useTables';
 export * from './useDailySales';
+export * from './usePublicMenu';
