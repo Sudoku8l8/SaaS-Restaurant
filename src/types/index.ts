@@ -112,6 +112,7 @@ export interface Category {
     restaurantId: string;
     name: string;
     createdAt: Date;
+    sortOrder?: number; // Custom display order in the digital menu
 }
 
 export interface OrderItem {

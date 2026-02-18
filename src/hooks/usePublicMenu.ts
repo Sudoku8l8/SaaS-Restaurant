@@ -49,7 +49,16 @@ export function usePublicMenu(restaurantId: string | undefined) {
 
         const unsubCategories = onSnapshot(cQuery, (snap) => {
             const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as Category));
-            setCategories(data.sort((a, b) => a.name.localeCompare(b.name)));
+            // Sort by sortOrder first, then alphabetically as fallback
+            const sorted = data.sort((a, b) => {
+                if (a.sortOrder !== undefined && b.sortOrder !== undefined) {
+                    return a.sortOrder - b.sortOrder;
+                }
+                if (a.sortOrder !== undefined) return -1;
+                if (b.sortOrder !== undefined) return 1;
+                return a.name.localeCompare(b.name);
+            });
+            setCategories(sorted);
             categoriesLoaded = true;
             checkDone();
         });
