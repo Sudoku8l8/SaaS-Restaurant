@@ -79,7 +79,7 @@ export function PrinterTab() {
     };
 
     return (
-        <div style={{ padding: '1rem', maxWidth: '600px', margin: '0 auto' }}>
+        <div style={{ padding: '1rem', width: '100%', maxWidth: '600px', margin: '0 auto', boxSizing: 'border-box' }}>
             <div style={{
                 backgroundColor: 'var(--surface-color)',
                 borderRadius: 'var(--radius-lg)',
@@ -87,7 +87,7 @@ export function PrinterTab() {
                 border: '1px solid var(--border-color)',
                 boxShadow: 'var(--shadow-md)'
             }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
                     <div style={{
                         width: '48px',
                         height: '48px',
@@ -96,13 +96,14 @@ export function PrinterTab() {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: isConnected ? '#22c55e' : 'var(--text-secondary)'
+                        color: isConnected ? '#22c55e' : 'var(--text-secondary)',
+                        flexShrink: 0,
                     }}>
                         <Printer size={24} />
                     </div>
-                    <div>
-                        <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '700' }}>Configuración de Impresora</h3>
-                        <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                        <h3 style={{ margin: 0, fontSize: 'clamp(1rem, 4vw, 1.25rem)', fontWeight: '700', lineHeight: 1.3 }}>Configuración de Impresora</h3>
+                        <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '0.2rem' }}>
                             {isConnected ? `Conectado a: ${deviceName}` : 'No hay ninguna impresora conectada'}
                         </p>
                     </div>
@@ -127,7 +128,7 @@ export function PrinterTab() {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     {!isConnected ? (
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem' }}>
                             <Button
                                 onClick={handleConnectBluetooth}
                                 disabled={isLoading}
@@ -145,7 +146,7 @@ export function PrinterTab() {
                             <Button
                                 onClick={handleConnectExternal}
                                 disabled={isLoading}
-                                style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', gridColumn: 'span 2', backgroundColor: 'var(--secondary-color)', color: 'white' }}
+                                style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', gridColumn: '1 / -1', backgroundColor: 'var(--secondary-color)', color: 'white' }}
                                 variant="primary"
                             >
                                 <Smartphone size={18} /> App RawBT (Bluetooth Clásico)
@@ -178,19 +179,21 @@ export function PrinterTab() {
 
                     <div style={{
                         marginTop: '1rem',
-                        padding: '1.5rem',
+                        padding: '1.25rem',
                         backgroundColor: 'var(--background-color)',
                         borderRadius: 'var(--radius-md)',
                         border: '1px solid var(--border-color)',
                         display: 'flex',
                         justifyContent: 'space-between',
-                        alignItems: 'center'
+                        alignItems: 'center',
+                        gap: '1rem',
+                        flexWrap: 'wrap',
                     }}>
-                        <div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontWeight: '600', marginBottom: '0.25rem' }}>Impresión Automática</div>
                             <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Imprimir comanda al confirmar pedido</div>
                         </div>
-                        <div onClick={toggleAutoPrint} style={{ cursor: 'pointer', color: autoPrint ? 'var(--primary-color)' : 'var(--text-secondary)' }}>
+                        <div onClick={toggleAutoPrint} style={{ cursor: 'pointer', color: autoPrint ? 'var(--primary-color)' : 'var(--text-secondary)', flexShrink: 0 }}>
                             {autoPrint ? <ToggleRight size={36} /> : <ToggleLeft size={36} />}
                         </div>
                     </div>

@@ -181,25 +181,29 @@
 .linkRow {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    flex-wrap: wrap;
+    gap: 0.6rem;
+    /* NO flex-wrap — keep URL + buttons on one line */
 }
 
 .linkCode {
     flex: 1;
-    font-size: 0.88rem;
-    color: var(--text-primary);
-    font-weight: 600;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-family: 'SFMono-Regular', 'Consolas', monospace;
     background: var(--surface-color);
-    padding: 0.6rem 1rem;
+    padding: 0.55rem 0.85rem;
     border-radius: 8px;
-    word-break: break-all;
+    /* Truncate long URLs — no vertical breaking */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     min-width: 0;
 }
 
 .linkActions {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.4rem;
     flex-shrink: 0;
 }
 
