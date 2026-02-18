@@ -252,7 +252,6 @@ export function DigitalMenuPage() {
                             ref={el => { sectionRefs.current[cat.id] = el; }}
                         >
                             <div className={styles.categoryHeader}>
-                                <span className={styles.categoryAccentBar} />
                                 <h2 className={styles.categoryTitle}>{cat.name}</h2>
                             </div>
 
@@ -262,21 +261,6 @@ export function DigitalMenuPage() {
                                         key={product.id}
                                         className={`${styles.productCard} ${!product.available ? styles.unavailable : ''}`}
                                     >
-                                        {/* Image */}
-                                        <div className={styles.productImageWrapper}>
-                                            {product.imageUrl ? (
-                                                <img
-                                                    src={product.imageUrl}
-                                                    alt={product.name}
-                                                    className={styles.productImage}
-                                                    loading="lazy"
-                                                />
-                                            ) : (
-                                                <span className={styles.productImagePlaceholder}>🍽️</span>
-                                            )}
-                                        </div>
-
-                                        {/* Info */}
                                         <div className={styles.productInfo}>
                                             <div className={styles.productNameRow}>
                                                 <h3 className={styles.productName}>{product.name}</h3>
@@ -286,15 +270,13 @@ export function DigitalMenuPage() {
                                                 {!product.available && (
                                                     <span className={styles.unavailableBadge}>Agotado</span>
                                                 )}
+                                                <span className={styles.productPrice}>
+                                                    {currency} {product.price.toFixed(2)}
+                                                </span>
                                             </div>
                                             {product.description && (
                                                 <p className={styles.productDescription}>{product.description}</p>
                                             )}
-                                        </div>
-
-                                        {/* Price */}
-                                        <div className={styles.productPrice}>
-                                            {currency} {product.price.toFixed(2)}
                                         </div>
                                     </div>
                                 ))}
@@ -306,18 +288,41 @@ export function DigitalMenuPage() {
 
             {/* ─── FOOTER ─── */}
             <footer className={styles.footer}>
+                <p className={styles.footerName}>{name}</p>
                 {(config?.menuAddress || config?.menuPhone) && (
                     <div className={styles.footerContact}>
                         {config.menuAddress && (
-                            <span><MapPin size={14} /> {config.menuAddress}</span>
+                            <span className={styles.footerContactItem}>
+                                <MapPin size={13} /> {config.menuAddress}
+                            </span>
                         )}
                         {config.menuPhone && (
-                            <span><Phone size={14} /> {config.menuPhone}</span>
+                            <span className={styles.footerContactItem}>
+                                <Phone size={13} /> {config.menuPhone}
+                            </span>
                         )}
                     </div>
                 )}
-                <p>© {new Date().getFullYear()} {name}</p>
-                <p className={styles.poweredBy}>Powered by OrdayGo</p>
+                <div className={styles.footerIcons}>
+                    {config?.menuPhone && (
+                        <a href={`tel:${config.menuPhone}`} className={styles.footerIconBtn} aria-label="Llamar">
+                            <Phone size={15} />
+                        </a>
+                    )}
+                    {config?.menuAddress && (
+                        <a
+                            href={`https://maps.google.com/?q=${encodeURIComponent(config.menuAddress)}`}
+                            target="_blank" rel="noreferrer"
+                            className={styles.footerIconBtn}
+                            aria-label="Ver en mapa"
+                        >
+                            <MapPin size={15} />
+                        </a>
+                    )}
+                </div>
+                <p className={styles.footerCopyright}>
+                    &copy; {new Date().getFullYear()} {name} &mdash; Carta Digital
+                </p>
             </footer>
         </div>
     );
