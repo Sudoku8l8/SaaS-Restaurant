@@ -302,6 +302,9 @@ export function DigitalMenuPage() {
                         >
                             <div className={styles.categoryHeader}>
                                 <h2 className={styles.categoryTitle}>{cat.name}</h2>
+                                <div className={styles.premiumDivider}>
+                                    <span className={styles.premiumDiamond}></span>
+                                </div>
                             </div>
 
                             <div className={styles.productList}>
