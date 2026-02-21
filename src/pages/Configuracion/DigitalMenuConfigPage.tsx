@@ -426,7 +426,29 @@ export function DigitalMenuConfigPage() {
                                     <Input
                                         placeholder="https://i.imgur.com/tu-logo.png"
                                         value={logoUrl}
-                                        onChange={e => setLogoUrl(e.target.value)}
+                                        onChange={e => {
+                                            const val = e.target.value.trim();
+                                            let finalUrl = val;
+
+                                            // Extract Google Drive ID using various URL patterns
+                                            const driveMatch1 = val.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+                                            const driveMatch2 = val.match(/drive\.google\.com\/uc\?.*id=([a-zA-Z0-9_-]+)/);
+                                            const driveMatch3 = val.match(/drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/);
+                                            const driveId = (driveMatch1 && driveMatch1[1]) || (driveMatch2 && driveMatch2[1]) || (driveMatch3 && driveMatch3[1]);
+
+                                            if (driveId) {
+                                                // The thumbnail endpoint is generally more reliable for public images now
+                                                finalUrl = `https://drive.google.com/thumbnail?id=${driveId}&sz=w1000`;
+                                            } else {
+                                                // Convert Imgur standard links (e.g., https://imgur.com/XYZ) to direct image links
+                                                const imgurMatch = val.match(/^https?:\/\/imgur\.com\/([a-zA-Z0-9]+)$/);
+                                                if (imgurMatch && imgurMatch[1]) {
+                                                    finalUrl = `https://i.imgur.com/${imgurMatch[1]}.png`;
+                                                }
+                                            }
+
+                                            setLogoUrl(finalUrl);
+                                        }}
                                         fullWidth
                                     />
                                     {logoUrl && (
