@@ -9,11 +9,12 @@ import {
     doc,
     writeBatch,
     getDocs,
+    addDoc,
     limit
 } from 'firebase/firestore';
 import { useAuth } from './useAuth';
 import type { Order, OrderStatus, PaymentMethod } from '@/types';
-import { ensurePeruDate, getPeruNow } from '@/utils/dateUtils';
+import { ensurePeruDate, getPeruNow, getPeruDateString } from '@/utils/dateUtils';
 
 export function useOrders() {
     const { user } = useAuth();
@@ -106,6 +107,40 @@ export function useOrders() {
     };
 
     const payOrder = async (orderId: string, paymentMethod: PaymentMethod) => {
+        // ── B5: Auto-create today's cash session if it doesn't exist ──────────
+        const todayStr = getPeruDateString();
+
+        const closuresRef = collection(db, 'closures');
+        const existingSessionQuery = query(
+            closuresRef,
+            where('restaurantId', '==', restaurantId),
+            where('date', '==', todayStr),
+            limit(1)
+        );
+        const existingSessionSnap = await getDocs(existingSessionQuery);
+
+        if (existingSessionSnap.empty) {
+            // No session for today — create one automatically
+            const currentUser = user; // captured from hook scope
+            await addDoc(closuresRef, {
+                restaurantId,
+                date: todayStr,
+                openingBalance: 0,
+                totalSales: 0,
+                orderCount: 0,
+                salesByWaiter: {},
+                salesByPaymentMethod: {},
+                expenses: [],
+                status: 'open',
+                createdAt: getPeruNow(),
+                createdBy: currentUser?.id || 'system',
+                createdByName: currentUser?.name || 'Auto-apertura',
+                autoCreated: true, // flag for audit purposes
+            });
+            console.info(`📦 Auto-apertura de caja para ${todayStr} creada automáticamente.`);
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
         const orderRef = doc(db, 'orders', orderId);
 
         // Transaction to update order and free table

@@ -1,22 +1,25 @@
-import { useState, useEffect } from 'react';
-import { BarChart3, ArrowLeft, Search, Download, DollarSign, ShoppingBag, CalendarCheck } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { BarChart3, ArrowLeft, Search, Download, DollarSign, ShoppingBag, CalendarCheck, AlertTriangle, Lock, Clock } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { db } from '@/services/firebase/config';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
-import { Button, Card, Input } from '@/components/shared';
+import { Button, Card, Badge, Input } from '@/components/shared';
 import { format, subDays, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { exportDailySalesToExcel } from '@/services/exportExcel';
+import { getPeruDateString, getPeruNow } from '@/utils/dateUtils';
 
-interface ClosureRecord {
-    id: string;
+// A "day record" may come from a closure, from raw orders, or both.
+interface DayRecord {
     date: string;
     totalSales: number;
     orderCount: number;
     salesByWaiter: Record<string, number>;
     salesByPaymentMethod: Record<string, number>;
-    createdByName: string;
+    createdByName?: string;
+    closureId?: string;              // If undefined → no closure for this day
+    closureStatus?: 'open' | 'closed'; // 'open' = session exists but not closed
 }
 
 export function ReportesPage() {
@@ -29,164 +32,264 @@ export function ReportesPage() {
     const [toDate, setToDate] = useState(format(new Date(), 'yyyy-MM-dd'));
 
     // Data State
-    const [closures, setClosures] = useState<ClosureRecord[]>([]);
+    const [dayRecords, setDayRecords] = useState<DayRecord[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
+    const [closingDate, setClosingDate] = useState<string | null>(null);
 
-    const fetchClosures = async () => {
+    // ─── MAIN FETCH ────────────────────────────────────────────────────────────
+    // FIX B3: Reads BOTH closures AND raw orders, then merges them.
+    // Days with ventas but no closure are shown with a "Sin Cierre" badge.
+    const fetchData = useCallback(async () => {
         if (!user?.restaurantId) return;
 
         setIsLoading(true);
         try {
-            const q = query(
+            // 1. Fetch all closures in range
+            const closuresQ = query(
                 collection(db, 'closures'),
                 where('restaurantId', '==', user.restaurantId),
                 where('date', '>=', fromDate),
                 where('date', '<=', toDate)
             );
+            const closuresSnap = await getDocs(closuresQ);
+            const closuresByDate: Record<string, DayRecord> = {};
 
-            const snapshot = await getDocs(q);
-            const data = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            } as ClosureRecord));
+            closuresSnap.docs.forEach(d => {
+                const c = d.data();
+                closuresByDate[c.date] = {
+                    date: c.date,
+                    totalSales: c.totalSales || 0,
+                    orderCount: c.orderCount || 0,
+                    salesByWaiter: c.salesByWaiter || {},
+                    salesByPaymentMethod: c.salesByPaymentMethod || {},
+                    createdByName: c.createdByName,
+                    closureId: d.id,
+                    closureStatus: c.status,
+                };
+            });
 
-            // Sort by date descending
-            data.sort((a, b) => b.date.localeCompare(a.date));
-            setClosures(data);
+            // 2. Fetch all PAID orders in range to detect days without closure
+            const ordersQ = query(
+                collection(db, 'orders'),
+                where('restaurantId', '==', user.restaurantId),
+                where('status', '==', 'paid')
+            );
+            const ordersSnap = await getDocs(ordersQ);
+
+            // Group orders by Peru date
+            const ordersByDate: Record<string, { totalSales: number; orderCount: number; salesByWaiter: Record<string, number>; salesByPaymentMethod: Record<string, number>; }> = {};
+
+            ordersSnap.docs.forEach(d => {
+                const data = d.data();
+                const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
+                const dateStr = getPeruDateString(createdAt);
+
+                // Only process dates within the selected range
+                if (dateStr < fromDate || dateStr > toDate) return;
+
+                if (!ordersByDate[dateStr]) {
+                    ordersByDate[dateStr] = { totalSales: 0, orderCount: 0, salesByWaiter: {}, salesByPaymentMethod: {} };
+                }
+                const entry = ordersByDate[dateStr];
+                entry.totalSales += data.total || 0;
+                entry.orderCount += 1;
+
+                const waiter = data.userName || 'Desconocido';
+                entry.salesByWaiter[waiter] = (entry.salesByWaiter[waiter] || 0) + (data.total || 0);
+
+                const pm = data.paymentMethod || 'unknown';
+                entry.salesByPaymentMethod[pm] = (entry.salesByPaymentMethod[pm] || 0) + (data.total || 0);
+            });
+
+            // 3. Merge: for dates that have orders but NO closure, create a synthetic record
+            Object.entries(ordersByDate).forEach(([date, data]) => {
+                if (!closuresByDate[date]) {
+                    // Day has sales but no closure document — this is the main bug scenario
+                    closuresByDate[date] = {
+                        date,
+                        totalSales: data.totalSales,
+                        orderCount: data.orderCount,
+                        salesByWaiter: data.salesByWaiter,
+                        salesByPaymentMethod: data.salesByPaymentMethod,
+                        closureId: undefined,     // No closure
+                        closureStatus: undefined, // No session at all
+                    };
+                } else if (closuresByDate[date].closureStatus === 'open') {
+                    // Session exists (open) → update with live order data for accuracy
+                    closuresByDate[date].totalSales = data.totalSales;
+                    closuresByDate[date].orderCount = data.orderCount;
+                    closuresByDate[date].salesByWaiter = data.salesByWaiter;
+                    closuresByDate[date].salesByPaymentMethod = data.salesByPaymentMethod;
+                }
+            });
+
+            // 4. Sort by date descending
+            const sorted = Object.values(closuresByDate).sort((a, b) => b.date.localeCompare(a.date));
+            setDayRecords(sorted);
         } catch (error) {
-            console.error("Error fetching closures:", error);
-            alert("Error al cargar reportes. Verifique los índices de Firestore.");
+            console.error('Error fetching reports:', error);
+            alert('Error al cargar reportes. Verifique los índices de Firestore.');
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [user?.restaurantId, fromDate, toDate]);
 
     useEffect(() => {
-        fetchClosures();
-    }, [user?.restaurantId]);
+        fetchData();
+    }, [fetchData]);
 
-    // Calculate totals
-    const totalSales = closures.reduce((sum, c) => sum + c.totalSales, 0);
-    const totalOrders = closures.reduce((sum, c) => sum + c.orderCount, 0);
+    // ─── RETROACTIVE CLOSURE ───────────────────────────────────────────────────
+    // Pilar 3: Admin can close a past day that has sales but no closed closure.
+    const handleRetroactiveClose = async (record: DayRecord) => {
+        if (!user?.restaurantId) return;
+        if (!confirm(`¿Cerrar caja retroactivamente para el ${format(parseISO(record.date), 'dd/MM/yyyy', { locale: es })}?\n\nEsto registrará las ventas de ese día en el historial de cierres.`)) return;
+
+        setClosingDate(record.date);
+        try {
+            if (record.closureId) {
+                // Session exists (open) → just mark it closed
+                const { updateDoc, doc } = await import('firebase/firestore');
+                await updateDoc(doc(db, 'closures', record.closureId), {
+                    totalSales: record.totalSales,
+                    orderCount: record.orderCount,
+                    salesByWaiter: record.salesByWaiter,
+                    salesByPaymentMethod: record.salesByPaymentMethod,
+                    status: 'closed',
+                    closedAt: getPeruNow(),
+                    retroactiveClosure: true,
+                });
+            } else {
+                // No session at all → create and close right away
+                await addDoc(collection(db, 'closures'), {
+                    restaurantId: user.restaurantId,
+                    date: record.date,
+                    openingBalance: 0,
+                    totalSales: record.totalSales,
+                    orderCount: record.orderCount,
+                    salesByWaiter: record.salesByWaiter,
+                    salesByPaymentMethod: record.salesByPaymentMethod,
+                    expenses: [],
+                    status: 'closed',
+                    createdAt: getPeruNow(),
+                    createdBy: user.id,
+                    createdByName: user.name,
+                    closedAt: getPeruNow(),
+                    retroactiveClosure: true,
+                    autoCreated: true,
+                });
+            }
+            await fetchData();
+        } catch (err) {
+            console.error('Error closing retroactively:', err);
+            alert('Error al realizar el cierre retroactivo.');
+        } finally {
+            setClosingDate(null);
+        }
+    };
+
+    // ─── EXPORTS ───────────────────────────────────────────────────────────────
+    const totalSales = dayRecords.reduce((sum, r) => sum + r.totalSales, 0);
+    const totalOrders = dayRecords.reduce((sum, r) => sum + r.orderCount, 0);
+    const closedDays = dayRecords.filter(r => r.closureStatus === 'closed').length;
 
     const handleExportHistorical = async () => {
-        if (!user?.restaurantId || closures.length === 0) return;
-
+        if (!user?.restaurantId || dayRecords.length === 0) return;
         setIsExporting(true);
         try {
-            // 1. Fetch orders and filter in clinical to avoid Composite Index errors
-            const q = query(
-                collection(db, 'orders'),
-                where('restaurantId', '==', user.restaurantId)
-            );
-
+            const q = query(collection(db, 'orders'), where('restaurantId', '==', user.restaurantId));
             const snapshot = await getDocs(q);
             const startRange = new Date(fromDate);
             const endRange = new Date(toDate + 'T23:59:59');
 
             const orders = snapshot.docs
-                .map(doc => {
-                    const data = doc.data();
+                .map(d => {
+                    const data = d.data();
                     const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
-                    return { id: doc.id, ...data, createdAt } as any;
+                    return { id: d.id, ...data, createdAt } as any;
                 })
-                .filter(order => {
-                    const isPaid = order.status === 'paid';
-                    const isInRange = order.createdAt >= startRange && order.createdAt <= endRange;
-                    return isPaid && isInRange;
-                });
+                .filter(o => o.status === 'paid' && o.createdAt >= startRange && o.createdAt <= endRange);
 
-            // 2. Aggregate metrics from closures
             const summaryMetrics = {
                 totalSales,
                 orderCount: totalOrders,
                 salesByWaiter: {} as Record<string, number>,
                 salesByPaymentMethod: {} as Record<string, number>
             };
-
-            closures.forEach(c => {
-                Object.entries(c.salesByWaiter || {}).forEach(([waiter, amount]) => {
-                    summaryMetrics.salesByWaiter[waiter] = (summaryMetrics.salesByWaiter[waiter] || 0) + amount;
+            dayRecords.forEach(r => {
+                Object.entries(r.salesByWaiter || {}).forEach(([w, a]) => {
+                    summaryMetrics.salesByWaiter[w] = (summaryMetrics.salesByWaiter[w] || 0) + a;
                 });
-                Object.entries(c.salesByPaymentMethod || {}).forEach(([method, amount]) => {
-                    summaryMetrics.salesByPaymentMethod[method] = (summaryMetrics.salesByPaymentMethod[method] || 0) + amount;
+                Object.entries(r.salesByPaymentMethod || {}).forEach(([m, a]) => {
+                    summaryMetrics.salesByPaymentMethod[m] = (summaryMetrics.salesByPaymentMethod[m] || 0) + a;
                 });
             });
 
-            // 3. Export
             const periodLabel = `${format(parseISO(fromDate), 'dd/MM/yyyy')} - ${format(parseISO(toDate), 'dd/MM/yyyy')}`;
             await exportDailySalesToExcel(summaryMetrics, orders, periodLabel);
-
-        } catch (error) {
-            console.error("Error exporting historical data:", error);
-            alert("Error al exportar los datos. Intente nuevamente.");
+        } catch (err) {
+            console.error('Error exporting:', err);
+            alert('Error al exportar los datos.');
         } finally {
             setIsExporting(false);
         }
     };
 
-    const handleExportSingleDay = async (closure: ClosureRecord) => {
+    const handleExportSingleDay = async (record: DayRecord) => {
         if (!user?.restaurantId) return;
-
         try {
-            // 1. Fetch orders for this specific day
-            const q = query(
-                collection(db, 'orders'),
-                where('restaurantId', '==', user.restaurantId)
-            );
-
+            const q = query(collection(db, 'orders'), where('restaurantId', '==', user.restaurantId));
             const snapshot = await getDocs(q);
-            const date = parseISO(closure.date);
-            const startOfDay = new Date(date);
-            startOfDay.setHours(0, 0, 0, 0);
-            const endOfDay = new Date(date);
-            endOfDay.setHours(23, 59, 59, 999);
+            const date = parseISO(record.date);
+            const startOfDay = new Date(date); startOfDay.setHours(0, 0, 0, 0);
+            const endOfDay = new Date(date); endOfDay.setHours(23, 59, 59, 999);
 
             const orders = snapshot.docs
-                .map(doc => {
-                    const data = doc.data();
+                .map(d => {
+                    const data = d.data();
                     const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
-                    return { id: doc.id, ...data, createdAt } as any;
+                    return { id: d.id, ...data, createdAt } as any;
                 })
-                .filter(order => {
-                    const isPaid = order.status === 'paid';
-                    const isInRange = order.createdAt >= startOfDay && order.createdAt <= endOfDay;
-                    return isPaid && isInRange;
-                });
+                .filter(o => o.status === 'paid' && o.createdAt >= startOfDay && o.createdAt <= endOfDay);
 
-            // 2. Metrics for the single day
             const metrics = {
-                totalSales: closure.totalSales,
-                orderCount: closure.orderCount,
-                salesByWaiter: closure.salesByWaiter || {},
-                salesByPaymentMethod: closure.salesByPaymentMethod || {}
+                totalSales: record.totalSales,
+                orderCount: record.orderCount,
+                salesByWaiter: record.salesByWaiter || {},
+                salesByPaymentMethod: record.salesByPaymentMethod || {}
             };
-
-            // 3. Export
-            const periodLabel = format(parseISO(closure.date), 'dd/MM/yyyy');
-            await exportDailySalesToExcel(metrics, orders, periodLabel);
-
-        } catch (error) {
-            console.error("Error exporting daily data:", error);
-            alert("Error al exportar el reporte del día.");
+            await exportDailySalesToExcel(metrics, orders, format(date, 'dd/MM/yyyy'));
+        } catch (err) {
+            console.error('Error exporting day:', err);
+            alert('Error al exportar el reporte del día.');
         }
     };
 
+    // ─── STATUS BADGE HELPER ───────────────────────────────────────────────────
+    const StatusBadge = ({ record }: { record: DayRecord }) => {
+        if (record.closureStatus === 'closed') {
+            return <Badge variant="success" style={{ fontSize: '0.7rem', padding: '0.2rem 0.6rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}><Lock size={11} /> Cerrada</Badge>;
+        }
+        if (record.closureStatus === 'open') {
+            return <Badge variant="warning" style={{ fontSize: '0.7rem', padding: '0.2rem 0.6rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', background: '#fef3c7', color: '#92400e' }}><Clock size={11} /> Abierta</Badge>;
+        }
+        // No closure at all
+        return <Badge variant="error" style={{ fontSize: '0.7rem', padding: '0.2rem 0.6rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', background: '#fee2e2', color: '#991b1b' }}><AlertTriangle size={11} /> Sin Cierre</Badge>;
+    };
+
+    // ─── RENDER ────────────────────────────────────────────────────────────────
     return (
         <div className="container mt-md">
-            <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+            <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <div>
                     <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                         <BarChart3 size={32} className="text-primary" /> Reportes Históricos
                     </h1>
-                    <p>Consulta de ventas por rango de fechas</p>
+                    <p>Ventas por rango de fechas — incluyendo días sin cierre de caja</p>
                 </div>
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                    <Button variant="ghost" onClick={() => navigate(`/${restaurantSlug}/admin`)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <ArrowLeft size={18} /> Volver
-                    </Button>
-                </div>
+                <Button variant="ghost" onClick={() => navigate(`/${restaurantSlug}/admin`)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <ArrowLeft size={18} /> Volver
+                </Button>
             </header>
 
             {/* Filter Section */}
@@ -194,21 +297,13 @@ export function ReportesPage() {
                 <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
                     <div>
                         <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Desde</label>
-                        <Input
-                            type="date"
-                            value={fromDate}
-                            onChange={e => setFromDate(e.target.value)}
-                        />
+                        <Input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} />
                     </div>
                     <div>
                         <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Hasta</label>
-                        <Input
-                            type="date"
-                            value={toDate}
-                            onChange={e => setToDate(e.target.value)}
-                        />
+                        <Input type="date" value={toDate} onChange={e => setToDate(e.target.value)} />
                     </div>
-                    <Button onClick={fetchClosures} disabled={isLoading} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Button onClick={fetchData} disabled={isLoading} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         {isLoading ? 'Cargando...' : <><Search size={18} /> Buscar</>}
                     </Button>
                 </div>
@@ -237,16 +332,39 @@ export function ReportesPage() {
                         <CalendarCheck size={16} /> Días con Cierre
                     </div>
                     <div style={{ fontSize: '2.25rem', fontWeight: '900', color: 'var(--primary-color)', letterSpacing: '-0.02em' }}>
-                        {closures.length}
+                        {closedDays}
                     </div>
                 </Card>
             </div>
 
-            {/* Closures Table */}
+            {/* Info Banner for unclosed days */}
+            {dayRecords.some(r => r.closureStatus !== 'closed') && (
+                <div style={{
+                    background: '#fffbeb',
+                    border: '1px solid #fcd34d',
+                    borderLeft: '5px solid #f59e0b',
+                    borderRadius: 'var(--radius-md)',
+                    padding: '1rem 1.25rem',
+                    marginBottom: '1.5rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    color: '#92400e',
+                    fontSize: '0.9rem'
+                }}>
+                    <AlertTriangle size={20} style={{ flexShrink: 0 }} />
+                    <span>
+                        <strong>Días sin cierre detectados.</strong> Las ventas están guardadas correctamente en el sistema.
+                        Usa el botón <strong>"Cerrar Retroactivo"</strong> para regularizar los cierres pendientes.
+                    </span>
+                </div>
+            )}
+
+            {/* Records Table */}
             <Card style={{ padding: '1.5rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                    <h3>Historial de Cierres</h3>
-                    {closures.length > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+                    <h3 style={{ margin: 0 }}>Historial de Ventas</h3>
+                    {dayRecords.length > 0 && (
                         <Button
                             variant="secondary"
                             size="sm"
@@ -254,14 +372,14 @@ export function ReportesPage() {
                             disabled={isExporting}
                             style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                         >
-                            <Download size={16} /> {isExporting ? 'Generando Excel...' : 'Exportar Detalles (Excel)'}
+                            <Download size={16} /> {isExporting ? 'Generando Excel...' : 'Exportar Todo (Excel)'}
                         </Button>
                     )}
                 </div>
 
-                {closures.length === 0 ? (
+                {dayRecords.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)', fontWeight: '600' }}>
-                        No se encontraron cierres en el rango seleccionado.
+                        No se encontraron ventas en el rango seleccionado.
                     </div>
                 ) : (
                     <div style={{ overflowX: 'auto' }}>
@@ -269,6 +387,7 @@ export function ReportesPage() {
                             <thead>
                                 <tr style={{ borderBottom: '2px solid var(--divider-color)', textAlign: 'left' }}>
                                     <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800', fontSize: '0.9rem', textTransform: 'uppercase' }}>Fecha</th>
+                                    <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800', fontSize: '0.9rem', textTransform: 'uppercase' }}>Estado</th>
                                     <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800', fontSize: '0.9rem', textTransform: 'uppercase' }}>Pedidos</th>
                                     <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800', fontSize: '0.9rem', textTransform: 'uppercase' }}>Total</th>
                                     <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800', fontSize: '0.9rem', textTransform: 'uppercase' }}>Responsable</th>
@@ -276,30 +395,49 @@ export function ReportesPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {closures.map(closure => (
-                                    <tr key={closure.id} style={{ borderBottom: '1px solid var(--divider-color)', transition: 'background-color 0.2s' }}
+                                {dayRecords.map(record => (
+                                    <tr
+                                        key={record.date}
+                                        style={{ borderBottom: '1px solid var(--divider-color)', transition: 'background-color 0.2s' }}
                                         onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--background-color)'}
-                                        onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
+                                        onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                                    >
                                         <td style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '600' }}>
-                                            {format(parseISO(closure.date), 'dd MMM yyyy', { locale: es })}
+                                            {format(parseISO(record.date), 'dd MMM yyyy', { locale: es })}
                                         </td>
-                                        <td style={{ padding: '1rem', color: 'var(--text-secondary)', fontWeight: '600' }}>{closure.orderCount}</td>
+                                        <td style={{ padding: '1rem' }}>
+                                            <StatusBadge record={record} />
+                                        </td>
+                                        <td style={{ padding: '1rem', color: 'var(--text-secondary)', fontWeight: '600' }}>{record.orderCount}</td>
                                         <td style={{ padding: '1rem', color: 'var(--primary-color)', fontWeight: '800', fontSize: '1.1rem' }}>
-                                            S/ {closure.totalSales.toFixed(2)}
+                                            S/ {record.totalSales.toFixed(2)}
                                         </td>
                                         <td style={{ padding: '1rem', color: 'var(--text-secondary)', fontWeight: '500' }}>
-                                            {closure.createdByName || 'Admin'}
+                                            {record.createdByName || (record.closureId ? 'Admin' : '—')}
                                         </td>
-                                        <td style={{ padding: '1rem', textAlign: 'right' }}>
+                                        <td style={{ padding: '1rem', textAlign: 'right', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                onClick={() => handleExportSingleDay(closure)}
+                                                onClick={() => handleExportSingleDay(record)}
                                                 style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.5rem' }}
                                                 title="Exportar día a Excel"
                                             >
                                                 <Download size={16} /> Excel
                                             </Button>
+                                            {/* Pilar 3: Retroactive close button for unclosed days */}
+                                            {record.closureStatus !== 'closed' && record.orderCount > 0 && (
+                                                <Button
+                                                    variant="secondary"
+                                                    size="sm"
+                                                    onClick={() => handleRetroactiveClose(record)}
+                                                    disabled={closingDate === record.date}
+                                                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
+                                                    title="Registrar cierre retroactivo para regularizar este día"
+                                                >
+                                                    <Lock size={14} /> {closingDate === record.date ? 'Cerrando...' : 'Cerrar Retroactivo'}
+                                                </Button>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}

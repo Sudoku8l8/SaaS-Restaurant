@@ -39,7 +39,7 @@ export function CierreCajaPage() {
 
     // Validation State
     const hasPendingOrders = activeOrders.length > 0;
-    const canClose = !hasPendingOrders && sessionExists && !isClosed && metrics.orderCount > 0;
+    const canClose = !hasPendingOrders && sessionExists && !isClosed;
 
     const handleCloseBox = async () => {
         if (!canClose || !currentSession?.id) return;

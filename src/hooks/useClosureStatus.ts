@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { db } from '@/services/firebase/config';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { useAuth } from './useAuth';
-import { format } from 'date-fns';
+import { getPeruDateString } from '@/utils/dateUtils';
 
 /**
  * Hook to check if today's cash box has been closed.
@@ -32,7 +32,8 @@ export function useClosureStatus() {
             return;
         }
 
-        const todayStr = format(new Date(), 'yyyy-MM-dd');
+        // FIX B2: Use Peru timezone, not browser's local time
+        const todayStr = getPeruDateString();
 
         const q = query(
             collection(db, 'closures'),

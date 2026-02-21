@@ -28,6 +28,9 @@ export function useDailySales(targetDate?: Date) {
     const [orders, setOrders] = useState<Order[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
+    // Use a stable string to avoid infinite re-renders from Date object identity changes
+    const targetDateStr = getPeruDateString(targetDate || new Date());
+
     useEffect(() => {
         if (!restaurantId) return;
 
@@ -37,7 +40,6 @@ export function useDailySales(targetDate?: Date) {
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
-            const targetDateStr = getPeruDateString(targetDate || new Date());
 
             const paidOrdersToday = snapshot.docs
                 .map(doc => {
@@ -81,7 +83,7 @@ export function useDailySales(targetDate?: Date) {
         });
 
         return () => unsubscribe();
-    }, [restaurantId]);
+    }, [restaurantId, targetDateStr]);
 
     return { metrics, orders, isLoading };
 }
