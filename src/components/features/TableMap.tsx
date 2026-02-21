@@ -48,47 +48,48 @@ export function TableMap({
 
     return (
         <div className={styles.container}>
-            {/* Legend */}
+            {/* Controls Bar: Legend + Floor Tabs in one row */}
             <div className={styles.controlsBar}>
+                {/* Legend as compact horizontal pills */}
                 <div className={styles.legend}>
                     <div className={styles.legendItem}>
                         <div className={`${styles.dot} ${styles.dotFree}`} />
-                        <span>Libre</span>
+                        Libre
                     </div>
                     <div className={styles.legendItem}>
                         <div className={`${styles.dot} ${styles.dotOccupied}`} />
-                        <span>Ocupada</span>
+                        Ocupado
                     </div>
                     <div className={styles.legendItem}>
                         <div className={`${styles.dot} ${styles.dotTakeout}`} />
-                        <span>Para Llevar</span>
+                        Para Llevar
                     </div>
+                </div>
+
+                {/* Floor Tabs */}
+                <div className={styles.floorTabsWrapper}>
+                    <Layers size={15} style={{ color: 'var(--text-secondary)', alignSelf: 'center', flexShrink: 0 }} />
+                    {floorNames.map(floor => (
+                        <button
+                            key={floor}
+                            className={`${styles.floorTab} ${currentFloor === floor ? styles.floorTabActive : ''}`}
+                            onClick={() => setActiveFloor(floor)}
+                        >
+                            {floor}
+                            <span className={styles.floorCount}>
+                                {getFloorCount(floor)}
+                            </span>
+                        </button>
+                    ))}
                 </div>
             </div>
 
-            {/* Floor Tabs */}
-            <div className={styles.floorTabsWrapper}>
-                <Layers size={16} style={{ color: 'var(--text-secondary)', marginLeft: '0.25rem', alignSelf: 'center' }} />
-                {floorNames.map(floor => (
-                    <button
-                        key={floor}
-                        className={`${styles.floorTab} ${currentFloor === floor ? styles.floorTabActive : ''}`}
-                        onClick={() => setActiveFloor(floor)}
-                    >
-                        {floor}
-                        <span className={styles.floorCount}>
-                            {getFloorCount(floor)}
-                        </span>
-                    </button>
-                ))}
-            </div>
-
             {/* Main Content */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
                 {/* 1. Active Floor Grid */}
                 <div>
-                    <h4 className={styles.sectionTitle}>Mesas - {currentFloor}</h4>
+                    <h4 className={styles.sectionTitle}>Mesas — {currentFloor}</h4>
 
                     {floorTables.length > 0 ? (
                         <div className={styles.gridContainer}>
@@ -106,7 +107,7 @@ export function TableMap({
                         </div>
                     ) : (
                         <div className={styles.emptyState}>
-                            <UtensilsCrossed size={40} style={{ opacity: 0.3 }} />
+                            <UtensilsCrossed size={36} style={{ opacity: 0.3 }} />
                             <h3>No hay mesas en este piso</h3>
                             <p>Configura las mesas en el Panel de Administración</p>
                         </div>
