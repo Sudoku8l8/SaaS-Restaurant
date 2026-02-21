@@ -22,13 +22,9 @@
 }
 
 .logoImg {
-    width: 72px;
-    height: 72px;
+    width: 80px;
+    height: 80px;
     object-fit: contain;
-    border-radius: 50%;
-    background: var(--menu-accent, #c0392b);
-    padding: 6px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
 }
 
 .logoPlaceholder {
