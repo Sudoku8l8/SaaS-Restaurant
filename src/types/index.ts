@@ -65,6 +65,13 @@ export interface RestaurantConfig {
     menuPhone?: string;
     menuThemeId?: string;       // 'gourmet' | 'fastfood' | 'bar_cafe' | 'dark_kitchen' | 'custom'
     menuEnglishSubtitles?: boolean;
+    // Digital Menu Ordering
+    restaurantWhatsApp?: string; // Number to receive orders
+    enableDigitalOrders?: boolean; // Enable shopping cart public
+    deliveryEnabled?: boolean;
+    pickupEnabled?: boolean;
+    deliveryCost?: number;
+    paymentMethodsConfig?: { yape?: string; plin?: string; bankAccount?: string };
 }
 
 export interface RestaurantTable {

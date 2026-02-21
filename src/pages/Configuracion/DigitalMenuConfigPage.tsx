@@ -58,6 +58,17 @@ export function DigitalMenuConfigPage() {
     const [address, setAddress] = useState(tenant?.config?.menuAddress || '');
     const [phone, setPhone] = useState(tenant?.config?.menuPhone || '');
 
+    // Digital Orders
+    const [restaurantWhatsApp, setRestaurantWhatsApp] = useState(tenant?.config?.restaurantWhatsApp || '');
+    const [enableDigitalOrders, setEnableDigitalOrders] = useState(tenant?.config?.enableDigitalOrders ?? false);
+    const [deliveryEnabled, setDeliveryEnabled] = useState(tenant?.config?.deliveryEnabled ?? false);
+    const [pickupEnabled, setPickupEnabled] = useState(tenant?.config?.pickupEnabled ?? false);
+    const [deliveryCost, setDeliveryCost] = useState(tenant?.config?.deliveryCost?.toString() || '0');
+    // Payment Methods
+    const [pmYape, setPmYape] = useState(tenant?.config?.paymentMethodsConfig?.yape || '');
+    const [pmPlin, setPmPlin] = useState(tenant?.config?.paymentMethodsConfig?.plin || '');
+    const [pmBank, setPmBank] = useState(tenant?.config?.paymentMethodsConfig?.bankAccount || '');
+
     // External URLs
     const [menuEs, setMenuEs] = useState(tenant?.config?.menuSpanishUrl || '');
     const [menuEn, setMenuEn] = useState(tenant?.config?.menuEnglishUrl || '');
@@ -82,6 +93,16 @@ export function DigitalMenuConfigPage() {
         setDescription(c.menuDescription || '');
         setAddress(c.menuAddress || '');
         setPhone(c.menuPhone || '');
+
+        setRestaurantWhatsApp(c.restaurantWhatsApp || '');
+        setEnableDigitalOrders(c.enableDigitalOrders ?? false);
+        setDeliveryEnabled(c.deliveryEnabled ?? false);
+        setPickupEnabled(c.pickupEnabled ?? false);
+        setDeliveryCost(c.deliveryCost?.toString() || '0');
+        setPmYape(c.paymentMethodsConfig?.yape || '');
+        setPmPlin(c.paymentMethodsConfig?.plin || '');
+        setPmBank(c.paymentMethodsConfig?.bankAccount || '');
+
         setMenuEs(c.menuSpanishUrl || '');
         setMenuEn(c.menuEnglishUrl || '');
         if (tenant.logo) {
@@ -104,6 +125,16 @@ export function DigitalMenuConfigPage() {
                 'config.menuDescription': description.trim(),
                 'config.menuAddress': address.trim(),
                 'config.menuPhone': phone.trim(),
+                'config.restaurantWhatsApp': restaurantWhatsApp.trim(),
+                'config.enableDigitalOrders': enableDigitalOrders,
+                'config.deliveryEnabled': deliveryEnabled,
+                'config.pickupEnabled': pickupEnabled,
+                'config.deliveryCost': parseFloat(deliveryCost) || 0,
+                'config.paymentMethodsConfig': {
+                    yape: pmYape.trim(),
+                    plin: pmPlin.trim(),
+                    bankAccount: pmBank.trim(),
+                },
                 'config.menuSpanishUrl': menuEs.trim(),
                 'config.menuEnglishUrl': menuEn.trim(),
                 'logo': logoUrl.trim(),
@@ -213,6 +244,121 @@ export function DigitalMenuConfigPage() {
                                 💡 Puedes agregar el número de mesa al final: <strong>{menuLink}/5</strong>
                             </p>
                         </div>
+
+                        {/* ── Digital Orders Settings ── */}
+                        <div className={styles.sectionHeader} style={{ marginTop: '2rem' }}>
+                            <h3 className={styles.sectionTitle}><Smartphone size={18} /> Pedidos por WhatsApp</h3>
+                            <p className={styles.sectionDesc}>
+                                Permite a tus clientes realizar pedidos directamente desde la carta digital hacia tu WhatsApp.
+                            </p>
+                        </div>
+
+                        <div className={styles.toggleCard}>
+                            <div className={styles.toggleInfo}>
+                                <strong>{enableDigitalOrders ? '🛒 Pedidos Digitales Activados' : '⭕ Pedidos Digitales Desactivados'}</strong>
+                                <span>
+                                    {enableDigitalOrders
+                                        ? 'Los clientes podrán agregar productos a un carrito y enviarte el pedido por WhatsApp.'
+                                        : 'La carta solo será visual (modo catálogo).'}
+                                </span>
+                            </div>
+                            <button
+                                className={styles.toggleBtn}
+                                onClick={() => setEnableDigitalOrders(v => !v)}
+                                style={{ color: enableDigitalOrders ? 'var(--primary-color)' : '#aaa' }}
+                                title={enableDigitalOrders ? 'Desactivar' : 'Activar'}
+                            >
+                                {enableDigitalOrders
+                                    ? <ToggleRight size={48} strokeWidth={1.5} />
+                                    : <ToggleLeft size={48} strokeWidth={1.5} />}
+                            </button>
+                        </div>
+
+                        {enableDigitalOrders && (
+                            <div className={styles.grid} style={{ marginTop: '1rem' }}>
+                                <div className={styles.fieldCard} style={{ gridColumn: '1 / -1' }}>
+                                    <div className={styles.fieldLabel}>📱 Número de WhatsApp (Recibe Pedidos)</div>
+                                    <Input
+                                        placeholder="Ej: +51 987654321"
+                                        value={restaurantWhatsApp}
+                                        onChange={e => setRestaurantWhatsApp(e.target.value)}
+                                        fullWidth
+                                    />
+                                    <p className={styles.fieldHint}>Es necesario incluir el código de país (ej. +51 para Perú) sin espacios vacíos. Aquí llegará el resumen del pedido.</p>
+                                </div>
+
+                                <div className={styles.fieldCard}>
+                                    <div className={styles.fieldLabel}>🛍️ Permitir Para Recoger</div>
+                                    <div style={{ display: 'flex', alignItems: 'center', marginTop: '0.5rem' }}>
+                                        <button
+                                            className={styles.toggleBtn}
+                                            onClick={() => setPickupEnabled(v => !v)}
+                                            style={{ color: pickupEnabled ? 'var(--primary-color)' : '#aaa', padding: 0 }}
+                                        >
+                                            {pickupEnabled
+                                                ? <ToggleRight size={36} strokeWidth={1.5} />
+                                                : <ToggleLeft size={36} strokeWidth={1.5} />}
+                                        </button>
+                                        <span style={{ fontSize: '0.85rem', marginLeft: '0.5rem', color: 'var(--text-secondary)' }}>
+                                            {pickupEnabled ? 'Habilitado' : 'Deshabilitado'}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className={styles.fieldCard}>
+                                    <div className={styles.fieldLabel}>🛵 Permitir Delivery</div>
+                                    <div style={{ display: 'flex', alignItems: 'center', marginTop: '0.5rem' }}>
+                                        <button
+                                            className={styles.toggleBtn}
+                                            onClick={() => setDeliveryEnabled(v => !v)}
+                                            style={{ color: deliveryEnabled ? 'var(--primary-color)' : '#aaa', padding: 0 }}
+                                        >
+                                            {deliveryEnabled
+                                                ? <ToggleRight size={36} strokeWidth={1.5} />
+                                                : <ToggleLeft size={36} strokeWidth={1.5} />}
+                                        </button>
+                                        <span style={{ fontSize: '0.85rem', marginLeft: '0.5rem', color: 'var(--text-secondary)' }}>
+                                            {deliveryEnabled ? 'Habilitado' : 'Deshabilitado'}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {deliveryEnabled && (
+                                    <>
+                                        <div className={styles.fieldCard} style={{ gridColumn: '1 / -1' }}>
+                                            <div className={styles.fieldLabel}>💵 Costo de Delivery Fijo (opcional)</div>
+                                            <Input
+                                                type="number"
+                                                min="0"
+                                                step="0.1"
+                                                placeholder="Ej: 5.00"
+                                                value={deliveryCost}
+                                                onChange={e => setDeliveryCost(e.target.value)}
+                                            />
+                                        </div>
+
+                                        <div className={styles.fieldCard} style={{ gridColumn: '1 / -1' }}>
+                                            <div className={styles.fieldLabel} style={{ marginBottom: '0.5rem' }}>💳 Métodos de Pago Digitales (Mostrados al cliente)</div>
+                                            <p className={styles.fieldHint} style={{ marginTop: 0, marginBottom: '1rem' }}>Llena los que apliquen para que el usuario sepa a dónde transferir. Déjalos vacíos si no los usas.</p>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                                <div>
+                                                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '0.2rem' }}>Número Yape</span>
+                                                    <Input placeholder="Ej: 987 654 321 - Juan Pérez" value={pmYape} onChange={e => setPmYape(e.target.value)} fullWidth />
+                                                </div>
+                                                <div>
+                                                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '0.2rem' }}>Número Plin</span>
+                                                    <Input placeholder="Ej: 987 654 321 - Maria Luna" value={pmPlin} onChange={e => setPmPlin(e.target.value)} fullWidth />
+                                                </div>
+                                                <div>
+                                                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '0.2rem' }}>Cuenta Bancaria</span>
+                                                    <Input placeholder="Ej: BCP: 191-xxxx - CCI: 002191xxxx" value={pmBank} onChange={e => setPmBank(e.target.value)} fullWidth />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        )}
 
                         <SaveBar onSave={handleSave} isSaving={isSaving} />
                     </>

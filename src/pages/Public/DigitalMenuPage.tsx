@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useTenant } from '@/app/providers/TenantProvider';
 import { usePublicMenu } from '@/hooks/usePublicMenu';
-import { Utensils, MapPin, Phone } from 'lucide-react';
+import { Utensils, MapPin, Phone, Plus, Minus } from 'lucide-react';
+import type { OrderItem, Product } from '@/types';
 import styles from './DigitalMenuPage.module.css';
 
 // ─── Skeleton loader for products ───────────────────────────────────────────
@@ -67,10 +68,12 @@ function LegacyMenuView({ config, name }: { config: NonNullable<ReturnType<typeo
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 export function DigitalMenuPage() {
-    const { tableNumber } = useParams<{ tableNumber: string }>();
+    const { tableNumber, restaurantSlug } = useParams<{ tableNumber: string; restaurantSlug: string }>();
+    const navigate = useNavigate();
     const { tenant, isLoading: tenantLoading, error } = useTenant();
     const { products, categories, isLoading: menuLoading } = usePublicMenu(tenant?.id);
     const [activeCategory, setActiveCategory] = useState<string>('');
+    const [cart, setCart] = useState<OrderItem[]>([]);
     const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
     const navRef = useRef<HTMLDivElement>(null);
 
@@ -146,6 +149,48 @@ export function DigitalMenuPage() {
         if (el) {
             el.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
+    };
+
+    // ── Cart Handlers ──
+    const handleAddToCart = (product: Product) => {
+        setCart((prev: OrderItem[]) => {
+            const existing = prev.find((item: OrderItem) => item.productId === product.id);
+            if (existing) {
+                return prev.map((item: OrderItem) =>
+                    item.productId === product.id
+                        ? { ...item, quantity: item.quantity + 1, subtotal: (item.quantity + 1) * item.price }
+                        : item
+                );
+            }
+            return [...prev, {
+                productId: product.id,
+                productName: product.name,
+                quantity: 1,
+                price: product.price,
+                subtotal: product.price,
+            }];
+        });
+    };
+
+    const handleUpdateQuantity = (productId: string, delta: number) => {
+        setCart((prev: OrderItem[]) => prev.map((item: OrderItem) => {
+            if (item.productId === productId) {
+                const newQty = Math.max(0, item.quantity + delta);
+                return { ...item, quantity: newQty, subtotal: newQty * item.price };
+            }
+            return item;
+        }).filter((item: OrderItem) => item.quantity > 0));
+    };
+
+    const cartTotal = cart.reduce((sum: number, item: OrderItem) => sum + item.subtotal, 0);
+    const cartCount = cart.reduce((sum: number, item: OrderItem) => sum + item.quantity, 0);
+
+    const handleOpenCheckout = () => {
+        // Save cart to local storage to persist across navigation
+        if (tenant?.id) {
+            localStorage.setItem(`cart_${tenant.id}`, JSON.stringify(cart));
+        }
+        navigate(`/${restaurantSlug}/menu/checkout${tableNumber ? `?table=${tableNumber}` : ''}`);
     };
 
     // ── Loading state ──
@@ -287,6 +332,30 @@ export function DigitalMenuPage() {
                                             {englishSubtitles && product.descriptionEn && (
                                                 <p className={styles.subtitleEn}>{product.descriptionEn}</p>
                                             )}
+
+                                            {/* Add to Cart / Quantity Controls */}
+                                            {config.enableDigitalOrders && product.available && (
+                                                (() => {
+                                                    const cartItem = cart.find(item => item.productId === product.id);
+                                                    if (cartItem) {
+                                                        return (
+                                                            <div className={styles.quantityControls}>
+                                                                <button className={styles.qtyBtn} onClick={() => handleUpdateQuantity(product.id, -1)} aria-label="Decrease quantity"><Minus size={14} /></button>
+                                                                <span className={styles.qtyValue}>{cartItem.quantity}</span>
+                                                                <button className={styles.qtyBtn} onClick={() => handleUpdateQuantity(product.id, 1)} aria-label="Increase quantity"><Plus size={14} /></button>
+                                                            </div>
+                                                        );
+                                                    }
+                                                    return (
+                                                        <button
+                                                            className={styles.addToCartBtn}
+                                                            onClick={() => handleAddToCart(product)}
+                                                        >
+                                                            <Plus size={14} /> Agregar
+                                                        </button>
+                                                    );
+                                                })()
+                                            )}
                                         </div>
                                     </div>
                                 ))}
@@ -334,6 +403,19 @@ export function DigitalMenuPage() {
                     &copy; {new Date().getFullYear()} {name} &mdash; Carta Digital
                 </p>
             </footer>
+
+            {/* ─── FLOATING CART BAR ─── */}
+            {cartCount > 0 && config?.enableDigitalOrders && (
+                <div className={styles.floatingCart} onClick={handleOpenCheckout} style={{ background: textColor }}>
+                    <div className={styles.cartInfo}>
+                        <span className={styles.cartBadge} style={{ background: accentColor }}>{cartCount}</span>
+                        <span className={styles.cartTotal} style={{ fontFamily: FONT_MAP[fontFamily] || FONT_MAP.inter }}>
+                            {currency} {cartTotal.toFixed(2)}
+                        </span>
+                    </div>
+                    <span className={styles.cartViewText}>Ver Pedido</span>
+                </div>
+            )}
         </div>
     );
 }

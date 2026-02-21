@@ -235,6 +235,74 @@
     font-style: italic;
 }
 
+/* ─── ADD TO CART BUTTON ─── */
+.addToCartBtn {
+    background: var(--menu-accent, #c0392b);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: opacity 0.2s, transform 0.1s;
+}
+
+.addToCartBtn:hover {
+    opacity: 0.9;
+}
+
+.addToCartBtn:active {
+    transform: scale(0.97);
+}
+
+.addToCartIcon {
+    width: 14px;
+    height: 14px;
+}
+
+/* ─── QUANTITY CONTROLS ─── */
+.quantityControls {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.8rem;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 0.2rem;
+}
+
+.qtyBtn {
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    border: none;
+    background: #f5f5f5;
+    color: var(--menu-text, #1a1a1a);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.2s;
+}
+
+.qtyBtn:hover {
+    background: #e0e0e0;
+}
+
+.qtyValue {
+    font-size: 0.9rem;
+    font-weight: 700;
+    min-width: 1.5rem;
+    text-align: center;
+}
+
 /* Badges */
 .popularBadge {
     font-size: 0.65rem;
@@ -402,4 +470,75 @@
     color: #bbb;
     letter-spacing: 1px;
     text-transform: uppercase;
+}
+
+/* ─── FLOATING CART BAR ─── */
+.floatingCart {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 32px);
+    max-width: 400px;
+    background: var(--menu-text, #1a1a1a);
+    color: white;
+    border-radius: 16px;
+    padding: 1rem 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+    z-index: 1000;
+    cursor: pointer;
+    animation: slideUpCart 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.floatingCart:hover {
+    transform: translateX(-50%) translateY(-2px);
+}
+
+.floatingCart:active {
+    transform: translateX(-50%) translateY(0);
+}
+
+.cartInfo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.cartBadge {
+    background: var(--menu-accent, #c0392b);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 800;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cartTotal {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.cartViewText {
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+@keyframes slideUpCart {
+    from {
+        opacity: 0;
+        transform: translate(-50%, 40px);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
 }

@@ -8,6 +8,7 @@ import { AdminPage } from '@/pages/Admin/AdminPage';
 import { ReportesPage } from '@/pages/Reportes/ReportesPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { DigitalMenuPage } from '@/pages/Public/DigitalMenuPage';
+import { DigitalCheckoutPage } from '@/pages/Public/DigitalCheckoutPage';
 import { ProtectedRoute } from '@/components/shared/ProtectedRoute';
 import { UserRole } from '@/types';
 
@@ -56,6 +57,10 @@ export const router = createBrowserRouter([
             {
                 path: 'menu/:tableNumber?',
                 element: <DigitalMenuPage />,
+            },
+            {
+                path: 'menu/checkout',
+                element: <DigitalCheckoutPage />,
             },
             {
                 element: <ProtectedRoute />,
