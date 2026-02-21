@@ -58,10 +58,13 @@ export interface RestaurantConfig {
     menuNativeEnabled?: boolean;
     menuAccentColor?: string;
     menuBgColor?: string;
+    menuTextColor?: string;
     menuFontFamily?: string;
     menuDescription?: string;
     menuAddress?: string;
     menuPhone?: string;
+    menuThemeId?: string;       // 'gourmet' | 'fastfood' | 'bar_cafe' | 'dark_kitchen' | 'custom'
+    menuEnglishSubtitles?: boolean;
 }
 
 export interface RestaurantTable {
@@ -94,6 +97,9 @@ export interface Product {
     stockCount?: number;
     trackStock?: boolean;
     modifiers?: ProductModifier[];
+    // English translations (for tourist menus)
+    nameEn?: string;
+    descriptionEn?: string;
 }
 
 export interface ProductModifier {

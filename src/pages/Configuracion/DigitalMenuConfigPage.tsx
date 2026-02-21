@@ -6,8 +6,9 @@ import { Button, Input } from '@/components/shared';
 import {
     Smartphone, Palette, Info, Globe, Save,
     ExternalLink, QrCode, Copy, Check,
-    ToggleLeft, ToggleRight, ImagePlus, X,
+    ToggleLeft, ToggleRight, ImagePlus, X, Languages, Type,
 } from 'lucide-react';
+import { MENU_THEMES, getMenuTheme } from '@/config/menuThemes';
 import styles from './DigitalMenuConfigPage.module.css';
 
 // ── Font options ──────────────────────────────────────────────────────────────
@@ -44,7 +45,10 @@ export function DigitalMenuConfigPage() {
     // Appearance
     const [accentColor, setAccentColor] = useState(tenant?.config?.menuAccentColor || '#c8a96e');
     const [bgColor, setBgColor] = useState(tenant?.config?.menuBgColor || '#ffffff');
+    const [textColor, setTextColor] = useState(tenant?.config?.menuTextColor || '#1a1a1a');
     const [fontFamily, setFontFamily] = useState<FontId>((tenant?.config?.menuFontFamily as FontId) || 'inter');
+    const [themeId, setThemeId] = useState(tenant?.config?.menuThemeId || 'custom');
+    const [englishSubtitles, setEnglishSubtitles] = useState(tenant?.config?.menuEnglishSubtitles ?? false);
 
     // Logo (external URL)
     const [logoUrl, setLogoUrl] = useState<string>(tenant?.logo || '');
@@ -71,7 +75,10 @@ export function DigitalMenuConfigPage() {
         setNativeEnabled(c.menuNativeEnabled ?? false);
         setAccentColor(c.menuAccentColor || '#c8a96e');
         setBgColor(c.menuBgColor || '#ffffff');
+        setTextColor(c.menuTextColor || '#1a1a1a');
         setFontFamily((c.menuFontFamily as FontId) || 'inter');
+        setThemeId(c.menuThemeId || 'custom');
+        setEnglishSubtitles(c.menuEnglishSubtitles ?? false);
         setDescription(c.menuDescription || '');
         setAddress(c.menuAddress || '');
         setPhone(c.menuPhone || '');
@@ -90,7 +97,10 @@ export function DigitalMenuConfigPage() {
                 'config.menuNativeEnabled': nativeEnabled,
                 'config.menuAccentColor': accentColor,
                 'config.menuBgColor': bgColor,
+                'config.menuTextColor': textColor,
                 'config.menuFontFamily': fontFamily,
+                'config.menuThemeId': themeId,
+                'config.menuEnglishSubtitles': englishSubtitles,
                 'config.menuDescription': description.trim(),
                 'config.menuAddress': address.trim(),
                 'config.menuPhone': phone.trim(),
@@ -114,6 +124,17 @@ export function DigitalMenuConfigPage() {
     };
 
     const selectedFont = FONT_OPTIONS.find(f => f.id === fontFamily) ?? FONT_OPTIONS[0];
+
+    /** Apply a predefined theme — sets all 3 colors + font */
+    const applyTheme = (id: string) => {
+        const theme = getMenuTheme(id);
+        if (!theme) return;
+        setThemeId(id);
+        setBgColor(theme.bgColor);
+        setAccentColor(theme.accentColor);
+        setTextColor(theme.textColor);
+        setFontFamily(theme.fontFamily as FontId);
+    };
 
     return (
         <div className={styles.module}>
@@ -207,25 +228,54 @@ export function DigitalMenuConfigPage() {
                             </p>
                         </div>
 
+                        {/* ── Theme Presets ── */}
+                        <div className={styles.fieldCard} style={{ marginBottom: '1.25rem' }}>
+                            <div className={styles.fieldLabel}><Palette size={14} /> Temas Predeterminados</div>
+                            <p className={styles.fieldHint} style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+                                Selecciona un tema para aplicar automáticamente colores y tipografía.
+                            </p>
+                            <div className={styles.themesGrid}>
+                                {MENU_THEMES.map(theme => (
+                                    <button
+                                        key={theme.id}
+                                        className={`${styles.themeCard} ${themeId === theme.id ? styles.themeCardActive : ''}`}
+                                        onClick={() => applyTheme(theme.id)}
+                                    >
+                                        <div className={styles.themePreviewBar}>
+                                            <span className={styles.themePreviewSwatch} style={{ background: theme.bgColor, border: '1px solid rgba(0,0,0,0.1)' }} />
+                                            <span className={styles.themePreviewSwatch} style={{ background: theme.accentColor }} />
+                                            <span className={styles.themePreviewSwatch} style={{ background: theme.textColor, border: '1px solid rgba(0,0,0,0.1)' }} />
+                                        </div>
+                                        <div className={styles.themeCardBody}>
+                                            <span className={styles.themeIcon}>{theme.icon}</span>
+                                            <div className={styles.themeInfo}>
+                                                <div className={styles.themeName}>{theme.name}</div>
+                                                <div className={styles.themeDesc}>{theme.description}</div>
+                                            </div>
+                                        </div>
+                                        {themeId === theme.id && (
+                                            <div className={styles.themeActiveBadge}>
+                                                <Check size={12} /> Activo
+                                            </div>
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
                         {/* ── Logo URL ── */}
                         <div className={styles.fieldCard} style={{ marginBottom: '1rem' }}>
                             <div className={styles.fieldLabel}><ImagePlus size={14} /> Logo del Restaurante</div>
                             <div className={styles.logoUploadRow}>
-                                {/* Logo preview */}
                                 <div className={styles.logoPreviewBox}>
                                     {logoUrl ? (
-                                        <img
-                                            src={logoUrl}
-                                            alt="Logo"
-                                            className={styles.logoPreviewImg}
-                                        />
+                                        <img src={logoUrl} alt="Logo" className={styles.logoPreviewImg} />
                                     ) : (
                                         <span className={styles.logoPreviewPlaceholder}>
                                             {tenant?.name?.charAt(0) ?? 'R'}
                                         </span>
                                     )}
                                 </div>
-                                {/* URL input + clear */}
                                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                     <Input
                                         placeholder="https://i.imgur.com/tu-logo.png"
@@ -254,17 +304,13 @@ export function DigitalMenuConfigPage() {
                             </p>
                         </div>
 
-                        <div className={styles.grid}>
+                        {/* ── Color Palette (3 pickers) ── */}
+                        <div className={styles.colorGrid}>
                             {/* Accent color */}
                             <div className={styles.fieldCard}>
                                 <div className={styles.fieldLabel}><Palette size={14} /> Color de Acento</div>
                                 <div className={styles.colorRow}>
-                                    <input
-                                        type="color"
-                                        value={accentColor}
-                                        onChange={e => setAccentColor(e.target.value)}
-                                        className={styles.colorSwatch}
-                                    />
+                                    <input type="color" value={accentColor} onChange={e => { setAccentColor(e.target.value); setThemeId('custom'); }} className={styles.colorSwatch} />
                                     <div>
                                         <div className={styles.colorValue}>{accentColor.toUpperCase()}</div>
                                         <div className={styles.colorDesc}>Botones, precios, categoría activa</div>
@@ -276,21 +322,53 @@ export function DigitalMenuConfigPage() {
                             <div className={styles.fieldCard}>
                                 <div className={styles.fieldLabel}>🎨 Color de Fondo</div>
                                 <div className={styles.colorRow}>
-                                    <input
-                                        type="color"
-                                        value={bgColor}
-                                        onChange={e => setBgColor(e.target.value)}
-                                        className={styles.colorSwatch}
-                                    />
+                                    <input type="color" value={bgColor} onChange={e => { setBgColor(e.target.value); setThemeId('custom'); }} className={styles.colorSwatch} />
                                     <div>
                                         <div className={styles.colorValue}>{bgColor.toUpperCase()}</div>
                                         <div className={styles.colorDesc}>Fondo general de la carta</div>
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Text color */}
+                            <div className={styles.fieldCard}>
+                                <div className={styles.fieldLabel}><Type size={14} /> Color de Texto</div>
+                                <div className={styles.colorRow}>
+                                    <input type="color" value={textColor} onChange={e => { setTextColor(e.target.value); setThemeId('custom'); }} className={styles.colorSwatch} />
+                                    <div>
+                                        <div className={styles.colorValue}>{textColor.toUpperCase()}</div>
+                                        <div className={styles.colorDesc}>Nombres de platos, títulos, textos</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                        {/* Font selector */}
+                        {/* ── English subtitles toggle ── */}
+                        <div className={styles.toggleCard} style={{ marginTop: '1.25rem' }}>
+                            <div className={styles.toggleInfo}>
+                                <strong>
+                                    <Languages size={16} style={{ verticalAlign: 'middle', marginRight: '0.4rem' }} />
+                                    {englishSubtitles ? '🌐 Subtítulos en Inglés Activados' : '🌐 Subtítulos en Inglés Desactivados'}
+                                </strong>
+                                <span>
+                                    {englishSubtitles
+                                        ? 'Los productos mostrarán su traducción en inglés debajo del nombre y descripción.'
+                                        : 'Activa esta opción si tu negocio recibe clientes turistas o extranjeros.'}
+                                </span>
+                            </div>
+                            <button
+                                className={styles.toggleBtn}
+                                onClick={() => setEnglishSubtitles(v => !v)}
+                                style={{ color: englishSubtitles ? 'var(--primary-color)' : '#aaa' }}
+                                title={englishSubtitles ? 'Desactivar' : 'Activar'}
+                            >
+                                {englishSubtitles
+                                    ? <ToggleRight size={48} strokeWidth={1.5} />
+                                    : <ToggleLeft size={48} strokeWidth={1.5} />}
+                            </button>
+                        </div>
+
+                        {/* ── Font selector ── */}
                         <div className={styles.fieldCard} style={{ marginTop: '1.25rem' }}>
                             <div className={styles.fieldLabel}>🔤 Tipografía de la Carta</div>
                             <div className={styles.fontGrid}>
@@ -298,7 +376,7 @@ export function DigitalMenuConfigPage() {
                                     <button
                                         key={font.id}
                                         className={`${styles.fontOption} ${fontFamily === font.id ? styles.fontOptionActive : ''}`}
-                                        onClick={() => setFontFamily(font.id)}
+                                        onClick={() => { setFontFamily(font.id); setThemeId('custom'); }}
                                     >
                                         <div className={styles.fontPreview} style={{ fontFamily: font.style }}>
                                             {font.preview}
@@ -313,7 +391,7 @@ export function DigitalMenuConfigPage() {
                             </p>
                         </div>
 
-                        {/* Live preview */}
+                        {/* ── Live preview ── */}
                         <div className={styles.preview} style={{ marginTop: '1.5rem' }}>
                             <div className={styles.previewHeader} style={{ backgroundColor: bgColor }}>
                                 <div className={styles.previewLogo} style={{ backgroundColor: logoUrl ? 'transparent' : accentColor }}>
@@ -328,24 +406,31 @@ export function DigitalMenuConfigPage() {
                                     )}
                                 </div>
                                 <div>
-                                    <div className={styles.previewName} style={{ fontFamily: selectedFont.style }}>
+                                    <div className={styles.previewName} style={{ fontFamily: selectedFont.style, color: textColor }}>
                                         {tenant?.name ?? 'Mi Restaurante'}
                                     </div>
-                                    <div className={styles.previewDesc} style={{ fontFamily: selectedFont.style }}>
+                                    <div className={styles.previewDesc} style={{ fontFamily: selectedFont.style, color: accentColor }}>
                                         {description || 'Tu slogan aquí'}
                                     </div>
                                 </div>
                             </div>
                             <div className={styles.previewBody} style={{ backgroundColor: bgColor }}>
                                 {[
-                                    { name: 'Ceviche Clásico', price: 'S/ 32' },
-                                    { name: 'Lomo Saltado', price: 'S/ 38' },
-                                    { name: 'Chicha Morada', price: 'S/ 12' },
+                                    { name: 'Ceviche Clásico', nameEn: 'Classic Ceviche', price: 'S/ 32' },
+                                    { name: 'Lomo Saltado', nameEn: 'Stir-Fried Beef', price: 'S/ 38' },
+                                    { name: 'Chicha Morada', nameEn: 'Purple Corn Drink', price: 'S/ 12' },
                                 ].map(item => (
                                     <div key={item.name} className={styles.previewItem}>
-                                        <span className={styles.previewItemName} style={{ fontFamily: selectedFont.style }}>
-                                            {item.name}
-                                        </span>
+                                        <div>
+                                            <span className={styles.previewItemName} style={{ fontFamily: selectedFont.style, color: textColor }}>
+                                                {item.name}
+                                            </span>
+                                            {englishSubtitles && (
+                                                <div className={styles.previewSubtitleEn}>
+                                                    {item.nameEn}
+                                                </div>
+                                            )}
+                                        </div>
                                         <span className={styles.previewItemPrice} style={{ color: accentColor, fontFamily: selectedFont.style }}>
                                             {item.price}
                                         </span>

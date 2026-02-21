@@ -16,9 +16,11 @@ export function ProductsTab() {
     // Form State
     const [formData, setFormData] = useState({
         name: '',
+        nameEn: '',
         price: '',
         category: '',
         description: '',
+        descriptionEn: '',
         available: true,
         isPopular: false
     });
@@ -64,9 +66,11 @@ export function ProductsTab() {
             const productData = {
                 restaurantId: user?.restaurantId,
                 name: formData.name,
+                nameEn: formData.nameEn.trim(),
                 price: parseFloat(formData.price),
                 category: formData.category,
                 description: formData.description.trim(),
+                descriptionEn: formData.descriptionEn.trim(),
                 available: formData.available,
                 isPopular: formData.isPopular
             };
@@ -95,9 +99,11 @@ export function ProductsTab() {
             setEditingProduct(product);
             setFormData({
                 name: product.name,
+                nameEn: product.nameEn || '',
                 price: product.price.toString(),
                 category: product.category,
                 description: product.description || '',
+                descriptionEn: product.descriptionEn || '',
                 available: product.available,
                 isPopular: product.isPopular || false
             });
@@ -105,9 +111,11 @@ export function ProductsTab() {
             setEditingProduct(null);
             setFormData({
                 name: '',
+                nameEn: '',
                 price: '',
                 category: categories.length > 0 ? categories[0].name : '',
                 description: '',
+                descriptionEn: '',
                 available: true,
                 isPopular: false
             });
@@ -156,32 +164,67 @@ export function ProductsTab() {
                     position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
                     background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
                 }}>
-                    <Card style={{ padding: '2rem', width: '400px', maxWidth: '90%' }}>
-                        <h2>{editingProduct ? 'Editar' : 'Nuevo'} Producto</h2>
+                    <Card style={{ padding: '1.5rem 2rem', width: '450px', maxWidth: '90%', maxHeight: '90vh', overflowY: 'auto' }}>
+                        <h2 style={{ marginBottom: '1.25rem' }}>{editingProduct ? 'Editar' : 'Nuevo'} Producto</h2>
                         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            <Input
-                                label="Nombre"
-                                value={formData.name}
-                                onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                required
-                            />
-                            <Input
-                                label="Precio (S/)"
-                                type="number"
-                                step="0.1"
-                                value={formData.price}
-                                onChange={e => setFormData({ ...formData, price: e.target.value })}
-                                required
-                            />
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                <Input
+                                    label="Nombre (ES)"
+                                    value={formData.name}
+                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                    required
+                                    placeholder="Ceviche Clásico"
+                                />
+                                <Input
+                                    label="Nombre (EN) - Opcional"
+                                    value={formData.nameEn}
+                                    onChange={e => setFormData({ ...formData, nameEn: e.target.value })}
+                                    placeholder="Classic Ceviche"
+                                />
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                <Input
+                                    label="Precio (S/)"
+                                    type="number"
+                                    step="0.1"
+                                    value={formData.price}
+                                    onChange={e => setFormData({ ...formData, price: e.target.value })}
+                                    required
+                                />
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 'bold' }}>Categoría</label>
+                                    <select
+                                        style={{
+                                            width: '100%',
+                                            padding: '0.56rem',
+                                            borderRadius: '8px',
+                                            border: '1px solid var(--divider-color)',
+                                            background: 'var(--background-color)',
+                                            color: 'var(--text-primary)',
+                                            fontSize: '0.9rem'
+                                        }}
+                                        value={formData.category}
+                                        onChange={e => setFormData({ ...formData, category: e.target.value })}
+                                        required
+                                    >
+                                        {categories.length === 0 && <option value="">Crear categoría primero...</option>}
+                                        {categories.map(cat => (
+                                            <option key={cat.id} value={cat.name}>{cat.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
                             <div>
                                 <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: '700', color: 'var(--text-primary)' }}>
-                                    Descripción <span style={{ fontWeight: 400, color: 'var(--text-secondary)', fontSize: '0.8rem' }}>(opcional · aparece en cursiva en la carta)</span>
+                                    Descripción (Español)
                                 </label>
                                 <textarea
                                     value={formData.description}
                                     onChange={e => setFormData({ ...formData, description: e.target.value })}
-                                    placeholder="Ej: Tiradito de corvina marinado en leche de tigre, ají amarillo y cilantro fresco..."
-                                    rows={3}
+                                    placeholder="Ej: Tiradito de corvina marinado en leche de tigre..."
+                                    rows={2}
                                     maxLength={200}
                                     style={{
                                         width: '100%',
@@ -198,46 +241,58 @@ export function ProductsTab() {
                                         boxSizing: 'border-box',
                                     }}
                                 />
-                                <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', textAlign: 'right', marginTop: '0.2rem' }}>
-                                    {formData.description.length}/200
-                                </div>
                             </div>
+
                             <div>
-                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 'bold' }}>Categoría</label>
-                                <select
-                                    style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid #ddd' }}
-                                    value={formData.category}
-                                    onChange={e => setFormData({ ...formData, category: e.target.value })}
-                                    required
-                                >
-                                    {categories.length === 0 && <option value="">Crear categoría primero...</option>}
-                                    {categories.map(cat => (
-                                        <option key={cat.id} value={cat.name}>{cat.name}</option>
-                                    ))}
-                                </select>
+                                <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: '700', color: 'var(--text-primary)' }}>
+                                    Descripción (Inglés) - Opcional
+                                </label>
+                                <textarea
+                                    value={formData.descriptionEn}
+                                    onChange={e => setFormData({ ...formData, descriptionEn: e.target.value })}
+                                    placeholder="Example: Sea bass tiradito marinated in tiger's milk..."
+                                    rows={2}
+                                    maxLength={200}
+                                    style={{
+                                        width: '100%',
+                                        padding: '0.6rem 0.75rem',
+                                        borderRadius: '8px',
+                                        border: '1px solid var(--divider-color)',
+                                        fontSize: '0.88rem',
+                                        fontFamily: 'inherit',
+                                        resize: 'vertical',
+                                        lineHeight: 1.5,
+                                        color: 'var(--text-primary)',
+                                        background: 'var(--background-color)',
+                                        outline: 'none',
+                                        boxSizing: 'border-box',
+                                    }}
+                                />
                             </div>
 
-                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <input
-                                    type="checkbox"
-                                    checked={formData.available}
-                                    onChange={e => setFormData({ ...formData, available: e.target.checked })}
-                                />
-                                Disponible para venta
-                            </label>
+                            <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.5rem' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.available}
+                                        onChange={e => setFormData({ ...formData, available: e.target.checked })}
+                                    />
+                                    Disponible
+                                </label>
 
-                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <input
-                                    type="checkbox"
-                                    checked={formData.isPopular}
-                                    onChange={e => setFormData({ ...formData, isPopular: e.target.checked })}
-                                />
-                                ⭐ Marcar como Popular
-                            </label>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.isPopular}
+                                        onChange={e => setFormData({ ...formData, isPopular: e.target.checked })}
+                                    />
+                                    ⭐ Popular
+                                </label>
+                            </div>
 
                             <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
                                 <Button type="button" variant="ghost" onClick={closeModal} fullWidth>Cancelar</Button>
-                                <Button type="submit" fullWidth>Guardar</Button>
+                                <Button type="submit" fullWidth>Guardar Producto</Button>
                             </div>
                         </form>
                     </Card>

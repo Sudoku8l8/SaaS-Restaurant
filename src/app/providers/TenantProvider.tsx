@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { useParams } from 'react-router-dom';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/services/firebase/config';
 import type { Restaurant } from '@/types';
 import { SubscriptionExpiredPage } from '@/pages/Public/SubscriptionExpiredPage';
@@ -22,68 +22,60 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        const loadTenant = async () => {
-            // Reset state on slug change
+        if (!restaurantSlug) {
+            setIsLoading(false);
             setTenant(null);
             setError(null);
+            return;
+        }
 
-            if (!restaurantSlug) {
-                // If no slug in URL (e.g. Landing Page), do nothing or set loading false
-                setIsLoading(false);
-                return;
-            }
+        setIsLoading(true);
+        setError(null);
 
-            try {
-                setIsLoading(true);
-                // For MVP SaaS, we treat the SLUG as the Firebase Document ID directly.
-                // In future, we could query where('slug', '==', restaurantSlug)
-                const docRef = doc(db, 'restaurants', restaurantSlug);
-                const docSnap = await getDoc(docRef);
+        // For MVP SaaS, we treat the SLUG as the Firebase Document ID directly.
+        const docRef = doc(db, 'restaurants', restaurantSlug);
 
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    const restaurantData = { id: docSnap.id, ...data } as Restaurant;
+        // Subscribe to real-time changes
+        const unsubscribe = onSnapshot(docRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                const restaurantData = { id: docSnap.id, ...data } as Restaurant;
 
-                    // Check logic for expiration
-                    // 1. If subscriptionEndsAt is set, check if it's past
-                    // 2. If not, check if createdAt + 28 days is past (Trial)
-                    let isExpired = false;
-                    const now = new Date();
+                // Check logic for expiration
+                let isExpired = false;
+                const now = new Date();
 
-                    if (data.subscriptionEndsAt) {
-                        const endDate = data.subscriptionEndsAt.seconds ? new Date(data.subscriptionEndsAt.seconds * 1000) : new Date(data.subscriptionEndsAt);
-                        if (now > endDate) isExpired = true;
-                    } else {
-                        // Trial Logic (28 days)
-                        const createdAt = data.createdAt.seconds ? new Date(data.createdAt.seconds * 1000) : new Date(data.createdAt);
-                        const diffTime = now.getTime() - createdAt.getTime();
-                        const diffDays = diffTime / (1000 * 3600 * 24);
-                        if (diffDays > 28) isExpired = true;
-                    }
-
-                    // Strict Block if expired
-                    if (isExpired) {
-                        setTenant(null); // Or keep it null to block access
-                        setError('EL PERIODO DE PRUEBA HA TERMINADO. Contacte a soporte.');
-                    } else {
-                        setTenant(restaurantData);
-                        setError(null);
-                    }
-
+                if (data.subscriptionEndsAt) {
+                    const endDate = data.subscriptionEndsAt.seconds ? new Date(data.subscriptionEndsAt.seconds * 1000) : new Date(data.subscriptionEndsAt);
+                    if (now > endDate) isExpired = true;
                 } else {
-                    console.warn(`Tenant not found for slug: ${restaurantSlug}`);
-                    setError('Restaurante no encontrado');
-                    setTenant(null);
+                    // Trial Logic (28 days)
+                    const createdAt = data.createdAt.seconds ? new Date(data.createdAt.seconds * 1000) : new Date(data.createdAt);
+                    const diffTime = now.getTime() - createdAt.getTime();
+                    const diffDays = diffTime / (1000 * 3600 * 24);
+                    if (diffDays > 28) isExpired = true;
                 }
-            } catch (err) {
-                console.error("Error loading tenant:", err);
-                setError('Error de conexión al cargar restaurante');
-            } finally {
-                setIsLoading(false);
-            }
-        };
 
-        loadTenant();
+                if (isExpired) {
+                    setTenant(null);
+                    setError('EL PERIODO DE PRUEBA HA TERMINADO. Contacte a soporte.');
+                } else {
+                    setTenant(restaurantData);
+                    setError(null);
+                }
+            } else {
+                console.warn(`Tenant not found for slug: ${restaurantSlug}`);
+                setError('Restaurante no encontrado');
+                setTenant(null);
+            }
+            setIsLoading(false);
+        }, (err) => {
+            console.error("Error subscribing to tenant:", err);
+            setError('Error de conexión al cargar restaurante');
+            setIsLoading(false);
+        });
+
+        return () => unsubscribe();
     }, [restaurantSlug]);
 
     // ... (existing code)

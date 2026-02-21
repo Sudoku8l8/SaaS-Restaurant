@@ -76,7 +76,9 @@ export function DigitalMenuPage() {
 
     const accentColor = tenant?.config?.menuAccentColor || '#c8a96e';
     const bgColor = tenant?.config?.menuBgColor || '#ffffff';
+    const textColor = tenant?.config?.menuTextColor || '#1a1a1a';
     const fontFamily = tenant?.config?.menuFontFamily || 'inter';
+    const englishSubtitles = tenant?.config?.menuEnglishSubtitles ?? false;
 
     const FONT_MAP: Record<string, string> = {
         inter: "'Inter', sans-serif",
@@ -94,14 +96,16 @@ export function DigitalMenuPage() {
         const root = document.documentElement;
         root.style.setProperty('--menu-accent', accentColor);
         root.style.setProperty('--menu-bg', bgColor);
+        root.style.setProperty('--menu-text', textColor);
         root.style.setProperty('--menu-font', FONT_MAP[fontFamily] ?? FONT_MAP.inter);
         return () => {
             root.style.removeProperty('--menu-accent');
             root.style.removeProperty('--menu-bg');
+            root.style.removeProperty('--menu-text');
             root.style.removeProperty('--menu-font');
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [accentColor, bgColor, fontFamily]);
+    }, [accentColor, bgColor, textColor, fontFamily]);
 
     // IntersectionObserver to highlight active category
     useEffect(() => {
@@ -274,8 +278,14 @@ export function DigitalMenuPage() {
                                                     {currency} {product.price.toFixed(2)}
                                                 </span>
                                             </div>
+                                            {englishSubtitles && product.nameEn && (
+                                                <p className={styles.subtitleEn}>{product.nameEn}</p>
+                                            )}
                                             {product.description && (
                                                 <p className={styles.productDescription}>{product.description}</p>
+                                            )}
+                                            {englishSubtitles && product.descriptionEn && (
+                                                <p className={styles.subtitleEn}>{product.descriptionEn}</p>
                                             )}
                                         </div>
                                     </div>

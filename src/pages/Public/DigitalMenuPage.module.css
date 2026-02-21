@@ -5,7 +5,7 @@
     min-height: 100vh;
     background-color: var(--menu-bg, #f5f0eb);
     font-family: var(--menu-font, 'Inter', sans-serif);
-    color: #1a1a1a;
+    color: var(--menu-text, #1a1a1a);
 }
 
 /* ─── HEADER ─── */
@@ -46,7 +46,7 @@
     font-family: var(--menu-font, 'Inter', sans-serif);
     font-size: clamp(1.8rem, 5vw, 2.6rem);
     font-weight: 800;
-    color: #1a1a1a;
+    color: var(--menu-text, #1a1a1a);
     margin: 0 0 0.4rem;
     letter-spacing: -0.5px;
     line-height: 1.1;
@@ -115,7 +115,7 @@
 }
 
 .categoryNavBtn:hover {
-    color: #1a1a1a;
+    color: var(--menu-text, #1a1a1a);
 }
 
 .categoryNavBtn.active {
@@ -147,7 +147,7 @@
     font-size: clamp(1.8rem, 5vw, 2.4rem);
     font-weight: 400;
     font-style: italic;
-    color: #1a1a1a;
+    color: var(--menu-text, #1a1a1a);
     margin: 0;
     letter-spacing: -0.3px;
     line-height: 1.2;
@@ -211,7 +211,7 @@
 .productName {
     font-size: 0.95rem;
     font-weight: 700;
-    color: #1a1a1a;
+    color: var(--menu-text, #1a1a1a);
     margin: 0;
     flex: 1;
     line-height: 1.3;
@@ -260,6 +260,16 @@
     padding: 0.1rem 0.45rem;
     border-radius: 999px;
     flex-shrink: 0;
+}
+
+/* ─── SUBTITLE (English) ─── */
+.subtitleEn {
+    font-size: 0.78rem;
+    color: #999;
+    font-style: italic;
+    margin: 0.1rem 0 0;
+    letter-spacing: 0.2px;
+    line-height: 1.45;
 }
 
 /* ─── SKELETON ─── */
@@ -340,7 +350,7 @@
     font-family: var(--menu-font, 'Inter', sans-serif);
     font-size: 1.5rem;
     font-weight: 800;
-    color: #1a1a1a;
+    color: var(--menu-text, #1a1a1a);
     margin: 0 0 0.75rem;
     letter-spacing: -0.3px;
 }
