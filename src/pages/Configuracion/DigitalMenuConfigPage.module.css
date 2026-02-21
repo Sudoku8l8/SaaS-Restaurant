@@ -389,7 +389,50 @@
     margin-left: 0.25rem;
 }
 
+/* ── Logo upload ─────────────────────────────────────────────────────────── */
+.logoUploadRow {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+}
+
+.logoPreviewBox {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    border: 2px solid var(--divider-color);
+    background: var(--surface-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--text-secondary);
+}
+
+.logoPreviewImg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.logoPreviewPlaceholder {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--text-secondary);
+}
+
+.logoUploadActions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
 /* ── Responsive: mobile ──────────────────────────────────────────────────── */
+
 @media (max-width: 767px) {
     .module {
         flex-direction: column;

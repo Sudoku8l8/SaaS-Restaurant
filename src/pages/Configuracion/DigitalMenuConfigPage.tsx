@@ -6,7 +6,7 @@ import { Button, Input } from '@/components/shared';
 import {
     Smartphone, Palette, Info, Globe, Save,
     ExternalLink, QrCode, Copy, Check,
-    ToggleLeft, ToggleRight,
+    ToggleLeft, ToggleRight, ImagePlus, X,
 } from 'lucide-react';
 import styles from './DigitalMenuConfigPage.module.css';
 
@@ -46,6 +46,9 @@ export function DigitalMenuConfigPage() {
     const [bgColor, setBgColor] = useState(tenant?.config?.menuBgColor || '#ffffff');
     const [fontFamily, setFontFamily] = useState<FontId>((tenant?.config?.menuFontFamily as FontId) || 'inter');
 
+    // Logo (external URL)
+    const [logoUrl, setLogoUrl] = useState<string>(tenant?.logo || '');
+
     // Info
     const [description, setDescription] = useState(tenant?.config?.menuDescription || '');
     const [address, setAddress] = useState(tenant?.config?.menuAddress || '');
@@ -74,6 +77,9 @@ export function DigitalMenuConfigPage() {
         setPhone(c.menuPhone || '');
         setMenuEs(c.menuSpanishUrl || '');
         setMenuEn(c.menuEnglishUrl || '');
+        if (tenant.logo) {
+            setLogoUrl(tenant.logo);
+        }
     }, [tenant]);
 
     const handleSave = async () => {
@@ -90,6 +96,7 @@ export function DigitalMenuConfigPage() {
                 'config.menuPhone': phone.trim(),
                 'config.menuSpanishUrl': menuEs.trim(),
                 'config.menuEnglishUrl': menuEn.trim(),
+                'logo': logoUrl.trim(),
             });
             alert('Configuración guardada correctamente');
         } catch (err) {
@@ -196,7 +203,54 @@ export function DigitalMenuConfigPage() {
                         <div className={styles.sectionHeader}>
                             <h3 className={styles.sectionTitle}><Palette size={18} /> Apariencia</h3>
                             <p className={styles.sectionDesc}>
-                                Personaliza los colores y la tipografía de la carta. Estos cambios solo afectan la carta pública.
+                                Personaliza el logo, colores y tipografía de la carta. Estos cambios solo afectan la carta pública.
+                            </p>
+                        </div>
+
+                        {/* ── Logo URL ── */}
+                        <div className={styles.fieldCard} style={{ marginBottom: '1rem' }}>
+                            <div className={styles.fieldLabel}><ImagePlus size={14} /> Logo del Restaurante</div>
+                            <div className={styles.logoUploadRow}>
+                                {/* Logo preview */}
+                                <div className={styles.logoPreviewBox}>
+                                    {logoUrl ? (
+                                        <img
+                                            src={logoUrl}
+                                            alt="Logo"
+                                            className={styles.logoPreviewImg}
+                                        />
+                                    ) : (
+                                        <span className={styles.logoPreviewPlaceholder}>
+                                            {tenant?.name?.charAt(0) ?? 'R'}
+                                        </span>
+                                    )}
+                                </div>
+                                {/* URL input + clear */}
+                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                    <Input
+                                        placeholder="https://i.imgur.com/tu-logo.png"
+                                        value={logoUrl}
+                                        onChange={e => setLogoUrl(e.target.value)}
+                                        fullWidth
+                                    />
+                                    {logoUrl && (
+                                        <button
+                                            onClick={() => setLogoUrl('')}
+                                            style={{
+                                                display: 'flex', alignItems: 'center', gap: '0.3rem',
+                                                background: 'none', border: 'none', cursor: 'pointer',
+                                                color: 'var(--danger-color)', fontSize: '0.78rem',
+                                                fontWeight: 600, padding: 0, width: 'fit-content',
+                                            }}
+                                        >
+                                            <X size={13} /> Quitar logo
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                            <p className={styles.fieldHint}>
+                                Pega la URL directa de tu imagen (Imgur, Drive, Cloudinary, etc.).
+                                Se mostrará en la cabecera de la carta digital.
                             </p>
                         </div>
 
@@ -262,8 +316,16 @@ export function DigitalMenuConfigPage() {
                         {/* Live preview */}
                         <div className={styles.preview} style={{ marginTop: '1.5rem' }}>
                             <div className={styles.previewHeader} style={{ backgroundColor: bgColor }}>
-                                <div className={styles.previewLogo} style={{ backgroundColor: accentColor }}>
-                                    {tenant?.name?.charAt(0) ?? 'R'}
+                                <div className={styles.previewLogo} style={{ backgroundColor: logoUrl ? 'transparent' : accentColor }}>
+                                    {logoUrl ? (
+                                        <img
+                                            src={logoUrl}
+                                            alt="Logo preview"
+                                            style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '50%' }}
+                                        />
+                                    ) : (
+                                        tenant?.name?.charAt(0) ?? 'R'
+                                    )}
                                 </div>
                                 <div>
                                     <div className={styles.previewName} style={{ fontFamily: selectedFont.style }}>
