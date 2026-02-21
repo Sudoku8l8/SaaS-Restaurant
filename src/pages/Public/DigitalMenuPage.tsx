@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTenant } from '@/app/providers/TenantProvider';
 import { usePublicMenu } from '@/hooks/usePublicMenu';
-import { Utensils, MapPin, Phone, Plus, Minus } from 'lucide-react';
+import { Utensils, MapPin, Phone, Plus, Minus, ShoppingBag } from 'lucide-react';
 import type { OrderItem, Product } from '@/types';
 import styles from './DigitalMenuPage.module.css';
 
@@ -335,26 +335,34 @@ export function DigitalMenuPage() {
 
                                             {/* Add to Cart / Quantity Controls */}
                                             {config.enableDigitalOrders && product.available && (
-                                                (() => {
-                                                    const cartItem = cart.find(item => item.productId === product.id);
-                                                    if (cartItem) {
+                                                <div className={styles.productAction}>
+                                                    {(() => {
+                                                        const cartItem = cart.find(item => item.productId === product.id);
+                                                        if (cartItem) {
+                                                            return (
+                                                                <div className={styles.quantityControls}>
+                                                                    <button className={styles.qtyBtn} onClick={() => handleUpdateQuantity(product.id, -1)} aria-label="Decrease quantity"><Minus size={14} /></button>
+                                                                    <span className={styles.qtyValue}>{cartItem.quantity}</span>
+                                                                    <button className={styles.qtyBtn} onClick={() => handleUpdateQuantity(product.id, 1)} aria-label="Increase quantity"><Plus size={14} /></button>
+                                                                </div>
+                                                            );
+                                                        }
                                                         return (
-                                                            <div className={styles.quantityControls}>
-                                                                <button className={styles.qtyBtn} onClick={() => handleUpdateQuantity(product.id, -1)} aria-label="Decrease quantity"><Minus size={14} /></button>
-                                                                <span className={styles.qtyValue}>{cartItem.quantity}</span>
-                                                                <button className={styles.qtyBtn} onClick={() => handleUpdateQuantity(product.id, 1)} aria-label="Increase quantity"><Plus size={14} /></button>
-                                                            </div>
+                                                            <button
+                                                                className={styles.addToCartBtn}
+                                                                onClick={() => handleAddToCart(product)}
+                                                                title="Agregar al Carrito"
+                                                            >
+                                                                <div className={styles.cartIconMiniWrapper}>
+                                                                    <ShoppingBag size={18} strokeWidth={2} />
+                                                                    <div className={styles.cartIconMiniPlus}>
+                                                                        <Plus size={10} strokeWidth={4} />
+                                                                    </div>
+                                                                </div>
+                                                            </button>
                                                         );
-                                                    }
-                                                    return (
-                                                        <button
-                                                            className={styles.addToCartBtn}
-                                                            onClick={() => handleAddToCart(product)}
-                                                        >
-                                                            <Plus size={14} /> Agregar
-                                                        </button>
-                                                    );
-                                                })()
+                                                    })()}
+                                                </div>
                                             )}
                                         </div>
                                     </div>
@@ -406,9 +414,12 @@ export function DigitalMenuPage() {
 
             {/* ─── FLOATING CART BAR ─── */}
             {cartCount > 0 && config?.enableDigitalOrders && (
-                <div className={styles.floatingCart} onClick={handleOpenCheckout} style={{ background: textColor }}>
+                <div className={styles.floatingCart} onClick={handleOpenCheckout}>
                     <div className={styles.cartInfo}>
-                        <span className={styles.cartBadge} style={{ background: accentColor }}>{cartCount}</span>
+                        <div className={styles.cartIconWrapper}>
+                            <ShoppingBag size={20} className={styles.floatingCartIcon} />
+                            <span className={styles.cartBadge} style={{ color: bgColor, background: accentColor }}>{cartCount}</span>
+                        </div>
                         <span className={styles.cartTotal} style={{ fontFamily: FONT_MAP[fontFamily] || FONT_MAP.inter }}>
                             {currency} {cartTotal.toFixed(2)}
                         </span>
