@@ -12,6 +12,12 @@ export const exportDailySalesToExcel = async (metrics: SalesMetrics, orders: Ord
     const dateStr = customDateRange || format(new Date(), 'dd/MM/yyyy', { locale: es });
     const filename = customDateRange ? `Reporte_Ventas_${customDateRange.replace(/\//g, '-')}.xlsx` : `Ventas_${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
 
+    const paymentLabels: Record<string, string> = {
+        cash: 'Efectivo',
+        card: 'Tarjeta',
+        yape: 'Yape / Plin'
+    };
+
     // ==========================================
     // SHEET 1: RESUMEN
     // ==========================================
@@ -53,7 +59,8 @@ export const exportDailySalesToExcel = async (metrics: SalesMetrics, orders: Ord
 
     let currentRow = 8;
     Object.entries(metrics.salesByPaymentMethod).forEach(([method, amount]) => {
-        wsSummary.getCell(`A${currentRow}`).value = method.charAt(0).toUpperCase() + method.slice(1);
+        const label = paymentLabels[method] || (method.charAt(0).toUpperCase() + method.slice(1));
+        wsSummary.getCell(`A${currentRow}`).value = label;
         wsSummary.getCell(`B${currentRow}`).value = amount;
         wsSummary.getCell(`B${currentRow}`).numFmt = '"S/" #,##0.00';
         currentRow++;
@@ -109,8 +116,8 @@ export const exportDailySalesToExcel = async (metrics: SalesMetrics, orders: Ord
             order.userName || 'N/A',
             order.items.map((i: any) => `${i.quantity}x ${i.productName}`).join(', '),
             order.payments && order.payments.length > 0
-                ? order.payments.map((p: any) => `${p.method}: ${p.amount}`).join(', ')
-                : (order.paymentMethod || '-'),
+                ? order.payments.map((p: any) => `${paymentLabels[p.method] || p.method}: ${p.amount}`).join(', ')
+                : (order.paymentMethod ? (paymentLabels[order.paymentMethod] || order.paymentMethod) : '-'),
             order.total
         ]);
 
