@@ -72,17 +72,16 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
     }, [user?.restaurantId]);
 
     // Filter products
+    // Si hay texto en el buscador → buscar en TODOS los productos (ignorar categoría)
+    // Si NO hay texto → filtrar por categoría seleccionada
     const filteredProducts = products?.filter(p => {
-        const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
-
-        let matchesCategory = false;
-        if (selectedCategory === 'popular') {
-            matchesCategory = p.isPopular === true;
-        } else {
-            matchesCategory = p.category === selectedCategory;
+        if (searchTerm.trim()) {
+            return p.name.toLowerCase().includes(searchTerm.toLowerCase());
         }
-
-        return matchesSearch && matchesCategory;
+        if (selectedCategory === 'popular') {
+            return p.isPopular === true;
+        }
+        return p.category === selectedCategory;
     });
 
     // Get dynamic categories
