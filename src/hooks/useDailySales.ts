@@ -64,8 +64,15 @@ export function useDailySales(targetDate?: Date) {
                 const waiterName = order.userName || 'Desconocido';
                 acc.salesByWaiter[waiterName] = (acc.salesByWaiter[waiterName] || 0) + order.total;
 
-                const paymentMethod = order.paymentMethod || 'unknown';
-                acc.salesByPaymentMethod[paymentMethod] = (acc.salesByPaymentMethod[paymentMethod] || 0) + order.total;
+                if (order.payments && order.payments.length > 0) {
+                    order.payments.forEach(p => {
+                        const method = p.method || 'unknown';
+                        acc.salesByPaymentMethod[method] = (acc.salesByPaymentMethod[method] || 0) + p.amount;
+                    });
+                } else {
+                    const paymentMethod = order.paymentMethod || 'unknown';
+                    acc.salesByPaymentMethod[paymentMethod] = (acc.salesByPaymentMethod[paymentMethod] || 0) + order.total;
+                }
 
                 return acc;
             }, {

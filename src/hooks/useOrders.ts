@@ -13,7 +13,7 @@ import {
     limit
 } from 'firebase/firestore';
 import { useAuth } from './useAuth';
-import type { Order, OrderStatus, PaymentMethod } from '@/types';
+import type { Order, OrderStatus, OrderPayment } from '@/types';
 import { ensurePeruDate, getPeruNow, getPeruDateString } from '@/utils/dateUtils';
 
 export function useOrders() {
@@ -106,7 +106,7 @@ export function useOrders() {
         });
     };
 
-    const payOrder = async (orderId: string, paymentMethod: PaymentMethod) => {
+    const payOrder = async (orderId: string, payments: OrderPayment[]) => {
         // ── B5: Auto-create today's cash session if it doesn't exist ──────────
         const todayStr = getPeruDateString();
 
@@ -149,7 +149,8 @@ export function useOrders() {
         // 1. Update Order
         batch.update(orderRef, {
             status: 'paid',
-            paymentMethod,
+            payments,
+            paymentMethod: payments[0]?.method || 'cash', // Legacy support
             closedAt: getPeruNow(),
             updatedAt: getPeruNow()
         });

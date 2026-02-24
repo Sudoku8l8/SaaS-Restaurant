@@ -128,12 +128,12 @@ class PrinterService {
     }
 
     // POS Receipt print
-    async printReceipt(order: Order, restaurantName: string, paymentMethod: string) {
+    async printReceipt(order: Order, restaurantName: string) {
         if (!this.isConnected) {
             throw new Error('La impresora no está conectada');
         }
 
-        const data = this.encodeReceipt(order, restaurantName, paymentMethod);
+        const data = this.encodeReceipt(order, restaurantName);
         await this.sendData(data);
     }
 
@@ -202,7 +202,7 @@ class PrinterService {
         return this.combineChunks(chunks);
     }
 
-    private encodeReceipt(order: Order, restaurantName: string, paymentMethod: string): Uint8Array {
+    private encodeReceipt(order: Order, restaurantName: string): Uint8Array {
         const encoder = new TextEncoder();
         const chunks: Uint8Array[] = [];
 
@@ -279,7 +279,13 @@ class PrinterService {
         // ── Payment Method ──
         add([ESC, 0x61, 0x01]); // Center
         add([ESC, 0x45, 0x01]); // Bold
-        addText(`Pagado con: ${paymentLabels[paymentMethod] || paymentMethod.toUpperCase()}\n`);
+        if (order.payments && order.payments.length > 0) {
+            order.payments.forEach(p => {
+                addText(`PAGO ${paymentLabels[p.method] || p.method.toUpperCase()}: S/ ${p.amount.toFixed(2)}\n`);
+            });
+        } else if (order.paymentMethod) {
+            addText(`Pagado con: ${paymentLabels[order.paymentMethod] || order.paymentMethod.toUpperCase()}\n`);
+        }
         add([ESC, 0x45, 0x00]); // Bold off
         addText(LINE);
 

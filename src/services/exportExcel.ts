@@ -108,7 +108,9 @@ export const exportDailySalesToExcel = async (metrics: SalesMetrics, orders: Ord
             order.tableNumber,
             order.userName || 'N/A',
             order.items.map((i: any) => `${i.quantity}x ${i.productName}`).join(', '),
-            order.paymentMethod || '-',
+            order.payments && order.payments.length > 0
+                ? order.payments.map((p: any) => `${p.method}: ${p.amount}`).join(', ')
+                : (order.paymentMethod || '-'),
             order.total
         ]);
 

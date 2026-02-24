@@ -98,8 +98,15 @@ export function ReportesPage() {
                 const waiter = data.userName || 'Desconocido';
                 entry.salesByWaiter[waiter] = (entry.salesByWaiter[waiter] || 0) + (data.total || 0);
 
-                const pm = data.paymentMethod || 'unknown';
-                entry.salesByPaymentMethod[pm] = (entry.salesByPaymentMethod[pm] || 0) + (data.total || 0);
+                if (data.payments && data.payments.length > 0) {
+                    data.payments.forEach((p: any) => {
+                        const pm = p.method || 'unknown';
+                        entry.salesByPaymentMethod[pm] = (entry.salesByPaymentMethod[pm] || 0) + (p.amount || 0);
+                    });
+                } else {
+                    const pm = data.paymentMethod || 'unknown';
+                    entry.salesByPaymentMethod[pm] = (entry.salesByPaymentMethod[pm] || 0) + (data.total || 0);
+                }
             });
 
             // 3. Merge: for dates that have orders but NO closure, create a synthetic record

@@ -147,6 +147,11 @@ export interface SelectedModifier {
     price?: number;
 }
 
+export interface OrderPayment {
+    method: PaymentMethod;
+    amount: number;
+}
+
 export interface Order {
     id: string;
     restaurantId: string;
@@ -158,6 +163,7 @@ export interface Order {
     updatedAt: Date;
     closedAt?: Date;
     paymentMethod?: PaymentMethod;
+    payments?: OrderPayment[];
     userId: string; // Waiter who created the order
     userName: string;
     orderType: 'dine-in' | 'takeout';

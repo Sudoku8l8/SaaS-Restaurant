@@ -4,7 +4,7 @@ import { PaymentModal } from '@/components/features/PaymentModal';
 import { useOrders } from '@/hooks/useOrders';
 import { useAuth } from '@/hooks/useAuth';
 import { useTenant } from '@/app/providers/TenantProvider';
-import type { Order, OrderStatus, PaymentMethod } from '@/types';
+import type { Order, OrderStatus, OrderPayment } from '@/types';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Clock, CheckCircle2, ChefHat, Truck, Banknote, Pencil, Trash2, Printer, MessageSquare } from 'lucide-react';
@@ -27,12 +27,12 @@ export function OrderCard({ order, onEdit, onDelete }: OrderCardProps) {
         updateOrderStatus(order.id, newStatus);
     };
 
-    const handlePayment = async (method: PaymentMethod, shouldPrintReceipt: boolean) => {
+    const handlePayment = async (payments: OrderPayment[], shouldPrintReceipt: boolean) => {
         try {
-            await payOrder(order.id, method);
+            await payOrder(order.id, payments);
             if (shouldPrintReceipt && printerService.isConnected) {
                 try {
-                    await printerService.printReceipt(order, tenant?.name || 'Restaurante', method);
+                    await printerService.printReceipt({ ...order, payments, status: 'paid' }, tenant?.name || 'Restaurante');
                 } catch (printError) {
                     console.error('Error printing receipt:', printError);
                     // Don't block payment flow if printing fails
