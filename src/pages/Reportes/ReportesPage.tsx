@@ -432,8 +432,8 @@ export function ReportesPage() {
                                             >
                                                 <Download size={16} /> Excel
                                             </Button>
-                                            {/* Pilar 3: Retroactive close button for unclosed days */}
-                                            {record.closureStatus !== 'closed' && record.orderCount > 0 && (
+                                            {/* Pilar 3: Retroactive close button for unclosed days (HIDDEN FOR TODAY) */}
+                                            {record.closureStatus !== 'closed' && record.orderCount > 0 && record.date !== getPeruDateString() && (
                                                 <Button
                                                     variant="secondary"
                                                     size="sm"
