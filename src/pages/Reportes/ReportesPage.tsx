@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { BarChart3, ArrowLeft, Search, Download, DollarSign, ShoppingBag, CalendarCheck, AlertTriangle, Lock, Clock } from 'lucide-react';
+import { BarChart3, ArrowLeft, Search, Download, DollarSign, ShoppingBag, CalendarCheck, AlertTriangle, Lock, Clock, Eye } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { db } from '@/services/firebase/config';
 import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
@@ -9,6 +9,7 @@ import { format, subDays, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { exportDailySalesToExcel } from '@/services/exportExcel';
 import { getPeruDateString, getPeruNow } from '@/utils/dateUtils';
+import { DailyReportPreviewModal } from '@/components/features/DailyReportPreviewModal';
 
 // A "day record" may come from a closure, from raw orders, or both.
 interface DayRecord {
@@ -36,6 +37,7 @@ export function ReportesPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
     const [closingDate, setClosingDate] = useState<string | null>(null);
+    const [previewRecord, setPreviewRecord] = useState<DayRecord | null>(null);
 
     // ─── MAIN FETCH ────────────────────────────────────────────────────────────
     // FIX B3: Reads BOTH closures AND raw orders, then merges them.
@@ -426,6 +428,15 @@ export function ReportesPage() {
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
+                                                onClick={() => setPreviewRecord(record)}
+                                                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.5rem', color: 'var(--primary-color)' }}
+                                                title="Ver Detalle"
+                                            >
+                                                <Eye size={16} /> Ver
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
                                                 onClick={() => handleExportSingleDay(record)}
                                                 style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.5rem' }}
                                                 title="Exportar día a Excel"
@@ -453,6 +464,15 @@ export function ReportesPage() {
                     </div>
                 )}
             </Card>
+
+            {/* Preview Modal */}
+            {previewRecord && user?.restaurantId && (
+                <DailyReportPreviewModal
+                    restaurantId={user.restaurantId}
+                    record={previewRecord}
+                    onClose={() => setPreviewRecord(null)}
+                />
+            )}
         </div>
     );
 }
