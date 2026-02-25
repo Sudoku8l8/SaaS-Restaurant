@@ -72,6 +72,7 @@ export interface RestaurantConfig {
     pickupEnabled?: boolean;
     deliveryCost?: number;
     paymentMethodsConfig?: { yape?: string; plin?: string; bankAccount?: string };
+    usarPantallaCocina?: boolean; // Toggle for Kitchen Screen vs Printed Tickets
 }
 
 export interface RestaurantTable {

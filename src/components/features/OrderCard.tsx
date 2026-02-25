@@ -68,8 +68,30 @@ export function OrderCard({ order, onEdit, onDelete }: OrderCardProps) {
     };
 
     const MainActionButton = () => {
+        const usarPantallaCocina = tenant?.config?.usarPantallaCocina ?? false;
+
+        const btnEntregar = (
+            <button
+                onClick={() => handleStatusChange('delivered')}
+                style={{
+                    flex: 1,
+                    backgroundColor: 'var(--text-primary)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 'var(--radius-md)',
+                    padding: '0.85rem',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem'
+                }}
+            >
+                <Truck size={18} /> Entregar
+            </button>
+        );
+
         switch (order.status) {
             case 'pending':
+                if (!usarPantallaCocina) return btnEntregar;
                 return (
                     <button
                         onClick={() => handleStatusChange('in_preparation')}
@@ -91,6 +113,7 @@ export function OrderCard({ order, onEdit, onDelete }: OrderCardProps) {
                     </button>
                 );
             case 'in_preparation':
+                if (!usarPantallaCocina) return btnEntregar;
                 return (
                     <button
                         onClick={() => handleStatusChange('ready')}
@@ -111,24 +134,7 @@ export function OrderCard({ order, onEdit, onDelete }: OrderCardProps) {
                     </button>
                 );
             case 'ready':
-                return (
-                    <button
-                        onClick={() => handleStatusChange('delivered')}
-                        style={{
-                            flex: 1,
-                            backgroundColor: 'var(--text-primary)',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: 'var(--radius-md)',
-                            padding: '0.85rem',
-                            fontWeight: '700',
-                            cursor: 'pointer',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem'
-                        }}
-                    >
-                        <Truck size={18} /> Entregar
-                    </button>
-                );
+                return btnEntregar;
             case 'delivered':
                 return (
                     <button

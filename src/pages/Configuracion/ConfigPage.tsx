@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Utensils, Users, LayoutGrid, ArrowLeft, FolderKanban, Printer, Globe, Shield } from 'lucide-react';
+import { Utensils, Users, LayoutGrid, ArrowLeft, FolderKanban, Printer, Globe, Shield, Settings } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/shared';
 
@@ -10,16 +10,17 @@ import { CategoriesTab } from '@/components/features/CategoriesTab';
 import { PrinterTab } from '@/components/features/PrinterTab';
 import { DigitalMenuConfigPage } from '@/pages/Configuracion/DigitalMenuConfigPage';
 import { SecurityTab } from '@/components/features/SecurityTab';
+import { GeneralTab } from '@/components/features/GeneralTab';
 
 import './ConfigPage.css';
 
-type Tab = 'products' | 'categories' | 'users' | 'tables' | 'printer' | 'menu' | 'security';
+type Tab = 'general' | 'products' | 'categories' | 'users' | 'tables' | 'printer' | 'menu' | 'security';
 
 export function ConfigPage() {
 
     const navigate = useNavigate();
     const { restaurantSlug } = useParams();
-    const [activeTab, setActiveTab] = useState<Tab>('products');
+    const [activeTab, setActiveTab] = useState<Tab>('general');
 
 
     return (
@@ -36,6 +37,13 @@ export function ConfigPage() {
 
             {/* Tabs Navigation */}
             <div className="tabs-nav">
+                <Button
+                    variant={activeTab === 'general' ? 'primary' : 'ghost'}
+                    onClick={() => setActiveTab('general')}
+                    className="tab-btn"
+                >
+                    <Settings size={18} /> General
+                </Button>
                 <Button
                     variant={activeTab === 'products' ? 'primary' : 'ghost'}
                     onClick={() => setActiveTab('products')}
@@ -89,6 +97,7 @@ export function ConfigPage() {
 
             {/* Tab Content */}
             <div className="tab-content">
+                {activeTab === 'general' && <GeneralTab />}
                 {activeTab === 'products' && <ProductsTab />}
                 {activeTab === 'categories' && <CategoriesTab />}
                 {activeTab === 'users' && <UsersTab />}
