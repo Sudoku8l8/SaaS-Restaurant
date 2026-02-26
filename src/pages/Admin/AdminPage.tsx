@@ -5,7 +5,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button, Card } from '@/components/shared';
 import { SalesDashboard } from '@/components/features/SalesDashboard';
 import { usePendingClosures } from '@/hooks/usePendingClosures';
-import { NotificationBell } from '@/components/shared/NotificationBell';
 
 export function AdminPage() {
     const { user, logout } = useAuth();
@@ -42,7 +41,6 @@ export function AdminPage() {
                     alignItems: 'center',
                     gap: isMobile ? '0.5rem' : '1rem'
                 }}>
-                    <NotificationBell />
                     <Button
                         variant="ghost"
                         size={isMobile ? "sm" : "md"}
