@@ -6,7 +6,7 @@ import {
     runTransaction, increment, serverTimestamp,
 } from 'firebase/firestore';
 import { useAuth } from './useAuth';
-import type { DigitalOrder } from '@/types';
+import type { DigitalOrder, OrderItem } from '@/types';
 import { getPeruNow, getPeruDateString } from '@/utils/dateUtils';
 
 // ── Notification sound (short chime encoded as base64 data URI) ────────────
@@ -28,6 +28,24 @@ function playNotificationSound() {
     } catch {
         // Silently fail if AudioContext is not available
     }
+}
+
+// ── Helper: merge incoming digital order items into existing order items ────
+function mergeOrderItems(existing: OrderItem[], incoming: OrderItem[]): OrderItem[] {
+    const merged = existing.map(item => ({ ...item })); // shallow clone
+    for (const item of incoming) {
+        const match = merged.find(
+            m => m.productId === item.productId
+                && JSON.stringify(m.selectedOptions || []) === JSON.stringify(item.selectedOptions || [])
+        );
+        if (match) {
+            match.quantity += item.quantity;
+            match.subtotal = match.quantity * match.price;
+        } else {
+            merged.push({ ...item });
+        }
+    }
+    return merged;
 }
 
 export function useDigitalOrders() {
@@ -74,11 +92,76 @@ export function useDigitalOrders() {
         return () => unsubscribe();
     }, [restaurantId]);
 
-    /** Accept a table order: create real Order, occupy table, mark digitalOrder accepted */
+    /** Accept a table order: create real Order (or merge into existing), occupy table, mark digitalOrder accepted */
     const acceptTableOrder = async (digitalOrder: DigitalOrder) => {
         if (!user || !restaurantId) return;
 
+        // Pre-read: check if this table already has an active (non-paid) order
+        const tableNum = digitalOrder.tableNumber ?? 0;
+
+        let existingOrderDoc: { id: string; ref: any; data: any } | null = null;
+        if (tableNum > 0) {
+            const existingSnap = await getDocs(
+                query(
+                    collection(db, 'orders'),
+                    where('restaurantId', '==', restaurantId),
+                    where('tableNumber', '==', tableNum),
+                )
+            );
+            // Find a non-paid order for this table
+            const activeDoc = existingSnap.docs.find(d => {
+                const s = d.data().status;
+                return s !== 'paid' && s !== 'cancelled';
+            });
+            if (activeDoc) {
+                existingOrderDoc = { id: activeDoc.id, ref: activeDoc.ref, data: activeDoc.data() };
+            }
+        }
+
+        // Pre-read: find the table document
+        let tableDocRef: any = null;
+        if (tableNum > 0) {
+            const tablesSnap = await getDocs(
+                query(
+                    collection(db, 'tables'),
+                    where('restaurantId', '==', restaurantId),
+                    where('number', '==', tableNum),
+                    limit(1)
+                )
+            );
+            if (!tablesSnap.empty) {
+                tableDocRef = tablesSnap.docs[0].ref;
+            }
+        }
+
         await runTransaction(db, async (transaction) => {
+            if (existingOrderDoc) {
+                // ─── MERGE: append items into the existing order ─────────────
+                const freshSnap = await transaction.get(existingOrderDoc.ref);
+                if (freshSnap.exists()) {
+                    const freshData = freshSnap.data() as any;
+                    const mergedItems = mergeOrderItems(freshData.items || [], digitalOrder.items);
+                    const newTotal = mergedItems.reduce((s: number, i: any) => s + i.subtotal, 0);
+
+                    transaction.update(existingOrderDoc.ref, {
+                        items: mergedItems,
+                        total: newTotal,
+                        updatedAt: getPeruNow(),
+                    });
+
+                    // Mark digitalOrder as accepted (merged)
+                    transaction.update(doc(db, 'digitalOrders', digitalOrder.id), {
+                        status: 'accepted',
+                        acceptedAt: serverTimestamp(),
+                        acceptedBy: user.id,
+                        createdOrderId: existingOrderDoc.id,
+                        mergedIntoExisting: true,
+                    });
+                    return; // Done — no new order needed
+                }
+            }
+
+            // ─── CREATE: no existing order, create a new one ─────────────
             // 1. Get daily counter
             const dateStr = getPeruDateString();
             const counterRef = doc(db, `restaurants/${restaurantId}/dailyCounters/${dateStr}`);
@@ -99,7 +182,7 @@ export function useDigitalOrders() {
             transaction.set(orderRef, {
                 id: orderId,
                 restaurantId,
-                tableNumber: digitalOrder.tableNumber ?? 0,
+                tableNumber: tableNum,
                 items: digitalOrder.items,
                 status: 'pending',
                 total: digitalOrder.total,
@@ -114,21 +197,11 @@ export function useDigitalOrders() {
             });
 
             // 3. Occupy table
-            if (digitalOrder.tableNumber) {
-                const tablesSnap = await getDocs(
-                    query(
-                        collection(db, 'tables'),
-                        where('restaurantId', '==', restaurantId),
-                        where('number', '==', digitalOrder.tableNumber),
-                        limit(1)
-                    )
-                );
-                if (!tablesSnap.empty) {
-                    transaction.update(tablesSnap.docs[0].ref, {
-                        status: 'occupied',
-                        currentOrderId: orderId,
-                    });
-                }
+            if (tableDocRef) {
+                transaction.update(tableDocRef, {
+                    status: 'occupied',
+                    currentOrderId: orderId,
+                });
             }
 
             // 4. Mark digitalOrder as accepted
