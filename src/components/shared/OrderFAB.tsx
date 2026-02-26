@@ -17,10 +17,10 @@ export function OrderFAB({ onClick }: OrderFABProps) {
             title="Crear nuevo pedido"
             style={{
                 position: 'fixed',
-                bottom: '2rem',
-                right: '2rem',
-                width: '60px',
-                height: '60px',
+                bottom: 'clamp(1rem, 5vw, 2rem)',
+                right: 'clamp(1rem, 5vw, 2rem)',
+                width: 'clamp(48px, 12vw, 60px)',
+                height: 'clamp(48px, 12vw, 60px)',
                 borderRadius: '50%',
                 backgroundColor: 'var(--primary-color)',
                 color: 'white',
@@ -46,7 +46,7 @@ export function OrderFAB({ onClick }: OrderFABProps) {
                 btn.style.backgroundColor = 'var(--primary-color)';
             }}
         >
-            <Plus size={28} strokeWidth={2.5} />
+            <Plus size="50%" strokeWidth={2.5} />
         </button>
     );
 }

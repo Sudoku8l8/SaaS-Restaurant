@@ -164,7 +164,7 @@ export function MozoPage() {
                 gap: 'var(--spacing-sm)',
                 padding: 'var(--spacing-sm) 0',
                 borderBottom: '1px solid var(--divider-color)',
-                flexWrap: 'nowrap'
+                flexWrap: 'wrap'
             }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xs)', flex: 1, minWidth: 0 }}>
                     <h1 style={{
@@ -178,7 +178,7 @@ export function MozoPage() {
                         overflow: 'hidden',
                         textOverflow: 'ellipsis'
                     }}>
-                        Servicio de Mesas
+                        Mesas
                     </h1>
                 </div>
 

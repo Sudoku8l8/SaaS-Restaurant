@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Lock, ShieldCheck, ChefHat } from 'lucide-react';
+import { useRef, useEffect, useState } from 'react';
+import { Lock, ShieldCheck, ChefHat, LogOut, Menu } from 'lucide-react';
 import type { RestaurantTable, Order } from '@/types';
 import { OrderModal } from '@/components/features/OrderModal';
 import { TableDetailModal } from '@/components/features/TableDetailModal';
@@ -9,7 +9,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useOrders } from '@/hooks/useOrders';
 import { useClosureStatus } from '@/hooks/useClosureStatus';
 import { useOrderCreation } from '@/hooks/useOrderCreation';
-import { Button } from '@/components/shared';
 import { OrderFAB } from '@/components/shared/OrderFAB';
 import { OrderCard } from '@/components/features/OrderCard';
 import { OrderCardSkeleton } from '@/components/shared/Skeleton';
@@ -23,6 +22,19 @@ export function CocinaPage() {
     const { activeOrders, deleteOrder } = useOrders();
     const { isClosed } = useClosureStatus();
     const [filterStatus, setFilterStatus] = useState<OrderStatus | 'all'>('all');
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    // Close menu when clicking outside
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setIsMenuOpen(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     // Order creation flow (reusable hook)
     const orderCreation = useOrderCreation();
@@ -113,46 +125,151 @@ export function CocinaPage() {
     return (
         <div style={{ minHeight: '100vh', backgroundColor: 'var(--background-color)', paddingBottom: '3rem' }}>
             {/* Header */}
-            <div style={{ backgroundColor: 'var(--surface-color)', borderBottom: '1px solid var(--border-color)', padding: '1.25rem 0', marginBottom: '2.5rem', boxShadow: 'var(--shadow-sm)' }}>
-                <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-                        <div style={{
-                            width: '48px', height: '48px',
-                            backgroundColor: 'var(--divider-color)',
-                            borderRadius: '14px',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            color: 'var(--primary-color)',
-                            border: '1px solid var(--border-color)'
-                        }}>
-                            <ChefHat size={30} />
+            <style>{`
+                .cocina-layout-header {
+                    display: flex;
+                    flex-direction: column;
+                }
+                .cocina-layout-top {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 1rem;
+                }
+                .cocina-layout-actions {
+                    display: flex;
+                    gap: 0.75rem;
+                }
+                .cocina-action-btn {
+                    flex: 1;
+                    justify-content: center;
+                    border: none !important;
+                    border-radius: 14px !important;
+                    transition: transform 0.15s, opacity 0.15s;
+                }
+                .cocina-action-btn:active {
+                    transform: scale(0.97);
+                }
+                .cocina-dropdown-menu {
+                    position: absolute;
+                    top: 100%;
+                    right: 0;
+                    margin-top: 0.5rem;
+                    background: var(--surface-color);
+                    border: 1px solid var(--border-color);
+                    border-radius: 12px;
+                    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+                    min-width: 200px;
+                    z-index: 50;
+                    opacity: 0;
+                    transform: translateY(-10px);
+                    pointer-events: none;
+                    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+                    display: flex;
+                    flex-direction: column;
+                    padding: 0.5rem;
+                    gap: 0.25rem;
+                }
+                .cocina-dropdown-menu.open {
+                    opacity: 1;
+                    transform: translateY(0);
+                    pointer-events: auto;
+                }
+                .cocina-dropdown-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.75rem;
+                    padding: 0.75rem 1rem;
+                    border: none;
+                    background: transparent;
+                    width: 100%;
+                    text-align: left;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-size: 0.95rem;
+                    font-weight: 600;
+                    transition: background 0.15s;
+                }
+                .cocina-dropdown-item:hover {
+                    background: var(--background-color);
+                }
+                .cocina-dropdown-item.danger {
+                    color: var(--danger-color);
+                }
+                .cocina-dropdown-item.danger:hover {
+                    background: rgba(230, 57, 70, 0.08);
+                }
+                @media (min-width: 768px) {
+                    .cocina-layout-header {
+                        flex-direction: row;
+                        justify-content: space-between;
+                        align-items: center;
+                    }
+                    .cocina-layout-top {
+                        margin-bottom: 0;
+                        flex: 1;
+                    }
+                }
+            `}</style>
+            <div style={{ backgroundColor: 'var(--surface-color)', borderBottom: '1px solid var(--border-color)', padding: '1.25rem 0', marginBottom: '2.5rem', boxShadow: 'var(--shadow-sm)', position: 'relative', zIndex: 100 }}>
+                <div className="container cocina-layout-header">
+                    <div className="cocina-layout-top">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flex: 1, minWidth: 0 }}>
+                            <div style={{
+                                width: '46px', height: '46px',
+                                backgroundColor: 'rgba(237, 219, 203, 0.4)',
+                                borderRadius: '50%',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                color: 'var(--text-primary)',
+                                flexShrink: 0
+                            }}>
+                                <ChefHat size={24} />
+                            </div>
+                            <div style={{ minWidth: 0 }}>
+                                <h1 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.25rem', fontWeight: '800', letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Cocina</h1>
+                                <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: '500', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    Hola, <span style={{ color: 'var(--primary-color)' }}>{user?.name}</span> &bull; {filteredOrders.length} pedidos
+                                </p>
+                            </div>
                         </div>
-                        <div>
-                            <h1 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.5rem', fontWeight: '800', letterSpacing: '-0.01em' }}>Cocina</h1>
-                            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: '600' }}>
-                                Hola, <span style={{ color: 'var(--primary-color)' }}>{user?.name}</span> &bull; {filteredOrders.length} pedido(s) activos
-                            </p>
-                        </div>
-                    </div>
 
-                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                        <NotificationBell />
-                        <Button
-                            variant="outline"
-                            onClick={() => navigate(`/${restaurantSlug}/admin`)}
-                            style={{
-                                display: 'flex', alignItems: 'center', gap: '0.6rem',
-                                padding: '0.6rem 1.2rem', fontWeight: '700'
-                            }}
-                        >
-                            <ShieldCheck size={18} /> Admin
-                        </Button>
-                        <Button
-                            variant="primary"
-                            onClick={logout}
-                            style={{ backgroundColor: 'var(--danger-color)', border: 'none', color: 'white', padding: '0.6rem 1.5rem', fontWeight: '700' }}
-                        >
-                            Salir
-                        </Button>
+                        <div style={{ flexShrink: 0, paddingLeft: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <NotificationBell />
+                            <div ref={menuRef} style={{ position: 'relative' }}>
+                                <button
+                                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                                    style={{
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        width: '42px', height: '42px',
+                                        borderRadius: '50%',
+                                        border: '1px solid var(--border-color)',
+                                        background: isMenuOpen ? 'var(--background-color)' : 'transparent',
+                                        color: 'var(--text-primary)',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s',
+                                    }}
+                                >
+                                    <Menu size={20} />
+                                </button>
+
+                                <div className={`cocina-dropdown-menu ${isMenuOpen ? 'open' : ''}`}>
+                                    <button
+                                        className="cocina-dropdown-item"
+                                        onClick={() => navigate(`/${restaurantSlug}/admin`)}
+                                    >
+                                        <ShieldCheck size={18} style={{ color: 'var(--primary-color)' }} />
+                                        <span>Administración</span>
+                                    </button>
+                                    <button
+                                        className="cocina-dropdown-item danger"
+                                        onClick={logout}
+                                    >
+                                        <LogOut size={18} />
+                                        <span>Cerrar Sesión</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
