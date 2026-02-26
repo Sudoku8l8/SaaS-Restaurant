@@ -49,6 +49,7 @@ export function DigitalMenuConfigPage() {
     const [fontFamily, setFontFamily] = useState<FontId>((tenant?.config?.menuFontFamily as FontId) || 'inter');
     const [themeId, setThemeId] = useState(tenant?.config?.menuThemeId || 'custom');
     const [englishSubtitles, setEnglishSubtitles] = useState(tenant?.config?.menuEnglishSubtitles ?? false);
+    const [searchEnabled, setSearchEnabled] = useState(tenant?.config?.menuSearchEnabled ?? false);
 
     // Logo (external URL)
     const [logoUrl, setLogoUrl] = useState<string>(tenant?.logo || '');
@@ -90,6 +91,7 @@ export function DigitalMenuConfigPage() {
         setFontFamily((c.menuFontFamily as FontId) || 'inter');
         setThemeId(c.menuThemeId || 'custom');
         setEnglishSubtitles(c.menuEnglishSubtitles ?? false);
+        setSearchEnabled(c.menuSearchEnabled ?? false);
         setDescription(c.menuDescription || '');
         setAddress(c.menuAddress || '');
         setPhone(c.menuPhone || '');
@@ -122,6 +124,7 @@ export function DigitalMenuConfigPage() {
                 'config.menuFontFamily': fontFamily,
                 'config.menuThemeId': themeId,
                 'config.menuEnglishSubtitles': englishSubtitles,
+                'config.menuSearchEnabled': searchEnabled,
                 'config.menuDescription': description.trim(),
                 'config.menuAddress': address.trim(),
                 'config.menuPhone': phone.trim(),
@@ -214,6 +217,28 @@ export function DigitalMenuConfigPage() {
                                 title={nativeEnabled ? 'Desactivar' : 'Activar'}
                             >
                                 {nativeEnabled
+                                    ? <ToggleRight size={48} strokeWidth={1.5} />
+                                    : <ToggleLeft size={48} strokeWidth={1.5} />}
+                            </button>
+                        </div>
+
+                        {/* Search Bar toggle */}
+                        <div className={styles.toggleCard}>
+                            <div className={styles.toggleInfo}>
+                                <strong>{searchEnabled ? '🔍 Barra de Búsqueda Activada' : '🔍 Barra de Búsqueda Desactivada'}</strong>
+                                <span>
+                                    {searchEnabled
+                                        ? 'Los clientes podrán buscar platos por nombre o descripción en la carta.'
+                                        : 'La carta se mostrará sin buscador (modo vistazo rápido).'}
+                                </span>
+                            </div>
+                            <button
+                                className={styles.toggleBtn}
+                                onClick={() => setSearchEnabled(v => !v)}
+                                style={{ color: searchEnabled ? 'var(--primary-color)' : '#aaa' }}
+                                title={searchEnabled ? 'Desactivar' : 'Activar'}
+                            >
+                                {searchEnabled
                                     ? <ToggleRight size={48} strokeWidth={1.5} />
                                     : <ToggleLeft size={48} strokeWidth={1.5} />}
                             </button>

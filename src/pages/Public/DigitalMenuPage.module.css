@@ -604,3 +604,176 @@
         transform: translate(-50%, 0);
     }
 }
+
+/* ─── SEARCH BAR ─── */
+.searchBar {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 1rem 1.5rem 0;
+}
+
+.searchInputWrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.searchIcon {
+    position: absolute;
+    left: 0.9rem;
+    color: #aaa;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+}
+
+.searchInput {
+    width: 100%;
+    padding: 0.7rem 1rem 0.7rem 2.6rem;
+    border-radius: 12px;
+    border: 1.5px solid rgba(0,0,0,0.1);
+    background: #fff;
+    font-family: var(--menu-font, 'Inter', sans-serif);
+    font-size: 0.9rem;
+    color: var(--menu-text, #1a1a1a);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    box-sizing: border-box;
+}
+
+.searchInput::placeholder {
+    color: #bbb;
+}
+
+.searchInput:focus {
+    border-color: var(--menu-accent, #c0392b);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--menu-accent, #c0392b) 12%, transparent);
+}
+
+.searchClearBtn {
+    position: absolute;
+    right: 0.75rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #aaa;
+    display: flex;
+    align-items: center;
+    padding: 0.2rem;
+    border-radius: 50%;
+    transition: color 0.15s;
+}
+
+.searchClearBtn:hover {
+    color: var(--menu-accent, #c0392b);
+}
+
+/* ─── QUICK FILTER CHIPS ─── */
+.filterChips {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding: 0.75rem 0 0.25rem;
+    scrollbar-width: none;
+}
+
+.filterChips::-webkit-scrollbar {
+    display: none;
+}
+
+.filterChip {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid rgba(0,0,0,0.1);
+    background: #fff;
+    color: #666;
+    transition: all 0.18s ease;
+    white-space: nowrap;
+}
+
+.filterChip:hover {
+    border-color: var(--menu-accent, #c0392b);
+    color: var(--menu-accent, #c0392b);
+}
+
+.filterChip.active {
+    background: var(--menu-accent, #c0392b);
+    border-color: var(--menu-accent, #c0392b);
+    color: #fff;
+}
+
+/* ─── DIETARY TAG BADGES ─── */
+.dietaryTags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin-top: 0.4rem;
+}
+
+.dietaryTag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.22rem;
+    padding: 0.12rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.67rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    border: 1px solid;
+}
+
+.dietaryTag.vegan {
+    background: #f0fdf4;
+    color: #16a34a;
+    border-color: #bbf7d0;
+}
+
+.dietaryTag.vegetarian {
+    background: #f7fee7;
+    color: #65a30d;
+    border-color: #d9f99d;
+}
+
+.dietaryTag.spicy {
+    background: #fff7ed;
+    color: #ea580c;
+    border-color: #fed7aa;
+}
+
+.dietaryTag.glutenFree {
+    background: #fefce8;
+    color: #ca8a04;
+    border-color: #fde68a;
+}
+
+.dietaryTag.dairyFree {
+    background: #eff6ff;
+    color: #2563eb;
+    border-color: #bfdbfe;
+}
+
+.dietaryTag.nutFree {
+    background: #fdf4ff;
+    color: #9333ea;
+    border-color: #e9d5ff;
+}
+
+/* ─── NO RESULTS STATE ─── */
+.noResults {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.noResults p {
+    font-size: 1rem;
+    color: #bbb;
+    font-style: italic;
+}

@@ -22,8 +22,18 @@ export function ProductsTab() {
         description: '',
         descriptionEn: '',
         available: true,
-        isPopular: false
+        isPopular: false,
+        dietaryTags: [] as string[],
     });
+
+    const DIETARY_OPTIONS = [
+        { tag: 'vegan', label: '🌿 Vegano' },
+        { tag: 'vegetarian', label: '🥦 Vegetariano' },
+        { tag: 'spicy', label: '🌶️ Picante' },
+        { tag: 'gluten-free', label: '🌾 Sin Gluten' },
+        { tag: 'dairy-free', label: '🥛 Sin Lácteos' },
+        { tag: 'nut-free', label: '🥜 Sin Nueces' },
+    ];
 
     useEffect(() => {
         if (!user?.restaurantId) return;
@@ -72,7 +82,8 @@ export function ProductsTab() {
                 description: formData.description.trim(),
                 descriptionEn: formData.descriptionEn.trim(),
                 available: formData.available,
-                isPopular: formData.isPopular
+                isPopular: formData.isPopular,
+                dietaryTags: formData.dietaryTags,
             };
 
             if (editingProduct) {
@@ -105,7 +116,8 @@ export function ProductsTab() {
                 description: product.description || '',
                 descriptionEn: product.descriptionEn || '',
                 available: product.available,
-                isPopular: product.isPopular || false
+                isPopular: product.isPopular || false,
+                dietaryTags: product.dietaryTags || [],
             });
         } else {
             setEditingProduct(null);
@@ -117,7 +129,8 @@ export function ProductsTab() {
                 description: '',
                 descriptionEn: '',
                 available: true,
-                isPopular: false
+                isPopular: false,
+                dietaryTags: [],
             });
         }
         setIsModalOpen(true);
@@ -138,9 +151,14 @@ export function ProductsTab() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
                 {products.map(product => (
                     <Card key={product.id} style={{ padding: '1rem', position: 'relative', opacity: product.available ? 1 : 0.6 }}>
-                        <div style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <div style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                             {product.name}
                             {product.isPopular && <span title="Popular">⭐</span>}
+                            {(product.dietaryTags || []).map(tag => (
+                                <span key={tag} title={tag} style={{ fontSize: '0.85rem' }}>
+                                    {tag === 'vegan' ? '🌿' : tag === 'vegetarian' ? '🥦' : tag === 'spicy' ? '🌶️' : tag === 'gluten-free' ? '🌾' : tag === 'dairy-free' ? '🥛' : tag === 'nut-free' ? '🥜' : ''}
+                                </span>
+                            ))}
                         </div>
                         <div style={{ color: 'var(--color-primary)', fontSize: '1.2rem' }}>S/ {product.price.toFixed(2)}</div>
                         <div style={{ fontSize: '0.8rem', color: '#666' }}>{product.category}</div>
@@ -288,6 +306,43 @@ export function ProductsTab() {
                                     />
                                     ⭐ Popular
                                 </label>
+                            </div>
+
+                            {/* Dietary Tags */}
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: '700', color: 'var(--text-primary)' }}>
+                                    Etiquetas Dietéticas / Alérgenos
+                                </label>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem' }}>
+                                    {DIETARY_OPTIONS.map(opt => {
+                                        const active = formData.dietaryTags.includes(opt.tag);
+                                        return (
+                                            <button
+                                                key={opt.tag}
+                                                type="button"
+                                                onClick={() => {
+                                                    const newTags = active
+                                                        ? formData.dietaryTags.filter(t => t !== opt.tag)
+                                                        : [...formData.dietaryTags, opt.tag];
+                                                    setFormData({ ...formData, dietaryTags: newTags });
+                                                }}
+                                                style={{
+                                                    padding: '0.4rem 0.5rem',
+                                                    borderRadius: '8px',
+                                                    border: active ? '2px solid var(--primary-color)' : '1.5px solid var(--divider-color)',
+                                                    background: active ? 'color-mix(in srgb, var(--primary-color) 10%, white)' : 'transparent',
+                                                    color: active ? 'var(--primary-color)' : 'var(--text-secondary)',
+                                                    fontSize: '0.78rem',
+                                                    fontWeight: active ? 700 : 500,
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.15s',
+                                                }}
+                                            >
+                                                {opt.label}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
                             </div>
 
                             <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>

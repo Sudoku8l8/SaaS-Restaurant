@@ -65,6 +65,7 @@ export interface RestaurantConfig {
     menuPhone?: string;
     menuThemeId?: string;       // 'gourmet' | 'fastfood' | 'bar_cafe' | 'dark_kitchen' | 'custom'
     menuEnglishSubtitles?: boolean;
+    menuSearchEnabled?: boolean;  // Search bar on public menu (default: off)
     // Digital Menu Ordering
     restaurantWhatsApp?: string; // Number to receive orders
     enableDigitalOrders?: boolean; // Enable shopping cart public
@@ -101,6 +102,8 @@ export interface Product {
     available: boolean;
     imageUrl?: string;
     isPopular?: boolean;
+    // Dietary & Allergen Tags
+    dietaryTags?: string[]; // e.g. ['vegan', 'spicy', 'gluten-free', 'nut-free', 'vegetarian', 'dairy-free']
     // Inventory & Options
     stockCount?: number;
     trackStock?: boolean;

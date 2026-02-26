@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTenant } from '@/app/providers/TenantProvider';
 import { usePublicMenu } from '@/hooks/usePublicMenu';
-import { Utensils, MapPin, Phone, Plus, Minus, ShoppingBag } from 'lucide-react';
+import { Utensils, MapPin, Phone, Plus, Minus, ShoppingBag, Search, X } from 'lucide-react';
 import type { OrderItem, Product } from '@/types';
 import styles from './DigitalMenuPage.module.css';
 
@@ -76,6 +76,8 @@ export function DigitalMenuPage() {
     const [cart, setCart] = useState<OrderItem[]>([]);
     const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
     const navRef = useRef<HTMLDivElement>(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [activeTag, setActiveTag] = useState<string | null>(null);
 
     const accentColor = tenant?.config?.menuAccentColor || '#c8a96e';
     const bgColor = tenant?.config?.menuBgColor || '#ffffff';
@@ -222,14 +224,54 @@ export function DigitalMenuPage() {
     }
 
     // ── Group products by category ──
+    const DIETARY_FILTER_OPTIONS = [
+        { tag: 'vegan', label: '🌿 Vegano' },
+        { tag: 'vegetarian', label: '🥦 Vegetariano' },
+        { tag: 'spicy', label: '🌶️ Picante' },
+        { tag: 'gluten-free', label: '🌾 Sin Gluten' },
+        { tag: 'dairy-free', label: '🥛 Sin Lácteos' },
+        { tag: 'nut-free', label: '🥜 Sin Nueces' },
+    ];
+
+    const DIETARY_TAG_LABELS: Record<string, { label: string; cssClass: keyof typeof styles }> = {
+        vegan: { label: '🌿 Vegano', cssClass: 'vegan' },
+        vegetarian: { label: '🥦 Vegetariano', cssClass: 'vegetarian' },
+        spicy: { label: '🌶️ Picante', cssClass: 'spicy' },
+        'gluten-free': { label: '🌾 Sin Gluten', cssClass: 'glutenFree' },
+        'dairy-free': { label: '🥛 Sin Lácteos', cssClass: 'dairyFree' },
+        'nut-free': { label: '🥜 Sin Nueces', cssClass: 'nutFree' },
+    };
+
+    const filteredProducts = (prods: Product[]) => {
+        let result = prods;
+        if (searchQuery.trim()) {
+            const q = searchQuery.toLowerCase();
+            result = result.filter(p =>
+                p.name.toLowerCase().includes(q) ||
+                (p.nameEn && p.nameEn.toLowerCase().includes(q)) ||
+                (p.description && p.description.toLowerCase().includes(q))
+            );
+        }
+        if (activeTag) {
+            result = result.filter(p => p.dietaryTags?.includes(activeTag));
+        }
+        return result;
+    };
+
+    const currency = config?.currency || 'S/';
+
+    // Collect all available dietary tags across all products
+    const availableTags = [...new Set(products.flatMap(p => p.dietaryTags || []))];
+    const filterOptions = DIETARY_FILTER_OPTIONS.filter(f => availableTags.includes(f.tag));
+
+    // Group products by category — applying search & dietary tag filters
     const categoriesWithProducts = categories
         .map(cat => ({
             ...cat,
-            products: products.filter(p => p.category === cat.name),
+            products: filteredProducts(products.filter(p => p.category === cat.name)),
         }))
         .filter(cat => cat.products.length > 0);
 
-    const currency = config?.currency || 'S/';
 
     return (
         <div className={styles.page}>
@@ -254,6 +296,40 @@ export function DigitalMenuPage() {
                     </div>
                 )}
             </header>
+
+            {/* ─── SEARCH + QUICK FILTERS (only when enabled by restaurant) ─── */}
+            {!menuLoading && config?.menuSearchEnabled && (
+                <div className={styles.searchBar}>
+                    <div className={styles.searchInputWrapper}>
+                        <span className={styles.searchIcon}><Search size={16} /></span>
+                        <input
+                            className={styles.searchInput}
+                            type="text"
+                            placeholder="Buscar en la carta..."
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                        />
+                        {searchQuery && (
+                            <button className={styles.searchClearBtn} onClick={() => setSearchQuery('')}>
+                                <X size={14} />
+                            </button>
+                        )}
+                    </div>
+                    {filterOptions.length > 0 && (
+                        <div className={styles.filterChips}>
+                            {filterOptions.map(opt => (
+                                <button
+                                    key={opt.tag}
+                                    className={`${styles.filterChip} ${activeTag === opt.tag ? styles.active : ''}`}
+                                    onClick={() => setActiveTag(prev => prev === opt.tag ? null : opt.tag)}
+                                >
+                                    {opt.label}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* ─── STICKY CATEGORY NAV ─── */}
             {!menuLoading && categoriesWithProducts.length > 1 && (
@@ -289,8 +365,17 @@ export function DigitalMenuPage() {
                 ) : categoriesWithProducts.length === 0 ? (
                     <div className={styles.emptyState}>
                         <Utensils size={48} style={{ color: '#ddd', marginBottom: '1rem' }} />
-                        <h2>Carta no disponible</h2>
-                        <p>Estamos preparando nuestra carta digital. Por favor consulte con el mozo.</p>
+                        {searchQuery || activeTag ? (
+                            <>
+                                <h2>Sin resultados</h2>
+                                <p>No encontramos platos que coincidan con tu búsqueda.</p>
+                            </>
+                        ) : (
+                            <>
+                                <h2>Carta no disponible</h2>
+                                <p>Estamos preparando nuestra carta digital. Por favor consulte con el mozo.</p>
+                            </>
+                        )}
                     </div>
                 ) : (
                     categoriesWithProducts.map(cat => (
@@ -334,6 +419,23 @@ export function DigitalMenuPage() {
                                             )}
                                             {englishSubtitles && product.descriptionEn && (
                                                 <p className={styles.subtitleEn}>{product.descriptionEn}</p>
+                                            )}
+                                            {/* Dietary Tags */}
+                                            {product.dietaryTags && product.dietaryTags.length > 0 && (
+                                                <div className={styles.dietaryTags}>
+                                                    {product.dietaryTags.map(tag => {
+                                                        const info = DIETARY_TAG_LABELS[tag];
+                                                        if (!info) return null;
+                                                        return (
+                                                            <span
+                                                                key={tag}
+                                                                className={`${styles.dietaryTag} ${styles[info.cssClass]}`}
+                                                            >
+                                                                {info.label}
+                                                            </span>
+                                                        );
+                                                    })}
+                                                </div>
                                             )}
 
                                             {/* Add to Cart / Quantity Controls */}
