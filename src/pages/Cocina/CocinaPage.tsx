@@ -13,6 +13,7 @@ import { Button } from '@/components/shared';
 import { OrderFAB } from '@/components/shared/OrderFAB';
 import { OrderCard } from '@/components/features/OrderCard';
 import { OrderCardSkeleton } from '@/components/shared/Skeleton';
+import { NotificationBell } from '@/components/shared/NotificationBell';
 import { OrderStatus } from '@/types';
 
 export function CocinaPage() {
@@ -133,7 +134,8 @@ export function CocinaPage() {
                         </div>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '1rem' }}>
+                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                        <NotificationBell />
                         <Button
                             variant="outline"
                             onClick={() => navigate(`/${restaurantSlug}/admin`)}

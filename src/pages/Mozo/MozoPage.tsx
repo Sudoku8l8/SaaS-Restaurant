@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTables } from '@/hooks/useTables';
 import { useOrders } from '@/hooks/useOrders';
 import { useClosureStatus } from '@/hooks/useClosureStatus';
+import { NotificationBell } from '@/components/shared/NotificationBell';
 import type { RestaurantTable, Order } from '@/types';
 
 export const TAKEOUT_NEW_ID = 'takeout-new-wildcard';
@@ -192,6 +193,7 @@ export function MozoPage() {
                     border: '1px solid var(--border-color)',
                     flexShrink: 0
                 }}>
+                    <NotificationBell />
                     <div style={{ textAlign: 'right', minWidth: 'fit-content' }}>
                         <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: '800', letterSpacing: '0.05em', lineHeight: 1 }}>{user?.name}</p>
                         <p style={{ margin: 0, color: 'var(--text-primary)', fontWeight: '700', fontSize: '0.85rem' }}>Mozo</p>

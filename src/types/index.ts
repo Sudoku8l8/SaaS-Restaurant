@@ -134,6 +134,28 @@ export interface Category {
     sortOrder?: number; // Custom display order in the digital menu
 }
 
+// ── Digital Order Notifications ──────────────────────────────────────────────
+
+export type DigitalOrderType = 'table' | 'whatsapp';
+export type DigitalOrderStatus = 'pending' | 'accepted' | 'dismissed';
+
+export interface DigitalOrder {
+    id: string;
+    restaurantId: string;
+    type: DigitalOrderType;
+    status: DigitalOrderStatus;
+    tableNumber?: number;      // set when type === 'table'
+    orderType: 'dine-in' | 'pickup' | 'delivery';
+    items: OrderItem[];
+    customerName?: string;
+    customerNote?: string;
+    total: number;
+    currency: string;
+    createdAt: Date;
+    acceptedAt?: Date;
+    acceptedBy?: string;
+}
+
 export interface OrderItem {
     productId: string;
     productName: string;

@@ -1,20 +1,26 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTenant } from '@/app/providers/TenantProvider';
-import { ArrowLeft, MapPin, MessageCircle, Wallet, Utensils, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, MapPin, MessageCircle, Wallet, Utensils, ShoppingBag, CheckCircle2 } from 'lucide-react';
 import type { OrderItem } from '@/types';
 import { Button } from '@/components/shared/Button';
 import { Input } from '@/components/shared/Input';
+import { createDigitalOrder } from '@/hooks/useDigitalOrders';
 import styles from './DigitalCheckoutPage.module.css';
 
 export function DigitalCheckoutPage() {
-    const { tableNumber, restaurantSlug } = useParams<{ tableNumber?: string; restaurantSlug: string }>();
+    const { restaurantSlug } = useParams<{ restaurantSlug: string }>();
+    const [searchParams] = useSearchParams();
+    const tableNumber = searchParams.get('table');
+
     const navigate = useNavigate();
     const { tenant, isLoading } = useTenant();
 
     // State
     const [cart, setCart] = useState<OrderItem[]>([]);
     const [orderType, setOrderType] = useState<'dine-in' | 'pickup' | 'delivery'>(tableNumber ? 'dine-in' : 'pickup');
+    const [submitting, setSubmitting] = useState(false);
+    const [sent, setSent] = useState<'table' | 'whatsapp' | null>(null);
 
     // Customer Info
     const [customerName, setCustomerName] = useState('');
@@ -47,61 +53,124 @@ export function DigitalCheckoutPage() {
     const deliveryCost = orderType === 'delivery' ? (config.deliveryCost || 0) : 0;
     const total = subtotal + deliveryCost;
 
-    const handleSendOrder = () => {
-        if (!customerName.trim() && orderType !== 'dine-in') {
-            alert("Por favor ingresa tu nombre.");
-            return;
+    // ── Flujo A: pedido a mesa via Firestore ─────────────────────────────────
+    const handleSendToTable = async () => {
+        if (cart.length === 0) return;
+        setSubmitting(true);
+        try {
+            await createDigitalOrder({
+                restaurantId: tenant.id,
+                type: 'table',
+                tableNumber: Number(tableNumber),
+                orderType: 'dine-in',
+                items: cart,
+                customerName: customerName.trim() || "",
+                total,
+                currency: config.currency || 'S/',
+            });
+            localStorage.removeItem(`cart_${tenant.id}`);
+            setSent('table');
+            setTimeout(() => navigate(`/${restaurantSlug}/menu/${tableNumber}`), 2500);
+        } catch (e) {
+            console.error(e);
+            alert('No se pudo enviar el pedido. Intente de nuevo.');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    // ── Flujo B: WhatsApp (+ notificación Firestore) ─────────────────────────
+    const handleSendOrder = async () => {
+        if (orderType !== 'dine-in') {
+            if (!customerName.trim()) { alert('Por favor ingresa tu nombre.'); return; }
         }
         if (orderType === 'delivery' && !customerAddress.trim()) {
-            alert("Por favor ingresa tu dirección de entrega.");
+            alert('Por favor ingresa tu dirección de entrega.');
             return;
         }
 
         const phone = config.restaurantWhatsApp?.replace(/\D/g, '');
-        if (!phone) {
-            alert("El restaurante no ha configurado un número de WhatsApp.");
-            return;
+        if (!phone) { alert('El restaurante no ha configurado un número de WhatsApp.'); return; }
+
+        setSubmitting(true);
+        try {
+            let message = `*NUEVO PEDIDO* \uD83C\uDF54\n`;
+            message += `Hola, me gustaría hacer el siguiente pedido:\n\n`;
+            cart.forEach(item => {
+                message += `- ${item.quantity}x ${item.productName} (${config.currency} ${item.subtotal.toFixed(2)})\n`;
+            });
+            message += `\n*Subtotal:* ${config.currency} ${subtotal.toFixed(2)}\n`;
+            if (orderType === 'delivery') message += `*Costo de Envío:* ${config.currency} ${deliveryCost.toFixed(2)}\n`;
+            message += `*Total:* ${config.currency} ${total.toFixed(2)}\n\n`;
+            message += `*Tipo de Pedido:* ${orderType === 'dine-in' ? 'Para Consumir (Mesa ' + tableNumber + ')'
+                : orderType === 'pickup' ? 'Para Recoger' : 'Delivery'
+                }\n`;
+            if (orderType !== 'dine-in') message += `*Nombre:* ${customerName}\n`;
+            if (orderType === 'delivery') message += `*Dirección:* ${customerAddress}\n`;
+            message += `*Método de Pago:* ${paymentMethod.toUpperCase()}\n`;
+
+            const encodedMessage = encodeURIComponent(message);
+            const whatsappUrl = `https://wa.me/${phone}?text=${encodedMessage}`;
+
+            // Also create Firestore notification so staff is alerted
+            await createDigitalOrder({
+                restaurantId: tenant.id,
+                type: 'whatsapp',
+                orderType,
+                items: cart,
+                customerName: customerName.trim() || "",
+                total,
+                currency: config.currency || 'S/',
+            });
+
+            localStorage.removeItem(`cart_${tenant.id}`);
+            window.open(whatsappUrl, '_blank');
+            setSent('whatsapp');
+            setTimeout(() => navigate(`/${restaurantSlug}/menu${tableNumber ? `/${tableNumber}` : ''}`), 2500);
+        } catch (e) {
+            console.error(e);
+            alert('Error al enviar el pedido.');
+        } finally {
+            setSubmitting(false);
         }
-
-        let message = `*NUEVO PEDIDO* 🍔\n`;
-        message += `Hola, me gustaría hacer el siguiente pedido:\n\n`;
-
-        cart.forEach(item => {
-            message += `- ${item.quantity}x ${item.productName} (${config.currency} ${item.subtotal.toFixed(2)})\n`;
-        });
-
-        message += `\n*Subtotal:* ${config.currency} ${subtotal.toFixed(2)}\n`;
-
-        if (orderType === 'delivery') {
-            message += `*Costo de Envío:* ${config.currency} ${deliveryCost.toFixed(2)}\n`;
-        }
-
-        message += `*Total:* ${config.currency} ${total.toFixed(2)}\n\n`;
-
-        message += `*Tipo de Pedido:* ${orderType === 'dine-in' ? 'Para Consumir (Mesa ' + tableNumber + ')' :
-            orderType === 'pickup' ? 'Para Recoger' : 'Delivery'
-            }\n`;
-
-        if (orderType !== 'dine-in') {
-            message += `*Nombre:* ${customerName}\n`;
-        }
-
-        if (orderType === 'delivery') {
-            message += `*Dirección:* ${customerAddress}\n`;
-        }
-
-        message += `*Método de Pago:* ${paymentMethod.toUpperCase()}\n`;
-
-        const encodedMessage = encodeURIComponent(message);
-        const whatsappUrl = `https://wa.me/${phone}?text=${encodedMessage}`;
-
-        // Clear cart
-        localStorage.removeItem(`cart_${tenant.id}`);
-
-        // Redirect to WhatsApp
-        window.open(whatsappUrl, '_blank');
-        navigate(`/${restaurantSlug}/menu${tableNumber ? `/${tableNumber}` : ''}`);
     };
+
+    // ── Success screens ────────────────────────────────────────────────────────
+    if (sent === 'table') {
+        return (
+            <div style={{
+                minHeight: '100vh', display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center',
+                background: '#f0fdf4', padding: '2rem', textAlign: 'center'
+            }}>
+                <CheckCircle2 size={72} color="#16a34a" strokeWidth={1.5} />
+                <h2 style={{ marginTop: '1.5rem', fontWeight: 800, color: '#14532d' }}>
+                    ¡Pedido Enviado a la Mesa!
+                </h2>
+                <p style={{ color: '#16a34a', fontWeight: 600, marginTop: '0.5rem' }}>
+                    El mozo recibirá tu pedido en un momento.
+                </p>
+            </div>
+        );
+    }
+
+    if (sent === 'whatsapp') {
+        return (
+            <div style={{
+                minHeight: '100vh', display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center',
+                background: '#f0fdf4', padding: '2rem', textAlign: 'center'
+            }}>
+                <CheckCircle2 size={72} color="#25d366" strokeWidth={1.5} />
+                <h2 style={{ marginTop: '1.5rem', fontWeight: 800, color: '#14532d' }}>
+                    ¡Pedido Enviado por WhatsApp!
+                </h2>
+                <p style={{ color: '#16a34a', fontWeight: 600, marginTop: '0.5rem' }}>
+                    El personal ha sido notificado también.
+                </p>
+            </div>
+        );
+    }
 
     return (
         <div className={styles.page}>
@@ -161,6 +230,16 @@ export function DigitalCheckoutPage() {
                             />
                         </div>
                     )}
+                    {orderType === 'dine-in' && (
+                        <div className={styles.formGroup}>
+                            <Input
+                                label="Nombre (Opcional)"
+                                value={customerName}
+                                onChange={(e) => setCustomerName(e.target.value)}
+                                placeholder="Para que el mozo te llame"
+                            />
+                        </div>
+                    )}
                     {orderType === 'delivery' && (
                         <div className={styles.formGroup}>
                             <Input
@@ -170,11 +249,6 @@ export function DigitalCheckoutPage() {
                                 placeholder="Ej. Av. Principal 123"
                                 required
                             />
-                        </div>
-                    )}
-                    {orderType === 'dine-in' && !tableNumber && (
-                        <div className={styles.formGroup}>
-                            <p style={{ color: '#888', fontSize: '0.9rem' }}>Estás pidiendo para consumir en el local pero no escaseaste un QR de mesa. Por favor, avísale al mozo tu número de mesa.</p>
                         </div>
                     )}
                 </section>
@@ -247,15 +321,38 @@ export function DigitalCheckoutPage() {
                 </section>
             </main>
 
-            <footer className={styles.footer}>
-                <Button
-                    className={styles.submitBtn}
-                    onClick={handleSendOrder}
-                    disabled={cart.length === 0}
-                >
-                    <MessageCircle size={20} />
-                    Enviar Pedido por WhatsApp
-                </Button>
+            <footer className={styles.footer} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {/* Flujo A: botón primario para mesa */}
+                {tableNumber && orderType === 'dine-in' && (
+                    <Button
+                        className={styles.submitBtn}
+                        onClick={handleSendToTable}
+                        disabled={cart.length === 0 || submitting}
+                        style={{
+                            background: 'var(--primary-color)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'
+                        }}
+                    >
+                        <Utensils size={20} />
+                        {submitting ? 'Enviando...' : '\uD83C\uDF7D\uFE0F Confirmar Pedido a la Mesa'}
+                    </Button>
+                )}
+
+                {/* Flujo B: WhatsApp (siempre disponible para pickup/delivery, secundario para mesa) */}
+                {(orderType !== 'dine-in' || !tableNumber) && (
+                    <Button
+                        className={styles.submitBtn}
+                        onClick={handleSendOrder}
+                        disabled={cart.length === 0 || submitting}
+                        style={{
+                            background: '#25d366',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'
+                        }}
+                    >
+                        <MessageCircle size={20} />
+                        {submitting ? 'Enviando...' : 'Enviar Pedido por WhatsApp'}
+                    </Button>
+                )}
             </footer>
         </div>
     );
