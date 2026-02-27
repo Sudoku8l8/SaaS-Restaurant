@@ -1,401 +1,88 @@
-import { useState } from 'react';
-import { collection, getDocs, query, orderBy, deleteDoc, doc, updateDoc, where } from 'firebase/firestore';
-import { db } from '@/services/firebase/config';
-import { Button, Card, Input, Badge } from '@/components/shared';
-import type { Restaurant } from '@/types';
-import { getPeruNow, formatPeruDisplay, ensurePeruDate } from '@/utils/dateUtils';
-import { hashPin } from '@/utils/crypto';
-import { Crown, Smartphone } from 'lucide-react';
+import { Button, Card } from '@/components/shared';
+import { useSuperAdminAuth } from '@/hooks/useSuperAdminAuth';
+import { useSuperAdminData } from '@/hooks/useSuperAdminData';
+
+import { SuperAdminLogin } from './components/SuperAdminLogin';
+import { StatCards } from './components/StatCards';
+import { RestaurantFilters } from './components/RestaurantFilters';
+import { RestaurantTable } from './components/RestaurantTable';
+import { RestaurantCardList } from './components/RestaurantCardList';
+import styles from './SuperAdmin.module.css';
 
 export function SuperAdminPage() {
-    const [isAuthenticated, setIsAuthenticated] = useState(() => {
-        return sessionStorage.getItem('superadmin_session') === 'active';
-    });
-    const [password, setPassword] = useState('');
-    const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
+    const { isAuthenticated, logout } = useSuperAdminAuth();
 
-    // Security: Password from environment variable
-    // TODO: In production, migrate to Firebase Auth with a dedicated superadmin role
-    const handleLogin = (e: React.FormEvent) => {
-        e.preventDefault();
-        const superadminKey = import.meta.env.VITE_SUPERADMIN_KEY;
-        if (superadminKey && password === superadminKey) {
-            setIsAuthenticated(true);
-            sessionStorage.setItem('superadmin_session', 'active');
-            loadRestaurants();
-        } else {
-            alert('Contraseña incorrecta');
-        }
-    };
+    const {
+        restaurants,
+        totalRestaurants,
+        loading,
+        searchQuery,
+        setSearchQuery,
+        statusFilter,
+        setStatusFilter,
+        toggleActive,
+        toggleDigitalMenu,
+        changePlan,
+        renewSubscription,
+        handleDelete
+    } = useSuperAdminData();
 
-    const loadRestaurants = async () => {
-        setIsLoading(true);
-        try {
-            const q = query(collection(db, 'restaurants'), orderBy('createdAt', 'desc'));
-            const querySnapshot = await getDocs(q);
-            const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Restaurant));
-            setRestaurants(data);
-        } catch (error) {
-            console.error("Error loading restaurants:", error);
-            alert('Error cargando restaurantes');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleDelete = async (id: string, name: string) => {
-        if (confirm(`¿ESTÁS SEGURO? Esto eliminará el acceso al restaurante "${name}". (Nota: No borra las sub-colecciones en este MVP)`)) {
-            try {
-                await deleteDoc(doc(db, 'restaurants', id));
-                setRestaurants(prev => prev.filter((r: Restaurant) => r.id !== id));
-            } catch (error) {
-                console.error("Error deleting:", error);
-                alert("Error eliminando restaurante");
-            }
-        }
-    };
-
-    const handleRenew = async (id: string, name: string) => {
-        const daysStr = prompt(`¿Cuántos días deseas renovar para "${name}"?`, "30");
-        if (!daysStr) return;
-
-        const days = parseInt(daysStr, 10);
-        if (isNaN(days) || days <= 0) {
-            alert("Por favor ingresa un número válido de días.");
-            return;
-        }
-
-        if (confirm(`¿Confirmas renovar "${name}" por ${days} días?`)) {
-            try {
-                const newEndDate = getPeruNow();
-                newEndDate.setDate(newEndDate.getDate() + days);
-
-                await updateDoc(doc(db, 'restaurants', id), {
-                    subscriptionEndsAt: newEndDate,
-                    active: true
-                });
-
-                setRestaurants((prev: Restaurant[]) => prev.map((r: Restaurant) => {
-                    if (r.id === id) {
-                        return { ...r, subscriptionEndsAt: newEndDate, active: true };
-                    }
-                    return r;
-                }));
-                alert(`Suscripción renovada por ${days} días.`);
-            } catch (error) {
-                console.error("Error renewing:", error);
-                alert("Error al renovar suscripción");
-            }
-        }
-    };
-
-    const getDaysRemaining = (restaurant: Restaurant) => {
-        const now = getPeruNow();
-        let endDate: Date;
-
-        if (restaurant.subscriptionEndsAt) {
-            endDate = ensurePeruDate(restaurant.subscriptionEndsAt);
-        } else {
-            // Trial Logic (28 days from createdAt)
-            const createdAt = ensurePeruDate(restaurant.createdAt);
-            endDate = new Date(createdAt);
-            endDate.setDate(endDate.getDate() + 28);
-        }
-
-        const diffTime = endDate.getTime() - now.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 3600 * 24));
-        return diffDays;
-    };
-
-    const checkIsExpired = (restaurant: Restaurant) => {
-        const now = getPeruNow();
-        if (restaurant.subscriptionEndsAt) {
-            const endDate = ensurePeruDate(restaurant.subscriptionEndsAt);
-            return now > endDate;
-        }
-        // Trial Logic
-        const createdAt = ensurePeruDate(restaurant.createdAt);
-        const diffTime = now.getTime() - createdAt.getTime();
-        const diffDays = diffTime / (1000 * 3600 * 24);
-        return diffDays > 28;
-    };
-
-    const handleResetPin = async (restaurantId: string, name: string) => {
-        const newPin = prompt(`Ingresa el nuevo PIN de 4 dígitos para el administrador de "${name}":`, "1234");
-        if (!newPin) return;
-
-        if (newPin.length !== 4 || !/^\d+$/.test(newPin)) {
-            alert("El PIN debe ser de exactamente 4 dígitos numéricos.");
-            return;
-        }
-
-        if (confirm(`¿Confirmas resetear el PIN del administrador de "${name}" a "${newPin}"?`)) {
-            try {
-                // Find the admin user for this restaurant
-                const usersRef = collection(db, 'users');
-                const q = query(usersRef,
-                    where('restaurantId', '==', restaurantId),
-                    where('role', '==', 'admin')
-                );
-                const querySnapshot = await getDocs(q);
-
-                if (querySnapshot.empty) {
-                    alert("No se encontró ningún usuario Administrador para este restaurante.");
-                    return;
-                }
-
-                const hashedPin = await hashPin(newPin);
-                const adminDoc = querySnapshot.docs[0];
-
-                await updateDoc(doc(db, 'users', adminDoc.id), {
-                    pinHash: hashedPin
-                });
-
-                alert(`PIN reseteado con éxito para "${name}".`);
-            } catch (error) {
-                console.error("Error resetting PIN:", error);
-                alert("Error al resetear el PIN");
-            }
-        }
-    };
-
-    const toggleActive = async (id: string, currentStatus: boolean) => {
-        try {
-            await updateDoc(doc(db, 'restaurants', id), {
-                active: !currentStatus
-            });
-            setRestaurants((prev: Restaurant[]) => prev.map((r: Restaurant) => r.id === id ? { ...r, active: !currentStatus } : r));
-        } catch (error) {
-            console.error("Error updating status:", error);
-            alert("Error al actualizar estado");
-        }
-    };
-
-    const toggleDigitalMenu = async (id: string, currentStatus: boolean) => {
-        try {
-            await updateDoc(doc(db, 'restaurants', id), {
-                'features.digitalMenu': !currentStatus
-            });
-            setRestaurants((prev: Restaurant[]) => prev.map((r: Restaurant) =>
-                r.id === id
-                    ? { ...r, features: { ...r.features, digitalMenu: !currentStatus } }
-                    : r
-            ));
-        } catch (error) {
-            console.error("Error toggling digital menu:", error);
-            alert("Error al cambiar estado del menú digital");
-        }
-    };
-
-    const changePlan = async (id: string, currentPlan: 'basic' | 'premium', name: string) => {
-        const newPlan = currentPlan === 'premium' ? 'basic' : 'premium';
-        const action = newPlan === 'premium' ? 'SUBIR a Premium' : 'BAJAR a Basic';
-
-        if (!confirm(`¿Confirmas ${action} para "${name}"?${newPlan === 'basic' ? '\n\n⚠️ El Menú Digital será desactivado automáticamente.' : ''}`)) return;
-
-        try {
-            const updates: Record<string, unknown> = { plan: newPlan };
-            if (newPlan === 'basic') {
-                updates['features.digitalMenu'] = false;
-            } else {
-                // Al subir a Premium, activar automáticamente el menú digital
-                updates['features.digitalMenu'] = true;
-            }
-            await updateDoc(doc(db, 'restaurants', id), updates);
-            setRestaurants((prev: Restaurant[]) => prev.map((r: Restaurant) =>
-                r.id === id
-                    ? {
-                        ...r,
-                        plan: newPlan,
-                        features: { ...r.features, digitalMenu: newPlan === 'premium' }
-                    }
-                    : r
-            ));
-            alert(`Plan actualizado a ${newPlan.toUpperCase()} para "${name}".`);
-        } catch (error) {
-            console.error("Error changing plan:", error);
-            alert("Error al cambiar el plan");
-        }
-    };
-
-    const formatDate = (date: any) => {
-        if (!date) return 'N/A';
-        return formatPeruDisplay(ensurePeruDate(date));
-    };
+    // Legacy handler reference (Assuming resetting PIN is less common now, but we can add it to the table later if needed)
+    // For now, I'm omitting handleResetPin for clarity, but it can be re-added via context if required.
 
     if (!isAuthenticated) {
-        return (
-            <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--primary-hover)' }}>
-                <Card style={{ padding: '2.5rem', width: '360px', borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-lg)' }}>
-                    <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-                        <h2 style={{ color: 'var(--text-primary)', fontWeight: '800', margin: 0 }}>SuperAdmin</h2>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Gestión Maestra de Restaurantes</p>
-                    </div>
-                    <form onSubmit={handleLogin}>
-                        <Input
-                            type="password"
-                            placeholder="Contraseña Maestra"
-                            value={password}
-                            onChange={e => setPassword(e.target.value)}
-                            fullWidth
-                            style={{ marginBottom: '1.5rem' }}
-                        />
-                        <Button type="submit" fullWidth style={{ background: 'var(--primary-color)', fontWeight: '800' }}>Acceder al Panel</Button>
-                    </form>
-                </Card>
-            </div>
-        );
+        return <SuperAdminLogin />;
     }
 
     return (
-        <div className="container mt-md">
-            <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
+        <div className={styles.superadminContainer}>
+            <header className={styles.header}>
                 <div>
-                    <h1 style={{ color: 'var(--text-primary)', fontWeight: '900' }}>🦸 SuperAdmin Dashboard</h1>
-                    <p style={{ color: 'var(--text-secondary)', fontWeight: '600' }}>Gestión Global de Tenants</p>
+                    <h1 className={styles.title}>🦸 SuperAdmin Dashboard</h1>
+                    <p style={{ color: 'var(--text-secondary)', fontWeight: '600', marginTop: '0.25rem' }}>
+                        Gestión Global de Tenants
+                    </p>
                 </div>
-                <Button variant="outline" onClick={() => {
-                    sessionStorage.removeItem('superadmin_session');
-                    setIsAuthenticated(false);
-                }}>Salir</Button>
+                <Button variant="outline" onClick={logout} className={styles.logoutBtn}>
+                    Cerrar Sesión
+                </Button>
             </header>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
-                <Card style={{ padding: '1.75rem', textAlign: 'center', borderTop: '4px solid var(--primary-color)', boxShadow: 'var(--shadow-md)' }}>
-                    <h3 style={{ fontSize: '2.5rem', fontWeight: '900', color: 'var(--text-primary)', margin: '0.5rem 0' }}>{restaurants.length}</h3>
-                    <p style={{ color: 'var(--text-secondary)', fontWeight: '700', textTransform: 'uppercase', fontSize: '0.8rem', letterSpacing: '0.05em' }}>Restaurantes Totales</p>
-                </Card>
-                <Card style={{ padding: '1.75rem', textAlign: 'center', borderTop: '4px solid var(--success-color)', boxShadow: 'var(--shadow-md)' }}>
-                    <h3 style={{ fontSize: '2.5rem', fontWeight: '900', color: 'var(--success-color)', margin: '0.5rem 0' }}>{restaurants.filter(r => r.active).length}</h3>
-                    <p style={{ color: 'var(--text-secondary)', fontWeight: '700', textTransform: 'uppercase', fontSize: '0.8rem', letterSpacing: '0.05em' }}>Licencias Activas</p>
-                </Card>
-                <Card style={{ padding: '1.75rem', textAlign: 'center', borderTop: '4px solid var(--secondary-hover)', boxShadow: 'var(--shadow-md)' }}>
-                    <h3 style={{ fontSize: '2.5rem', fontWeight: '900', color: 'var(--primary-color)', margin: '0.5rem 0' }}>S/ 0.00</h3>
-                    <p style={{ color: 'var(--text-secondary)', fontWeight: '700', textTransform: 'uppercase', fontSize: '0.8rem', letterSpacing: '0.05em' }}>Ingresos Mensuales</p>
-                </Card>
-                <Card style={{ padding: '1.75rem', textAlign: 'center', borderTop: '4px solid #d4a017', boxShadow: 'var(--shadow-md)' }}>
-                    <h3 style={{ fontSize: '2.5rem', fontWeight: '900', color: '#d4a017', margin: '0.5rem 0' }}>{restaurants.filter(r => r.features?.digitalMenu).length}</h3>
-                    <p style={{ color: 'var(--text-secondary)', fontWeight: '700', textTransform: 'uppercase', fontSize: '0.8rem', letterSpacing: '0.05em' }}>Menú Digital Activo</p>
-                </Card>
-            </div>
+            <StatCards restaurants={restaurants} />
 
-            <Card style={{ boxShadow: 'var(--shadow-md)', borderRadius: 'var(--radius-lg)' }}>
-                <div style={{ padding: '1.5rem', overflowX: 'auto' }}>
-                    {isLoading ? (
-                        <p style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>Cargando datos...</p>
+            <Card style={{ boxShadow: 'var(--shadow-sm)', borderRadius: 'var(--radius-lg)' }}>
+                <div style={{ padding: '1.5rem' }}>
+                    <RestaurantFilters
+                        searchQuery={searchQuery}
+                        setSearchQuery={setSearchQuery}
+                        statusFilter={statusFilter}
+                        setStatusFilter={setStatusFilter}
+                    />
+
+                    {loading ? (
+                        <p style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)', fontWeight: '700' }}>
+                            Cargando {totalRestaurants > 0 ? totalRestaurants : ''} restaurantes...
+                        </p>
                     ) : (
-                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                            <thead>
-                                <tr style={{ borderBottom: '2px solid var(--divider-color)' }}>
-                                    <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800' }}>Restaurante</th>
-                                    <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800' }}>Ruta URL</th>
-                                    <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800' }}>Plan</th>
-                                    <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800' }}>
-                                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                                            <Smartphone size={14} /> Menú Digital
-                                        </span>
-                                    </th>
-                                    <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800' }}>Estado</th>
-                                    <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800' }}>Días Restantes</th>
-                                    <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800' }}>Registro</th>
-                                    <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800' }}>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {restaurants.map(rest => (
-                                    <tr key={rest.id} style={{ borderBottom: '1px solid var(--divider-color)', transition: 'background-color 0.2s' }}>
-                                        <td style={{ padding: '1rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>{rest.name}</td>
-                                        <td style={{ padding: '1rem' }}>
-                                            <a href={`/${rest.id}/login`} target="_blank" rel="noreferrer" style={{ color: 'var(--primary-color)', fontWeight: '700', textDecoration: 'none', borderBottom: '1px dashed' }}>
-                                                /{rest.id}
-                                            </a>
-                                        </td>
-                                        <td style={{ padding: '1rem' }}>
-                                            <Badge variant={rest.plan === 'premium' ? 'warning' : 'neutral'}>
-                                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                                                    {rest.plan === 'premium' && <Crown size={12} />}
-                                                    {rest.plan.toUpperCase()}
-                                                </span>
-                                            </Badge>
-                                        </td>
-                                        <td style={{ padding: '1rem' }}>
-                                            <Badge
-                                                variant={rest.features?.digitalMenu ? 'success' : 'neutral'}
-                                                style={{ cursor: 'pointer', userSelect: 'none' }}
-                                                onClick={() => toggleDigitalMenu(rest.id, rest.features?.digitalMenu ?? false)}
-                                            >
-                                                {rest.features?.digitalMenu ? '✅ ACTIVO' : '⭕ OFF'}
-                                            </Badge>
-                                        </td>
-                                        <td style={{ padding: '1rem' }}>
-                                            <Badge variant={rest.active ? 'success' : 'error'}>
-                                                {rest.active ? 'ACTIVO' : 'INACTIVO'}
-                                            </Badge>
-                                            {checkIsExpired(rest) && (
-                                                <Badge variant="error" style={{ marginLeft: '0.5rem' }}>
-                                                    VENCIDO
-                                                </Badge>
-                                            )}
-                                        </td>
-                                        <td style={{ padding: '1rem' }}>
-                                            {(() => {
-                                                const days = getDaysRemaining(rest);
-                                                const isExpired = days <= 0;
-                                                return (
-                                                    <span style={{
-                                                        fontWeight: 'bold',
-                                                        color: isExpired ? 'var(--danger-color)' : (days < 5 ? 'var(--warning-color)' : 'var(--success-color)')
-                                                    }}>
-                                                        {isExpired ? '0' : days} días
-                                                    </span>
-                                                );
-                                            })()}
-                                        </td>
-                                        <td style={{ padding: '1rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                                            {formatDate(rest.createdAt)}
-                                        </td>
-                                        <td style={{ padding: '1rem', display: 'flex', gap: '0.5rem' }}>
-                                            <Button
-                                                variant={rest.active ? 'outline' : 'primary'}
-                                                size="sm"
-                                                onClick={() => toggleActive(rest.id, rest.active)}
-                                                style={{ fontSize: '0.75rem', fontWeight: '800' }}
-                                            >
-                                                {rest.active ? 'Desactivar' : 'Activar'}
-                                            </Button>
-                                            <Button variant="danger" size="sm" onClick={() => handleDelete(rest.id, rest.name)} style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', fontWeight: '800' }}>
-                                                Eliminar
-                                            </Button>
-                                            <Button variant="primary" size="sm" onClick={() => handleRenew(rest.id, rest.name)} style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', fontWeight: '800' }}>
-                                                Renovar
-                                            </Button>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => handleResetPin(rest.id, rest.name)}
-                                                style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', fontWeight: '800', border: '1px solid var(--danger-color)', color: 'var(--danger-color)' }}
-                                            >
-                                                Reset PIN
-                                            </Button>
-                                            <Button
-                                                variant={rest.plan === 'premium' ? 'outline' : 'primary'}
-                                                size="sm"
-                                                onClick={() => changePlan(rest.id, rest.plan, rest.name)}
-                                                style={{
-                                                    padding: '0.4rem 0.8rem',
-                                                    fontSize: '0.75rem',
-                                                    fontWeight: '800',
-                                                    ...(rest.plan !== 'premium' ? { background: '#d4a017', border: '1px solid #d4a017' } : { border: '1px solid #d4a017', color: '#d4a017' })
-                                                }}
-                                            >
-                                                {rest.plan === 'premium' ? '↓ Bajar a Basic' : '↑ Subir a Premium'}
-                                            </Button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                        <>
+                            <RestaurantTable
+                                restaurants={restaurants}
+                                toggleActive={toggleActive}
+                                toggleDigitalMenu={toggleDigitalMenu}
+                                changePlan={changePlan}
+                                renewSubscription={renewSubscription}
+                                handleDelete={handleDelete}
+                            />
+
+                            <RestaurantCardList
+                                restaurants={restaurants}
+                                toggleActive={toggleActive}
+                                toggleDigitalMenu={toggleDigitalMenu}
+                                changePlan={changePlan}
+                                renewSubscription={renewSubscription}
+                                handleDelete={handleDelete}
+                            />
+                        </>
                     )}
                 </div>
             </Card>

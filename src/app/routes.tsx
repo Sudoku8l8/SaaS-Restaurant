@@ -22,13 +22,18 @@ import { TenantProvider } from '@/app/providers/TenantProvider';
 import { Outlet } from 'react-router-dom';
 
 import { SuperAdminPage } from '@/pages/SuperAdmin/SuperAdminPage';
+import { SuperAdminAuthProvider } from '@/hooks/useSuperAdminAuth';
 import { TermsPage } from '@/pages/Public/TermsPage';
 import { PrivacyPage } from '@/pages/Public/PrivacyPage';
 
 export const router = createBrowserRouter([
     {
         path: '/superadmin',
-        element: <SuperAdminPage />,
+        element: (
+            <SuperAdminAuthProvider>
+                <SuperAdminPage />
+            </SuperAdminAuthProvider>
+        ),
     },
     {
         path: '/terminos',
