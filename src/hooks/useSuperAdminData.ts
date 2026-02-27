@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { collection, getDocs, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/services/firebase/config';
 import type { Restaurant } from '@/types';
@@ -19,8 +19,8 @@ export function useSuperAdminData() {
             });
             // Sort by created date descending (newest first)
             data.sort((a, b) => {
-                const dateA = a.createdAt?.seconds || 0;
-                const dateB = b.createdAt?.seconds || 0;
+                const dateA = (a.createdAt as any)?.seconds || 0;
+                const dateB = (b.createdAt as any)?.seconds || 0;
                 return dateB - dateA;
             });
             setRestaurants(data);
@@ -86,7 +86,7 @@ export function useSuperAdminData() {
     };
 
     const renewSubscription = async (id: string) => {
-        const daysStr = window.prompt("¿Cuántos días quieres agregar a la suscripción?");
+        const daysStr = window.prompt("¿Cuántos días quieres agregar a la suscripción?", "30");
         if (!daysStr) return;
         const days = parseInt(daysStr, 10);
         if (isNaN(days) || days <= 0) {
@@ -100,7 +100,7 @@ export function useSuperAdminData() {
 
             let newDate = new Date(); // From today
             if (currentDoc.subscriptionEndsAt) {
-                const currentEnd = new Date(currentDoc.subscriptionEndsAt.seconds ? currentDoc.subscriptionEndsAt.seconds * 1000 : currentDoc.subscriptionEndsAt);
+                const currentEnd = new Date((currentDoc.subscriptionEndsAt as any).seconds ? (currentDoc.subscriptionEndsAt as any).seconds * 1000 : currentDoc.subscriptionEndsAt);
                 if (currentEnd > new Date()) {
                     newDate = currentEnd; // Add to existing time if not expired
                 }

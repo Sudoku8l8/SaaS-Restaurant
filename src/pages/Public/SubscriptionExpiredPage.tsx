@@ -1,7 +1,9 @@
 import { AlertOctagon, Phone } from 'lucide-react';
 import { Card, Button } from '@/components/shared';
 
-export function SubscriptionExpiredPage() {
+export function SubscriptionExpiredPage({ error }: { error?: string }) {
+    const isInactive = error?.includes('INACTIVO');
+
     return (
         <div style={{
             minHeight: '100vh',
@@ -28,7 +30,7 @@ export function SubscriptionExpiredPage() {
                     justifyContent: 'center',
                     margin: '0 auto 2rem'
                 }}>
-                    <AlertOctagon size={48} color="var(--danger-color)" />
+                    {isInactive ? <AlertOctagon size={48} color="var(--danger-color)" /> : <AlertOctagon size={48} color="var(--danger-color)" />}
                 </div>
 
                 <h1 style={{
@@ -37,7 +39,7 @@ export function SubscriptionExpiredPage() {
                     marginBottom: '1rem',
                     color: 'var(--text-primary)'
                 }}>
-                    Plan Finalizado
+                    {isInactive ? 'Acceso Suspendido' : 'Plan Finalizado'}
                 </h1>
 
                 <p style={{
@@ -45,9 +47,7 @@ export function SubscriptionExpiredPage() {
                     lineHeight: '1.6',
                     marginBottom: '2rem'
                 }}>
-                    El periodo de prueba o suscripción de este restaurante ha vencido.
-                    Para continuar disfrutando del servicio y recuperar el acceso inmediato,
-                    por favor contacte a su administrador.
+                    {error || 'El periodo de prueba o suscripción de este restaurante ha vencido. Para continuar disfrutando del servicio y recuperar el acceso inmediato, por favor contacte a su administrador.'}
                 </p>
 
                 <div style={{

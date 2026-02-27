@@ -5,6 +5,8 @@ import { db } from '@/services/firebase/config';
 import type { Restaurant } from '@/types';
 import { SubscriptionExpiredPage } from '@/pages/Public/SubscriptionExpiredPage';
 
+import { getPeruNow } from '@/utils/dateUtils';
+
 interface TenantContextType {
     tenant: Restaurant | null;
     isLoading: boolean;
@@ -41,9 +43,17 @@ export function TenantProvider({ children }: { children: ReactNode }) {
                 const data = docSnap.data();
                 const restaurantData = { id: docSnap.id, ...data } as Restaurant;
 
-                // Check logic for expiration
+                // 1. Check if manually deactivated
+                if (data.active === false) {
+                    setTenant(null);
+                    setError('ESTE RESTAURANTE ESTÁ INACTIVO. El servicio ha sido suspendido por el administrador.');
+                    setIsLoading(false);
+                    return;
+                }
+
+                // 2. Check for expiration
                 let isExpired = false;
-                const now = new Date();
+                const now = getPeruNow();
 
                 if (data.subscriptionEndsAt) {
                     const endDate = data.subscriptionEndsAt.seconds ? new Date(data.subscriptionEndsAt.seconds * 1000) : new Date(data.subscriptionEndsAt);
@@ -58,7 +68,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 
                 if (isExpired) {
                     setTenant(null);
-                    setError('EL PERIODO DE PRUEBA HA TERMINADO. Contacte a soporte.');
+                    setError('LA SUSCRIPCIÓN HA VENCIDO. Para continuar usando el servicio debe renovar su plan.');
                 } else {
                     setTenant(restaurantData);
                     setError(null);
@@ -80,8 +90,8 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 
     // ... (existing code)
 
-    if (error === 'EL PERIODO DE PRUEBA HA TERMINADO. Contacte a soporte.') {
-        return <SubscriptionExpiredPage />;
+    if (error !== null) {
+        return <SubscriptionExpiredPage error={error} />;
     }
 
     return (
