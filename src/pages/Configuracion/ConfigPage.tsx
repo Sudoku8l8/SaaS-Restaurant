@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Utensils, Users, LayoutGrid, ArrowLeft, FolderKanban, Printer, Globe, Shield, Settings } from 'lucide-react';
+import { Utensils, Users, LayoutGrid, ArrowLeft, FolderKanban, Printer, Globe, Shield, Settings, Crown } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/shared';
+import { useTenant } from '@/app/providers/TenantProvider';
 
 import { ProductsTab } from '@/components/features/ProductsTab';
 import { UsersTab } from '@/components/features/UsersTab';
@@ -11,6 +12,7 @@ import { PrinterTab } from '@/components/features/PrinterTab';
 import { DigitalMenuConfigPage } from '@/pages/Configuracion/DigitalMenuConfigPage';
 import { SecurityTab } from '@/components/features/SecurityTab';
 import { GeneralTab } from '@/components/features/GeneralTab';
+import { PremiumUpgradeBanner } from '@/components/features/PremiumUpgradeBanner';
 
 import './ConfigPage.css';
 
@@ -20,6 +22,8 @@ export function ConfigPage() {
 
     const navigate = useNavigate();
     const { restaurantSlug } = useParams();
+    const { tenant } = useTenant();
+    const hasDigitalMenu = tenant?.features?.digitalMenu ?? false;
     const [activeTab, setActiveTab] = useState<Tab>('general');
 
 
@@ -85,6 +89,7 @@ export function ConfigPage() {
                     className="tab-btn"
                 >
                     <Globe size={18} /> Menú Digital
+                    {!hasDigitalMenu && <Crown size={14} style={{ color: '#d4a017', marginLeft: '0.25rem' }} />}
                 </Button>
                 <Button
                     variant={activeTab === 'security' ? 'primary' : 'ghost'}
@@ -103,7 +108,11 @@ export function ConfigPage() {
                 {activeTab === 'users' && <UsersTab />}
                 {activeTab === 'tables' && <TablesTab />}
                 {activeTab === 'printer' && <PrinterTab />}
-                {activeTab === 'menu' && <DigitalMenuConfigPage />}
+                {activeTab === 'menu' && (
+                    hasDigitalMenu
+                        ? <DigitalMenuConfigPage />
+                        : <PremiumUpgradeBanner feature="Menú Digital" />
+                )}
                 {activeTab === 'security' && <SecurityTab />}
             </div>
         </div>

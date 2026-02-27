@@ -218,6 +218,11 @@ export function DigitalMenuPage() {
 
     const { name, logo, config } = tenant;
 
+    // ── Gate: Digital menu feature must be enabled by SuperAdmin ──
+    if (!tenant.features?.digitalMenu) {
+        return <LegacyMenuView config={config} name={name} />;
+    }
+
     // ── Fallback to legacy view if native menu is not enabled ──
     if (!config?.menuNativeEnabled) {
         return <LegacyMenuView config={config} name={name} />;

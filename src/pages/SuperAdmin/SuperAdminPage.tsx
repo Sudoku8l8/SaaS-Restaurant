@@ -5,6 +5,7 @@ import { Button, Card, Input, Badge } from '@/components/shared';
 import type { Restaurant } from '@/types';
 import { getPeruNow, formatPeruDisplay, ensurePeruDate } from '@/utils/dateUtils';
 import { hashPin } from '@/utils/crypto';
+import { Crown, Smartphone } from 'lucide-react';
 
 export function SuperAdminPage() {
     const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -171,6 +172,53 @@ export function SuperAdminPage() {
         }
     };
 
+    const toggleDigitalMenu = async (id: string, currentStatus: boolean) => {
+        try {
+            await updateDoc(doc(db, 'restaurants', id), {
+                'features.digitalMenu': !currentStatus
+            });
+            setRestaurants((prev: Restaurant[]) => prev.map((r: Restaurant) =>
+                r.id === id
+                    ? { ...r, features: { ...r.features, digitalMenu: !currentStatus } }
+                    : r
+            ));
+        } catch (error) {
+            console.error("Error toggling digital menu:", error);
+            alert("Error al cambiar estado del menú digital");
+        }
+    };
+
+    const changePlan = async (id: string, currentPlan: 'basic' | 'premium', name: string) => {
+        const newPlan = currentPlan === 'premium' ? 'basic' : 'premium';
+        const action = newPlan === 'premium' ? 'SUBIR a Premium' : 'BAJAR a Basic';
+
+        if (!confirm(`¿Confirmas ${action} para "${name}"?${newPlan === 'basic' ? '\n\n⚠️ El Menú Digital será desactivado automáticamente.' : ''}`)) return;
+
+        try {
+            const updates: Record<string, unknown> = { plan: newPlan };
+            if (newPlan === 'basic') {
+                updates['features.digitalMenu'] = false;
+            } else {
+                // Al subir a Premium, activar automáticamente el menú digital
+                updates['features.digitalMenu'] = true;
+            }
+            await updateDoc(doc(db, 'restaurants', id), updates);
+            setRestaurants((prev: Restaurant[]) => prev.map((r: Restaurant) =>
+                r.id === id
+                    ? {
+                        ...r,
+                        plan: newPlan,
+                        features: { ...r.features, digitalMenu: newPlan === 'premium' }
+                    }
+                    : r
+            ));
+            alert(`Plan actualizado a ${newPlan.toUpperCase()} para "${name}".`);
+        } catch (error) {
+            console.error("Error changing plan:", error);
+            alert("Error al cambiar el plan");
+        }
+    };
+
     const formatDate = (date: any) => {
         if (!date) return 'N/A';
         return formatPeruDisplay(ensurePeruDate(date));
@@ -226,6 +274,10 @@ export function SuperAdminPage() {
                     <h3 style={{ fontSize: '2.5rem', fontWeight: '900', color: 'var(--primary-color)', margin: '0.5rem 0' }}>S/ 0.00</h3>
                     <p style={{ color: 'var(--text-secondary)', fontWeight: '700', textTransform: 'uppercase', fontSize: '0.8rem', letterSpacing: '0.05em' }}>Ingresos Mensuales</p>
                 </Card>
+                <Card style={{ padding: '1.75rem', textAlign: 'center', borderTop: '4px solid #d4a017', boxShadow: 'var(--shadow-md)' }}>
+                    <h3 style={{ fontSize: '2.5rem', fontWeight: '900', color: '#d4a017', margin: '0.5rem 0' }}>{restaurants.filter(r => r.features?.digitalMenu).length}</h3>
+                    <p style={{ color: 'var(--text-secondary)', fontWeight: '700', textTransform: 'uppercase', fontSize: '0.8rem', letterSpacing: '0.05em' }}>Menú Digital Activo</p>
+                </Card>
             </div>
 
             <Card style={{ boxShadow: 'var(--shadow-md)', borderRadius: 'var(--radius-lg)' }}>
@@ -239,6 +291,11 @@ export function SuperAdminPage() {
                                     <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800' }}>Restaurante</th>
                                     <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800' }}>Ruta URL</th>
                                     <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800' }}>Plan</th>
+                                    <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800' }}>
+                                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                            <Smartphone size={14} /> Menú Digital
+                                        </span>
+                                    </th>
                                     <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800' }}>Estado</th>
                                     <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800' }}>Días Restantes</th>
                                     <th style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '800' }}>Registro</th>
@@ -256,7 +313,19 @@ export function SuperAdminPage() {
                                         </td>
                                         <td style={{ padding: '1rem' }}>
                                             <Badge variant={rest.plan === 'premium' ? 'warning' : 'neutral'}>
-                                                {rest.plan.toUpperCase()}
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                                    {rest.plan === 'premium' && <Crown size={12} />}
+                                                    {rest.plan.toUpperCase()}
+                                                </span>
+                                            </Badge>
+                                        </td>
+                                        <td style={{ padding: '1rem' }}>
+                                            <Badge
+                                                variant={rest.features?.digitalMenu ? 'success' : 'neutral'}
+                                                style={{ cursor: 'pointer', userSelect: 'none' }}
+                                                onClick={() => toggleDigitalMenu(rest.id, rest.features?.digitalMenu ?? false)}
+                                            >
+                                                {rest.features?.digitalMenu ? '✅ ACTIVO' : '⭕ OFF'}
                                             </Badge>
                                         </td>
                                         <td style={{ padding: '1rem' }}>
@@ -308,6 +377,19 @@ export function SuperAdminPage() {
                                                 style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', fontWeight: '800', border: '1px solid var(--danger-color)', color: 'var(--danger-color)' }}
                                             >
                                                 Reset PIN
+                                            </Button>
+                                            <Button
+                                                variant={rest.plan === 'premium' ? 'outline' : 'primary'}
+                                                size="sm"
+                                                onClick={() => changePlan(rest.id, rest.plan, rest.name)}
+                                                style={{
+                                                    padding: '0.4rem 0.8rem',
+                                                    fontSize: '0.75rem',
+                                                    fontWeight: '800',
+                                                    ...(rest.plan !== 'premium' ? { background: '#d4a017', border: '1px solid #d4a017' } : { border: '1px solid #d4a017', color: '#d4a017' })
+                                                }}
+                                            >
+                                                {rest.plan === 'premium' ? '↓ Bajar a Basic' : '↑ Subir a Premium'}
                                             </Button>
                                         </td>
                                     </tr>

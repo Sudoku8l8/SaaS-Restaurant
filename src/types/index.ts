@@ -35,6 +35,14 @@ export type TableStatus = (typeof TableStatus)[keyof typeof TableStatus];
 
 // ========== INTERFACES ==========
 
+/** Feature flags controlled exclusively by SuperAdmin */
+export interface RestaurantFeatures {
+    digitalMenu?: boolean;   // Menú digital nativo habilitado
+    // Future features:
+    // advancedReports?: boolean;
+    // multiLocation?: boolean;
+}
+
 export interface Restaurant {
     id: string;
     name: string;
@@ -45,6 +53,7 @@ export interface Restaurant {
     active: boolean;
     createdAt: Date;
     subscriptionEndsAt?: Date;
+    features?: RestaurantFeatures;
     config?: RestaurantConfig;
 }
 

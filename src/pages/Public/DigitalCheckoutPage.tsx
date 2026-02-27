@@ -45,6 +45,12 @@ export function DigitalCheckoutPage() {
 
     const config = tenant.config;
 
+    // Gate: Digital menu feature must be enabled by SuperAdmin
+    if (!tenant.features?.digitalMenu) {
+        navigate(`/${restaurantSlug}/menu`);
+        return null;
+    }
+
     if (!config?.enableDigitalOrders) {
         return <div>Los pedidos digitales están desactivados.</div>;
     }
