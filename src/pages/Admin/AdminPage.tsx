@@ -121,10 +121,9 @@ export function AdminPage() {
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
-                        flexWrap: 'wrap',
                         gap: '1rem'
                     }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, minWidth: 0 }}>
                             <div style={{
                                 backgroundColor: 'var(--warning-color)',
                                 color: 'white',
@@ -133,13 +132,14 @@ export function AdminPage() {
                                 borderRadius: '50%',
                                 display: 'flex',
                                 alignItems: 'center',
-                                justifyContent: 'center'
+                                justifyContent: 'center',
+                                flexShrink: 0
                             }}>
                                 <AlertTriangle size={20} />
                             </div>
-                            <div>
+                            <div style={{ minWidth: 0 }}>
                                 <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1rem' }}>Alertas de Inventario</h4>
-                                <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                                <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                     {lowStockProducts.length} producto{lowStockProducts.length > 1 ? 's' : ''} con stock bajo o crítico.
                                 </p>
                             </div>
@@ -147,8 +147,8 @@ export function AdminPage() {
                         <Button
                             variant="primary"
                             size="sm"
-                            onClick={() => navigate(`/${restaurantSlug}/config`)}
-                            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: 'var(--warning-color)', color: '#000' }}
+                            onClick={() => navigate(`/${restaurantSlug}/inventario`)}
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: 'var(--warning-color)', color: '#000', flexShrink: 0, whiteSpace: 'nowrap' }}
                         >
                             Ver Inventario <ArrowRight size={16} />
                         </Button>
