@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { db } from '@/services/firebase/config';
 import { collection, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
 import { Button, Card, Input, Badge } from '@/components/shared';
-import { Edit2, Search, AlertTriangle, Eye, Clock, ShoppingBag } from 'lucide-react';
+import { Edit2, Search, AlertTriangle, Eye, Clock, ShoppingBag, Box, AlertCircle } from 'lucide-react';
 import type { Product } from '@/types';
 import { useProductMovements } from '@/hooks/useProductMovements';
 
@@ -101,119 +101,244 @@ export function InventoryTab() {
     });
 
     const getStockStatus = (actual: number = 0, minimo: number = 0) => {
-        if (actual === 0) return <Badge variant="error">Crítico</Badge>;
-        if (actual <= minimo) return <Badge variant="warning">Bajo</Badge>;
+        if (actual === 0) return <Badge variant="error">Sin Stock</Badge>;
+        if (actual <= minimo) return <Badge variant="warning">Bajo Stock</Badge>;
         return <Badge variant="success">Normal</Badge>;
     };
 
+    // Calculate Summary Stats
+    const stats = useMemo(() => {
+        let low = 0;
+        let critical = 0;
+
+        products.forEach(p => {
+            const actual = p.stockActual || 0;
+            const minimo = p.stockMinimo || 0;
+            if (actual === 0) {
+                critical++;
+            } else if (actual <= minimo) {
+                low++;
+            }
+        });
+
+        return {
+            total: products.length,
+            low,
+            critical
+        };
+    }, [products]);
+
     return (
         <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-                <div>
-                    <h2 style={{ margin: 0, fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        Inventario ({products.length} productos)
-                    </h2>
-                    <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                        Gestiona el stock de los productos con control activado.
-                    </p>
-                </div>
+            {/* Summary Cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+                <Card style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid var(--divider-color)', boxShadow: 'var(--shadow-sm)' }}>
+                    <div>
+                        <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 500 }}>Total Productos</p>
+                        <h3 style={{ margin: '0.5rem 0 0', fontSize: '2rem', color: 'var(--text-primary)' }}>{stats.total}</h3>
+                    </div>
+                    <div style={{ padding: '1rem', background: 'rgba(37, 99, 235, 0.1)', borderRadius: 'var(--radius-md)', color: 'var(--primary-color)' }}>
+                        <Box size={24} />
+                    </div>
+                </Card>
 
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                <Card style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid var(--divider-color)', boxShadow: 'var(--shadow-sm)' }}>
+                    <div>
+                        <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 500 }}>Stock Bajo</p>
+                        <h3 style={{ margin: '0.5rem 0 0', fontSize: '2rem', color: 'var(--text-primary)' }}>{stats.low}</h3>
+                    </div>
+                    <div style={{ padding: '1rem', background: '#fdf5f2', borderRadius: 'var(--radius-md)', color: 'var(--warning-color)' }}>
+                        <AlertTriangle size={24} />
+                    </div>
+                </Card>
+
+                <Card style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid var(--divider-color)', boxShadow: 'var(--shadow-sm)' }}>
+                    <div>
+                        <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 500 }}>Sin Existencias</p>
+                        <h3 style={{ margin: '0.5rem 0 0', fontSize: '2rem', color: 'var(--text-primary)' }}>{stats.critical}</h3>
+                    </div>
+                    <div style={{ padding: '1rem', background: '#fff1f2', borderRadius: 'var(--radius-md)', color: 'var(--danger-color)' }}>
+                        <AlertCircle size={24} />
+                    </div>
+                </Card>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+                <div style={{ flex: 1, minWidth: '300px', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
                     <div style={{
                         display: 'flex',
                         alignItems: 'center',
                         background: 'var(--surface-color)',
                         border: '1px solid var(--divider-color)',
                         borderRadius: 'var(--radius-md)',
-                        padding: '0.4rem 0.75rem',
-                        gap: '0.5rem'
+                        padding: '0.5rem 1rem',
+                        gap: '0.5rem',
+                        flex: 1,
+                        minWidth: '250px',
+                        boxShadow: 'var(--shadow-sm)'
                     }}>
-                        <Search size={16} color="var(--text-secondary)" />
+                        <Search size={18} color="var(--text-secondary)" />
                         <input
                             type="text"
-                            placeholder="Buscar producto..."
+                            placeholder="Buscar productos..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            style={{ border: 'none', background: 'transparent', outline: 'none', color: 'var(--text-primary)', width: '150px' }}
+                            style={{ border: 'none', background: 'transparent', outline: 'none', color: 'var(--text-primary)', width: '100%', fontSize: '0.95rem' }}
                         />
                     </div>
 
                     <select
                         style={{
-                            padding: '0.5rem 1rem',
+                            padding: '0.6rem 1rem',
                             borderRadius: 'var(--radius-md)',
                             border: '1px solid var(--divider-color)',
                             background: 'var(--surface-color)',
                             color: 'var(--text-primary)',
                             outline: 'none',
+                            fontSize: '0.95rem',
+                            boxShadow: 'var(--shadow-sm)'
                         }}
                         value={filterState}
                         onChange={(e) => setFilterState(e.target.value as any)}
                     >
                         <option value="all">Todos los estados</option>
                         <option value="low">Stock Bajo</option>
-                        <option value="critical">Stock Crítico</option>
+                        <option value="critical">Sin Existencias</option>
                     </select>
                 </div>
             </div>
 
-            <Card style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                    <thead>
-                        <tr style={{ borderBottom: '1px solid var(--divider-color)' }}>
-                            <th style={{ padding: '1rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Producto</th>
-                            <th style={{ padding: '1rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Categoría</th>
-                            <th style={{ padding: '1rem', color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'center' }}>Stock Actual</th>
-                            <th style={{ padding: '1rem', color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'center' }}>Stock Min.</th>
-                            <th style={{ padding: '1rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Estado</th>
-                            <th style={{ padding: '1rem', color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'right' }}>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredProducts.map(product => {
-                            const actual = product.stockActual || 0;
-                            const minimo = product.stockMinimo || 0;
-                            const isCritico = actual === 0;
+            {/* Desktop View */}
+            <div className="hidden-mobile">
+                <Card style={{ overflowX: 'auto', padding: '0', border: '1px solid var(--divider-color)', boxShadow: 'var(--shadow-sm)' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                        <thead>
+                            <tr style={{ borderBottom: '1px solid var(--divider-color)', background: '#f8fafc' }}>
+                                <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Producto</th>
+                                <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Categoría</th>
+                                <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' }}>Stock Actual</th>
+                                <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' }}>Stock Min.</th>
+                                <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Estado</th>
+                                <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'right' }}>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredProducts.map(product => {
+                                const actual = product.stockActual || 0;
+                                const minimo = product.stockMinimo || 0;
+                                const isCritico = actual === 0;
 
-                            return (
-                                <tr key={product.id} style={{ borderBottom: '1px solid var(--divider-color)', background: isCritico ? 'rgba(230, 57, 70, 0.05)' : 'transparent' }}>
-                                    <td style={{ padding: '1rem', fontWeight: 500 }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                            {isCritico && <AlertTriangle size={16} color="var(--danger-color)" />}
-                                            {product.name}
-                                        </div>
-                                    </td>
-                                    <td style={{ padding: '1rem', color: 'var(--text-secondary)' }}>{product.category}</td>
-                                    <td style={{ padding: '1rem', textAlign: 'center', fontWeight: 'bold', fontSize: '1.1rem', color: isCritico ? 'var(--danger-color)' : (actual <= minimo ? 'var(--warning-color)' : 'var(--text-primary)') }}>
-                                        {actual}
-                                    </td>
-                                    <td style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>{minimo}</td>
-                                    <td style={{ padding: '1rem' }}>
-                                        {getStockStatus(actual, minimo)}
-                                    </td>
-                                    <td style={{ padding: '1rem', textAlign: 'right' }}>
-                                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                                            <Button size="sm" variant="ghost" onClick={() => handleInspect(product)}>
-                                                <Eye size={14} className="mr-1" /> Detalle
-                                            </Button>
-                                            <Button size="sm" variant="outline" onClick={() => handleOpenAdjust(product)}>
-                                                <Edit2 size={14} className="mr-1" /> Ajustar
-                                            </Button>
-                                        </div>
+                                return (
+                                    <tr key={product.id} style={{ borderBottom: '1px solid var(--divider-color)', background: 'transparent', transition: 'background 0.2s ease' }} className="hover-row">
+                                        <td style={{ padding: '1rem 1.5rem', fontWeight: 500 }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                                <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'var(--background-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
+                                                    <Box size={20} />
+                                                </div>
+                                                <div>
+                                                    <div style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{product.name}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td style={{ padding: '1rem 1.5rem', color: 'var(--text-secondary)' }}>{product.category}</td>
+                                        <td style={{ padding: '1rem 1.5rem', textAlign: 'center', fontWeight: 'bold', fontSize: '1.1rem', color: isCritico ? 'var(--danger-color)' : (actual <= minimo ? 'var(--warning-color)' : 'var(--text-primary)') }}>
+                                            {actual}
+                                        </td>
+                                        <td style={{ padding: '1rem 1.5rem', textAlign: 'center', color: 'var(--text-secondary)' }}>{minimo}</td>
+                                        <td style={{ padding: '1rem 1.5rem' }}>
+                                            {getStockStatus(actual, minimo)}
+                                        </td>
+                                        <td style={{ padding: '1rem 1.5rem', textAlign: 'right' }}>
+                                            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                                                <Button size="sm" variant="ghost" onClick={() => handleInspect(product)}>
+                                                    <Eye size={16} />
+                                                </Button>
+                                                <Button size="sm" variant="outline" onClick={() => handleOpenAdjust(product)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                    <Edit2 size={14} /> Ajustar
+                                                </Button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                            {filteredProducts.length === 0 && (
+                                <tr>
+                                    <td colSpan={6} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                                        <Box size={40} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
+                                        <p style={{ margin: 0 }}>No se encontraron productos con estos filtros.</p>
                                     </td>
                                 </tr>
-                            );
-                        })}
-                        {filteredProducts.length === 0 && (
-                            <tr>
-                                <td colSpan={6} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                                    No se encontraron productos con estos filtros.
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
-            </Card>
+                            )}
+                        </tbody>
+                    </table>
+                </Card>
+            </div>
+
+            {/* Mobile View */}
+            <div className="hidden-desktop block">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <p style={{ margin: 0, fontWeight: 600, color: 'var(--text-secondary)', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        INVENTARIO ({filteredProducts.length} PRODUCTOS)
+                    </p>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {filteredProducts.map(product => {
+                        const actual = product.stockActual || 0;
+                        const minimo = product.stockMinimo || 0;
+                        const isCritico = actual === 0;
+
+                        return (
+                            <Card key={product.id} style={{ padding: '1.25rem', border: `1px solid ${isCritico ? '#ffccd5' : (actual <= minimo ? '#ffedd5' : 'var(--divider-color)')}`, position: 'relative', overflow: 'hidden', boxShadow: 'var(--shadow-sm)' }}>
+                                <div style={{ display: 'flex', gap: '1rem' }}>
+                                    <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'var(--background-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', flexShrink: 0 }}>
+                                        <Box size={24} />
+                                    </div>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.25rem' }}>
+                                            <h4 style={{ margin: 0, fontSize: '1.05rem', color: 'var(--text-primary)', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingRight: '0.5rem' }}>
+                                                {product.name}
+                                            </h4>
+                                            <div style={{ flexShrink: 0 }}>
+                                                {getStockStatus(actual, minimo)}
+                                            </div>
+                                        </div>
+                                        <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1rem' }}>
+                                            {product.category}
+                                        </p>
+
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                                            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem' }}>
+                                                <span style={{ fontSize: '1.5rem', fontWeight: 700, color: isCritico ? 'var(--danger-color)' : (actual <= minimo ? 'var(--warning-color)' : 'var(--text-primary)'), lineHeight: 1 }}>
+                                                    {actual}
+                                                </span>
+                                                <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                                                    / {minimo} min
+                                                </span>
+                                            </div>
+
+                                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                <Button size="sm" variant="ghost" onClick={() => handleInspect(product)} style={{ padding: '0.5rem' }}>
+                                                    <Eye size={18} />
+                                                </Button>
+                                                <Button size="sm" variant="primary" onClick={() => handleOpenAdjust(product)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                    <Edit2 size={14} /> Ajustar
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </Card>
+                        );
+                    })}
+                    {filteredProducts.length === 0 && (
+                        <div style={{ padding: '3rem 1rem', textAlign: 'center', color: 'var(--text-secondary)', background: 'var(--surface-color)', borderRadius: 'var(--radius-md)', border: '1px solid var(--divider-color)' }}>
+                            <Box size={40} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
+                            <p style={{ margin: 0 }}>No se encontraron productos.</p>
+                        </div>
+                    )}
+                </div>
+            </div>
 
             {/* Adjust Modal */}
             {isAdjustModalOpen && adjustingProduct && (

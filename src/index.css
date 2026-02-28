@@ -149,3 +149,22 @@ button {
     padding: 0 var(--spacing-xs);
   }
 }
+
+/* Visibility Utilities */
+.hidden-desktop {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .hidden-mobile {
+    display: none !important;
+  }
+
+  .hidden-desktop {
+    display: flex !important;
+  }
+
+  .hidden-desktop.block {
+    display: block !important;
+  }
+}
