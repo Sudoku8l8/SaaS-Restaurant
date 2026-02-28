@@ -14,6 +14,7 @@ export function CategoriesTab() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [localOrder, setLocalOrder] = useState<Category[]>([]);
     const [newCategoryName, setNewCategoryName] = useState('');
+    const [newCategoryNameEn, setNewCategoryNameEn] = useState('');
     const [loading, setLoading] = useState(false);
     const [orderDirty, setOrderDirty] = useState(false);
     const [savingOrder, setSavingOrder] = useState(false);
@@ -65,10 +66,12 @@ export function CategoriesTab() {
             await addDoc(collection(db, 'categories'), {
                 restaurantId: user.restaurantId,
                 name: newCategoryName.trim(),
+                nameEn: newCategoryNameEn.trim() || null,
                 sortOrder: localOrder.length, // append at end
                 createdAt: serverTimestamp()
             });
             setNewCategoryName('');
+            setNewCategoryNameEn('');
         } catch (error) {
             console.error(error);
             alert('Error al guardar categoría');
@@ -90,10 +93,13 @@ export function CategoriesTab() {
     };
 
     // ── Rename category ───────────────────────────────────────────────────────
-    const handleRename = async (id: string, newName: string) => {
+    const handleRename = async (id: string, newName: string, newNameEn: string) => {
         if (!newName.trim()) return;
         try {
-            await updateDoc(doc(db, 'categories', id), { name: newName.trim() });
+            await updateDoc(doc(db, 'categories', id), {
+                name: newName.trim(),
+                nameEn: newNameEn.trim() || null
+            });
         } catch (error) {
             console.error(error);
         }
@@ -157,9 +163,9 @@ export function CategoriesTab() {
     };
 
     return (
-        <div style={{ maxWidth: '620px' }}>
+        <div style={{ maxWidth: '700px', width: '100%', margin: '0 auto' }}>
             {/* Header */}
-            <div style={{ marginBottom: '2rem' }}>
+            <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
                 <h3 style={{ marginBottom: '0.25rem' }}>Gestionar Categorías</h3>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                     Define las secciones de tu carta. Arrastra las filas para cambiar el orden en el menú digital.
@@ -167,22 +173,35 @@ export function CategoriesTab() {
             </div>
 
             {/* Add form */}
-            <form onSubmit={handleAddCategory} style={{ display: 'flex', gap: '0.5rem', marginBottom: '2rem' }}>
-                <Input
-                    placeholder="Nueva categoría (ej: Bebidas)"
-                    value={newCategoryName}
-                    onChange={e => setNewCategoryName(e.target.value)}
-                    required
-                    fullWidth
-                />
-                <Button
-                    type="submit"
-                    disabled={loading || !newCategoryName.trim()}
-                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}
-                >
-                    <FolderPlus size={18} /> Agregar
-                </Button>
-            </form>
+            <div style={{ background: 'var(--surface-color)', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', marginBottom: '2rem', border: '1px solid var(--divider-color)' }}>
+                <h4 style={{ marginBottom: '1rem', fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>Agregar Nueva Categoría</h4>
+                <form onSubmit={handleAddCategory} style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem', alignItems: 'stretch' }}>
+                    <div style={{ flex: '1 1 250px' }}>
+                        <Input
+                            placeholder="Nombre en Español *"
+                            value={newCategoryName}
+                            onChange={e => setNewCategoryName(e.target.value)}
+                            required
+                            fullWidth
+                        />
+                    </div>
+                    <div style={{ flex: '1 1 250px' }}>
+                        <Input
+                            placeholder="Nombre en Inglés (Opcional)"
+                            value={newCategoryNameEn}
+                            onChange={e => setNewCategoryNameEn(e.target.value)}
+                            fullWidth
+                        />
+                    </div>
+                    <Button
+                        type="submit"
+                        disabled={loading || !newCategoryName.trim()}
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0, padding: '0 1.5rem' }}
+                    >
+                        <FolderPlus size={18} /> Agregar
+                    </Button>
+                </form>
+            </div>
 
             {/* Order dirty banner */}
             {orderDirty && (
@@ -212,7 +231,7 @@ export function CategoriesTab() {
             )}
 
             {/* Category list */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
                 {localOrder.length === 0 ? (
                     <div style={{
                         textAlign: 'center', padding: '2.5rem',
@@ -233,7 +252,7 @@ export function CategoriesTab() {
                             onMoveUp={() => moveItem(index, 'up')}
                             onMoveDown={() => moveItem(index, 'down')}
                             onDelete={() => handleDelete(category.id, category.name)}
-                            onRename={(name) => handleRename(category.id, name)}
+                            onRename={(name, nameEn) => handleRename(category.id, name, nameEn)}
                         />
                     ))
                 )}
@@ -259,7 +278,7 @@ interface CategoryRowProps {
     onMoveUp: () => void;
     onMoveDown: () => void;
     onDelete: () => void;
-    onRename: (name: string) => void;
+    onRename: (name: string, nameEn: string) => void;
 }
 
 function CategoryRow({
@@ -269,13 +288,14 @@ function CategoryRow({
 }: CategoryRowProps) {
     const [editing, setEditing] = useState(false);
     const [editName, setEditName] = useState(category.name);
+    const [editNameEn, setEditNameEn] = useState(category.nameEn || '');
     const [isDragOver, setIsDragOver] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
     const handleEditSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (editName.trim() && editName.trim() !== category.name) {
-            onRename(editName.trim());
+        if (editName.trim() && (editName.trim() !== category.name || editNameEn.trim() !== (category.nameEn || ''))) {
+            onRename(editName.trim(), editNameEn.trim());
         }
         setEditing(false);
     };
@@ -283,6 +303,7 @@ function CategoryRow({
     const handleEditKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Escape') {
             setEditName(category.name);
+            setEditNameEn(category.nameEn || '');
             setEditing(false);
         }
     };
@@ -299,140 +320,176 @@ function CategoryRow({
             style={{
                 display: 'flex',
                 flexDirection: 'row',
+                flexWrap: 'wrap',
                 alignItems: 'center',
-                gap: '0.6rem',
-                padding: '0.7rem 0.85rem',
-                borderRadius: '10px',
+                gap: '1rem',
+                padding: '1rem',
+                borderRadius: '12px',
                 border: isDragOver
                     ? '2px solid var(--primary-color)'
                     : '1px solid var(--divider-color)',
                 backgroundColor: isDragOver
                     ? 'rgba(37,99,235, 0.04)'
                     : 'var(--surface-color)',
-                boxShadow: isDragOver ? '0 4px 16px rgba(0,0,0,0.1)' : '0 1px 3px rgba(0,0,0,0.04)',
-                cursor: 'grab',
-                transition: 'border-color 0.15s, background-color 0.15s, box-shadow 0.15s',
-                userSelect: 'none',
+                boxShadow: isDragOver ? '0 4px 16px rgba(0,0,0,0.1)' : '0 2px 6px rgba(0,0,0,0.03)',
+                transition: 'all 0.2s ease',
             }}
         >
-            {/* ── Drag handle ── */}
-            <span style={{ color: '#ccc', cursor: 'grab', display: 'flex', flexShrink: 0 }}>
-                <GripVertical size={18} />
-            </span>
+            {/* ── Left Controls (Drag & Order) ── */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexShrink: 0 }}>
+                <span style={{ color: '#ccc', cursor: 'grab', display: 'flex' }}
+                    onMouseDown={(e) => { e.currentTarget.style.cursor = 'grabbing'; }}
+                    onMouseUp={(e) => { e.currentTarget.style.cursor = 'grab'; }}
+                >
+                    <GripVertical size={20} />
+                </span>
+                <span style={{
+                    width: '26px', height: '26px', borderRadius: '50%',
+                    background: 'rgba(0,0,0,0.04)',
+                    border: '1px solid var(--divider-color)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-secondary)',
+                }}>
+                    {index + 1}
+                </span>
+            </div>
 
-            {/* ── Order badge ── */}
-            <span style={{
-                width: '22px', height: '22px', borderRadius: '50%',
-                background: 'var(--background-color)',
-                border: '1px solid var(--divider-color)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-secondary)',
-                flexShrink: 0,
-            }}>
-                {index + 1}
-            </span>
-
-            {/* ── Name / inline edit ── */}
-            <div style={{ flex: 1, minWidth: 0 }}>
+            {/* ── Center Content (Name / inline edit) ── */}
+            <div style={{ flex: '1 1 200px', minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                 {editing ? (
-                    <form onSubmit={handleEditSubmit} style={{ display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
-                        <input
-                            ref={inputRef}
-                            value={editName}
-                            onChange={e => setEditName(e.target.value)}
-                            onKeyDown={handleEditKeyDown}
-                            autoFocus
-                            style={{
-                                flex: 1, padding: '0.3rem 0.55rem', fontSize: '0.9rem',
-                                border: '1.5px solid var(--primary-color)', borderRadius: '6px',
-                                outline: 'none', fontWeight: '600',
-                                background: 'var(--background-color)',
-                                color: 'var(--text-primary)',
-                            }}
-                        />
-                        <button type="submit" style={{
-                            background: 'var(--primary-color)', border: 'none', cursor: 'pointer',
-                            color: '#fff', fontWeight: '700', fontSize: '0.78rem',
-                            padding: '0.3rem 0.6rem', borderRadius: '6px',
-                        }}>
-                            OK
-                        </button>
-                        <button type="button" onClick={() => { setEditName(category.name); setEditing(false); }} style={{
-                            background: 'none', border: 'none', cursor: 'pointer',
-                            color: 'var(--text-secondary)', fontSize: '0.78rem', padding: '0.3rem',
-                        }}>
-                            ✕
-                        </button>
+                    <form onSubmit={handleEditSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                            <div style={{ flex: '1 1 140px', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Español</label>
+                                <input
+                                    ref={inputRef}
+                                    value={editName}
+                                    onChange={e => setEditName(e.target.value)}
+                                    onKeyDown={handleEditKeyDown}
+                                    autoFocus
+                                    style={{
+                                        width: '100%', padding: '0.5rem 0.6rem', fontSize: '0.95rem',
+                                        border: '1.5px solid var(--primary-color)', borderRadius: '8px',
+                                        outline: 'none', fontWeight: '600',
+                                        background: 'var(--background-color)',
+                                        color: 'var(--text-primary)',
+                                    }}
+                                />
+                            </div>
+                            <div style={{ flex: '1 1 140px', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Inglés (Opcional)</label>
+                                <input
+                                    value={editNameEn}
+                                    onChange={e => setEditNameEn(e.target.value)}
+                                    onKeyDown={handleEditKeyDown}
+                                    style={{
+                                        width: '100%', padding: '0.5rem 0.6rem', fontSize: '0.95rem',
+                                        border: '1.5px solid var(--border-color)', borderRadius: '8px',
+                                        outline: 'none', fontWeight: '400',
+                                        background: 'var(--background-color)',
+                                        color: 'var(--text-primary)',
+                                    }}
+                                />
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                            <Button type="button" variant="ghost" size="sm" onClick={() => { setEditName(category.name); setEditNameEn(category.nameEn || ''); setEditing(false); }}>
+                                Cancelar
+                            </Button>
+                            <Button type="submit" variant="primary" size="sm" style={{ fontWeight: 600 }}>
+                                Guardar Cambios
+                            </Button>
+                        </div>
                     </form>
                 ) : (
-                    <span
-                        style={{ fontWeight: '600', fontSize: '0.95rem', cursor: 'text', color: 'var(--text-primary)' }}
-                        onDoubleClick={() => { setEditing(true); setEditName(category.name); }}
-                        title="Doble clic para renombrar"
+                    <div
+                        style={{ display: 'flex', flexDirection: 'column', cursor: 'text', padding: '0.2rem 0' }}
+                        onClick={() => { setEditing(true); setEditName(category.name); setEditNameEn(category.nameEn || ''); }}
+                        title="Haz clic para editar"
                     >
-                        {category.name}
-                    </span>
+                        <span style={{ fontWeight: '700', fontSize: '1.05rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            {category.name}
+                            <span style={{ fontSize: '0.7rem', fontWeight: 600, padding: '2px 6px', background: 'rgba(0,0,0,0.06)', borderRadius: '4px', color: 'var(--text-secondary)' }}>ES</span>
+                        </span>
+                        {category.nameEn && (
+                            <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.2rem' }}>
+                                {category.nameEn}
+                                <span style={{ fontSize: '0.7rem', fontWeight: 600, padding: '2px 6px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '4px', color: 'rgb(59, 130, 246)' }}>EN</span>
+                            </span>
+                        )}
+                        {!category.nameEn && (
+                            <span style={{ fontSize: '0.8rem', color: '#aaa', fontStyle: 'italic', marginTop: '0.2rem' }}>
+                                Sin traducción añadida
+                            </span>
+                        )}
+                    </div>
                 )}
             </div>
 
-            {/* ── Up / Down arrows (horizontal pair) ── */}
-            <div style={{ display: 'flex', flexDirection: 'row', gap: '2px', flexShrink: 0 }}>
-                <button
-                    onClick={onMoveUp}
-                    disabled={index === 0}
-                    title="Subir"
-                    style={{
-                        width: '28px', height: '28px',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        background: index === 0 ? 'transparent' : 'var(--background-color)',
-                        border: '1px solid',
-                        borderColor: index === 0 ? 'transparent' : 'var(--divider-color)',
-                        borderRadius: '6px',
-                        cursor: index === 0 ? 'not-allowed' : 'pointer',
-                        color: index === 0 ? '#ddd' : 'var(--text-secondary)',
-                        fontSize: '0.65rem', lineHeight: 1,
-                        transition: 'background 0.15s',
-                    }}
-                >▲</button>
-                <button
-                    onClick={onMoveDown}
-                    disabled={index === total - 1}
-                    title="Bajar"
-                    style={{
-                        width: '28px', height: '28px',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        background: index === total - 1 ? 'transparent' : 'var(--background-color)',
-                        border: '1px solid',
-                        borderColor: index === total - 1 ? 'transparent' : 'var(--divider-color)',
-                        borderRadius: '6px',
-                        cursor: index === total - 1 ? 'not-allowed' : 'pointer',
-                        color: index === total - 1 ? '#ddd' : 'var(--text-secondary)',
-                        fontSize: '0.65rem', lineHeight: 1,
-                        transition: 'background 0.15s',
-                    }}
-                >▼</button>
-            </div>
+            {/* ── Right Controls (Arrows & Delete) ── */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0, marginLeft: 'auto' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <button
+                        onClick={onMoveUp}
+                        disabled={index === 0}
+                        title="Subir"
+                        style={{
+                            width: '32px', height: '24px',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            background: index === 0 ? 'transparent' : 'var(--background-color)',
+                            border: '1px solid',
+                            borderColor: index === 0 ? 'transparent' : 'var(--divider-color)',
+                            borderRadius: '6px 6px 2px 2px',
+                            cursor: index === 0 ? 'not-allowed' : 'pointer',
+                            color: index === 0 ? '#ebebeb' : 'var(--text-secondary)',
+                            fontSize: '0.7rem',
+                            transition: 'all 0.15s',
+                        }}
+                    >▲</button>
+                    <button
+                        onClick={onMoveDown}
+                        disabled={index === total - 1}
+                        title="Bajar"
+                        style={{
+                            width: '32px', height: '24px',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            background: index === total - 1 ? 'transparent' : 'var(--background-color)',
+                            border: '1px solid',
+                            borderColor: index === total - 1 ? 'transparent' : 'var(--divider-color)',
+                            borderRadius: '2px 2px 6px 6px',
+                            cursor: index === total - 1 ? 'not-allowed' : 'pointer',
+                            color: index === total - 1 ? '#ebebeb' : 'var(--text-secondary)',
+                            fontSize: '0.7rem',
+                            transition: 'all 0.15s',
+                        }}
+                    >▼</button>
+                </div>
 
-            {/* ── Delete ── */}
-            <button
-                onClick={onDelete}
-                title="Eliminar categoría"
-                style={{
-                    width: '32px', height: '32px',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: 'rgba(220,38,38,0.08)',
-                    border: '1px solid rgba(220,38,38,0.2)',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    color: '#dc2626',
-                    flexShrink: 0,
-                    transition: 'background 0.15s',
-                }}
-                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(220,38,38,0.18)')}
-                onMouseLeave={e => (e.currentTarget.style.background = 'rgba(220,38,38,0.08)')}
-            >
-                <Trash2 size={14} />
-            </button>
+                <div style={{ width: '1px', height: '32px', background: 'var(--divider-color)', margin: '0 0.2rem' }}></div>
+
+                <button
+                    onClick={onDelete}
+                    title="Eliminar categoría"
+                    style={{
+                        width: '36px', height: '36px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: 'transparent',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        color: '#ef4444',
+                        transition: 'all 0.2s',
+                    }}
+                    onMouseEnter={e => {
+                        e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
+                    }}
+                    onMouseLeave={e => {
+                        e.currentTarget.style.background = 'transparent';
+                    }}
+                >
+                    <Trash2 size={18} />
+                </button>
+            </div>
         </div>
     );
 }

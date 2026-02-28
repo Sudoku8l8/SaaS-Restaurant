@@ -55,7 +55,7 @@ export function GeneralTab() {
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
                         <div>
                             <div style={{ fontWeight: '700', fontSize: '1rem', marginBottom: '0.2rem' }}>
-                                Pantalla de Cocina vs Comandas
+                                Pantalla en Cocina
                             </div>
                             <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                                 {usarPantallaCocina

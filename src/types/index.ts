@@ -139,6 +139,7 @@ export interface Category {
     id: string;
     restaurantId: string;
     name: string;
+    nameEn?: string; // Optional English translation
     createdAt: Date;
     sortOrder?: number; // Custom display order in the digital menu
 }

@@ -364,7 +364,7 @@ export function DigitalMenuPage() {
                                 className={`${styles.categoryNavBtn} ${activeCategory === cat.id ? styles.active : ''}`}
                                 onClick={() => scrollToCategory(cat.id)}
                             >
-                                {cat.name}
+                                {i18n.language.startsWith('en') && cat.nameEn ? cat.nameEn : cat.name}
                             </button>
                         ))}
                     </div>
@@ -408,7 +408,9 @@ export function DigitalMenuPage() {
                             ref={el => { sectionRefs.current[cat.id] = el; }}
                         >
                             <div className={styles.categoryHeader}>
-                                <h2 className={styles.categoryTitle}>{cat.name}</h2>
+                                <h2 className={styles.categoryTitle}>
+                                    {i18n.language.startsWith('en') && cat.nameEn ? cat.nameEn : cat.name}
+                                </h2>
                                 <div className={styles.premiumDivider}>
                                     <span className={styles.premiumDiamond}></span>
                                 </div>
