@@ -17,7 +17,7 @@ export function UsersTab() {
     const [formData, setFormData] = useState<{
         name: string;
         pin: string;
-        role: 'admin' | 'waiter' | 'chef';
+        role: 'admin' | 'waiter' | 'chef' | 'shift_manager';
     }>({
         name: '',
         pin: '',
@@ -120,6 +120,7 @@ export function UsersTab() {
         switch (role) {
             case 'admin': return <Badge variant="info">Administrador</Badge>;
             case 'chef': return <Badge variant="warning">Cocinero</Badge>;
+            case 'shift_manager': return <Badge variant="success">Encargado de Turno</Badge>;
             default: return <Badge variant="neutral">Mozo</Badge>;
         }
     };
@@ -133,7 +134,7 @@ export function UsersTab() {
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
                 {users.map(u => (
-                    <Card key={u.id} style={{ padding: '1rem', borderLeft: u.role === 'admin' ? '5px solid var(--color-primary)' : u.role === 'chef' ? '5px solid var(--warning-color)' : '5px solid #ccc' }}>
+                    <Card key={u.id} style={{ padding: '1rem', borderLeft: u.role === 'admin' ? '5px solid var(--color-primary)' : u.role === 'chef' ? '5px solid var(--warning-color)' : u.role === 'shift_manager' ? '5px solid var(--success-color)' : '5px solid #ccc' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <div style={{ flex: 1 }}>
                                 <div style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>{u.name}</div>
@@ -193,6 +194,7 @@ export function UsersTab() {
                                 >
                                     <option value="waiter">Mozo</option>
                                     <option value="chef">Cocinero</option>
+                                    <option value="shift_manager">Encargado de Turno</option>
                                     <option value="admin">Administrador</option>
                                 </select>
                             </div>

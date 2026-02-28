@@ -1,38 +1,70 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { parseISO } from 'date-fns';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import { useDailySales } from '@/hooks/useDailySales';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrders } from '@/hooks/useOrders';
 import { useCashSession } from '@/hooks/useCashSession';
 import { Card, Button, Badge, Input } from '@/components/shared';
-import { Download, ArrowLeft, CheckCircle, AlertTriangle, Check, Lock, DollarSign, CreditCard, User, Wallet, MinusCircle, List } from 'lucide-react';
-import { updateDoc, doc } from 'firebase/firestore';
+import { Download, ArrowLeft, CheckCircle, AlertTriangle, Check, Lock, DollarSign, CreditCard, User, Wallet, List, ExternalLink } from 'lucide-react';
+import { updateDoc, doc, collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/services/firebase/config';
 import { exportDailySalesToExcel } from '@/services/exportExcel';
 import { getPeruDateString, getPeruNow, formatPeruDisplay } from '@/utils/dateUtils';
 
 export function CierreCajaPage() {
     const navigate = useNavigate();
+    const { restaurantSlug } = useParams<{ restaurantSlug: string }>();
     const [searchParams] = useSearchParams();
     const dateParam = searchParams.get('date');
     const targetDate = dateParam ? parseISO(dateParam) : new Date();
     const targetDateStr = getPeruDateString(targetDate);
 
-    useAuth();
+    const { user } = useAuth();
     const { metrics, orders, isLoading: loadingMetrics } = useDailySales(targetDate);
     const { activeOrders } = useOrders();
-    const { currentSession, isLoading: loadingSession, openSession, addExpense } = useCashSession();
+    const { currentSession, isLoading: loadingSession, openSession } = useCashSession();
+    const restaurantId = user?.restaurantId || '';
+
+    // Petty Cash integration
+    const [pettyCashPendingCount, setPettyCashPendingCount] = useState(0);
+    const [pettyCashApprovedTotal, setPettyCashApprovedTotal] = useState(0);
 
     const [isClosing, setIsClosing] = useState(false);
     const [openingBalanceInput, setOpeningBalanceInput] = useState('');
-    const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
-    const [expenseData, setExpenseData] = useState({ amount: '', description: '', category: 'General' });
+
     const [actualCashInput, setActualCashInput] = useState('');
 
     const isToday = targetDateStr === getPeruDateString();
     const sessionExists = !!currentSession;
     const isClosed = currentSession?.status === 'closed';
+
+    // Listen to petty cash expenses for this date
+    useEffect(() => {
+        if (!restaurantId || !targetDateStr) return;
+
+        const q = query(
+            collection(db, 'pettyCashExpenses'),
+            where('restaurantId', '==', restaurantId),
+            where('date', '==', targetDateStr)
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            let pending = 0;
+            let approved = 0;
+            snapshot.docs.forEach(d => {
+                const data = d.data();
+                if (data.status === 'pending') pending++;
+                if (data.status === 'auto_approved' || data.status === 'approved') {
+                    approved += data.amount || 0;
+                }
+            });
+            setPettyCashPendingCount(pending);
+            setPettyCashApprovedTotal(approved);
+        });
+
+        return () => unsubscribe();
+    }, [restaurantId, targetDateStr]);
 
     if (loadingMetrics || loadingSession) {
         return (
@@ -61,8 +93,7 @@ export function CierreCajaPage() {
             const totalCashSales = Object.entries(metrics.salesByPaymentMethod)
                 .filter(([method]) => ['cash', 'efectivo'].includes(method.toLowerCase()))
                 .reduce((sum, [_, amount]) => sum + amount, 0);
-            const totalExpenses = currentSession.expenses?.reduce((acc, e) => acc + e.amount, 0) || 0;
-            const expectedCash = (currentSession.openingBalance || 0) + totalCashSales - totalExpenses;
+            const expectedCash = (currentSession.openingBalance || 0) + totalCashSales - pettyCashApprovedTotal;
             const difference = actualCash - expectedCash;
 
             await updateDoc(doc(db, 'closures', currentSession.id), {
@@ -85,14 +116,7 @@ export function CierreCajaPage() {
         }
     };
 
-    const handleAddExpense = async (e: React.FormEvent) => {
-        e.preventDefault();
-        const amount = parseFloat(expenseData.amount);
-        if (isNaN(amount) || !expenseData.description) return;
-        await addExpense({ amount, description: expenseData.description, category: expenseData.category });
-        setIsExpenseModalOpen(false);
-        setExpenseData({ amount: '', description: '', category: 'General' });
-    };
+
 
     // ── APERTURA DE CAJA ─────────────────────────────────────────────────────
     if (isToday && !sessionExists) {
@@ -155,22 +179,7 @@ export function CierreCajaPage() {
 
                     {/* Action buttons — icon-only on mobile, labeled on desktop */}
                     <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
-                        {!isClosed && sessionExists && isToday && (
-                            <button
-                                onClick={() => setIsExpenseModalOpen(true)}
-                                title="Registrar Gasto"
-                                style={{
-                                    display: 'flex', alignItems: 'center', gap: '0.4rem',
-                                    padding: '0.5rem 0.85rem', borderRadius: 'var(--radius-md)',
-                                    background: 'var(--danger-color)', color: 'white', border: 'none',
-                                    cursor: 'pointer', fontWeight: '700', fontSize: '0.82rem',
-                                    whiteSpace: 'nowrap'
-                                }}
-                            >
-                                <MinusCircle size={15} />
-                                <span className="btn-label">Registrar Gasto</span>
-                            </button>
-                        )}
+
                         <button
                             onClick={() => exportDailySalesToExcel(metrics, orders)}
                             disabled={metrics.orderCount === 0}
@@ -237,6 +246,66 @@ export function CierreCajaPage() {
                 </div>
             )}
 
+            {/* Petty Cash Pending Warning */}
+            {pettyCashPendingCount > 0 && !isClosed && (
+                <div style={{
+                    background: 'rgba(245,158,11,0.08)', color: '#b45309',
+                    padding: '1rem 1.25rem', borderRadius: 'var(--radius-lg)',
+                    marginBottom: '1.25rem', border: '1px solid rgba(245,158,11,0.2)',
+                    borderLeft: '5px solid #f59e0b',
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    gap: '0.75rem', flexWrap: 'wrap',
+                    boxShadow: 'var(--shadow-sm)'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                        <Wallet size={20} color="#f59e0b" />
+                        <span style={{ fontWeight: '600', fontSize: '0.88rem' }}>
+                            <strong>{pettyCashPendingCount}</strong> gasto{pettyCashPendingCount !== 1 ? 's' : ''} de caja chica pendiente{pettyCashPendingCount !== 1 ? 's' : ''} de aprobación.
+                        </span>
+                    </div>
+                    <button
+                        onClick={() => navigate(`/${restaurantSlug}/caja-chica`)}
+                        style={{
+                            display: 'flex', alignItems: 'center', gap: '0.3rem',
+                            padding: '0.4rem 0.85rem', borderRadius: 'var(--radius-md)',
+                            background: '#f59e0b', color: 'white', border: 'none',
+                            cursor: 'pointer', fontWeight: '700', fontSize: '0.8rem',
+                        }}
+                    >
+                        Revisar <ExternalLink size={14} />
+                    </button>
+                </div>
+            )}
+
+            {/* Caja Chica Quick Access */}
+            {isToday && sessionExists && !isClosed && (
+                <div style={{
+                    background: 'rgba(37,99,235,0.05)',
+                    padding: '0.85rem 1.25rem', borderRadius: 'var(--radius-lg)',
+                    marginBottom: '1.25rem', border: '1px solid rgba(37,99,235,0.12)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    gap: '0.75rem', flexWrap: 'wrap',
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                        <Wallet size={18} color="var(--primary-color)" />
+                        <span style={{ fontWeight: '600', fontSize: '0.85rem', color: 'var(--text-primary)' }}>
+                            Caja Chica: <strong style={{ color: 'var(--danger-color)' }}>S/ {pettyCashApprovedTotal.toFixed(2)}</strong> en gastos aprobados hoy
+                        </span>
+                    </div>
+                    <button
+                        onClick={() => navigate(`/${restaurantSlug}/caja-chica`)}
+                        style={{
+                            display: 'flex', alignItems: 'center', gap: '0.3rem',
+                            padding: '0.4rem 0.85rem', borderRadius: 'var(--radius-md)',
+                            background: 'var(--primary-color)', color: 'white', border: 'none',
+                            cursor: 'pointer', fontWeight: '700', fontSize: '0.8rem',
+                        }}
+                    >
+                        Ir a Caja Chica <ExternalLink size={14} />
+                    </button>
+                </div>
+            )}
+
             {/* ── METRICS GRID ── */}
             <div style={{
                 display: 'grid',
@@ -265,8 +334,8 @@ export function CierreCajaPage() {
                             <strong>+ S/ {Object.entries(metrics.salesByPaymentMethod).filter(([m]) => ['cash', 'efectivo'].includes(m.toLowerCase())).reduce((s, [_, a]) => s + a, 0).toFixed(2)}</strong>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--danger-color)', fontSize: '0.88rem' }}>
-                            <span>Gastos</span>
-                            <strong>- S/ {(currentSession?.expenses?.reduce((acc, e) => acc + e.amount, 0) || 0).toFixed(2)}</strong>
+                            <span>Gastos Caja Chica</span>
+                            <strong>- S/ {pettyCashApprovedTotal.toFixed(2)}</strong>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.88rem', marginTop: '0.25rem', paddingTop: '0.4rem', borderTop: '1px dashed var(--divider-color)' }}>
                             <span style={{ color: 'var(--text-secondary)' }}>Pedidos</span>
@@ -397,36 +466,7 @@ export function CierreCajaPage() {
                 )}
             </Card>
 
-            {/* ── EXPENSE MODAL ── */}
-            {isExpenseModalOpen && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
-                    <Card style={{ width: '100%', maxWidth: '400px', padding: '2rem' }}>
-                        <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.1rem' }}>
-                            <MinusCircle size={22} color="var(--danger-color)" /> Registrar Gasto
-                        </h3>
-                        <form onSubmit={handleAddExpense} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            <Input
-                                label="Monto (S/)"
-                                type="number"
-                                required
-                                value={expenseData.amount}
-                                onChange={e => setExpenseData({ ...expenseData, amount: e.target.value })}
-                            />
-                            <Input
-                                label="Descripción"
-                                placeholder="Ej: Pago a proveedor de gas"
-                                required
-                                value={expenseData.description}
-                                onChange={e => setExpenseData({ ...expenseData, description: e.target.value })}
-                            />
-                            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
-                                <Button type="button" variant="ghost" onClick={() => setIsExpenseModalOpen(false)} style={{ flex: 1 }}>Cancelar</Button>
-                                <Button type="submit" variant="danger" style={{ flex: 1 }}>Guardar Gasto</Button>
-                            </div>
-                        </form>
-                    </Card>
-                </div>
-            )}
+
 
             {/* Inline CSS for responsive label hiding */}
             <style>{`

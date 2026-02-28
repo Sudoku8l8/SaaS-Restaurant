@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Utensils, Users, LayoutGrid, ArrowLeft, FolderKanban, Printer, Globe, Shield, Settings, Crown } from 'lucide-react';
+import { Utensils, Users, LayoutGrid, ArrowLeft, FolderKanban, Printer, Globe, Shield, Settings, Crown, Wallet } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/shared';
 import { useTenant } from '@/app/providers/TenantProvider';
@@ -13,10 +13,11 @@ import { DigitalMenuConfigPage } from '@/pages/Configuracion/DigitalMenuConfigPa
 import { SecurityTab } from '@/components/features/SecurityTab';
 import { GeneralTab } from '@/components/features/GeneralTab';
 import { PremiumUpgradeBanner } from '@/components/features/PremiumUpgradeBanner';
+import { PettyCashConfigTab } from '@/components/features/PettyCashConfigTab';
 
 import './ConfigPage.css';
 
-type Tab = 'general' | 'products' | 'categories' | 'users' | 'tables' | 'printer' | 'menu' | 'security';
+type Tab = 'general' | 'products' | 'categories' | 'users' | 'tables' | 'printer' | 'menu' | 'security' | 'pettycash';
 
 export function ConfigPage() {
 
@@ -98,6 +99,13 @@ export function ConfigPage() {
                 >
                     <Shield size={18} /> Seguridad
                 </Button>
+                <Button
+                    variant={activeTab === 'pettycash' ? 'primary' : 'ghost'}
+                    onClick={() => setActiveTab('pettycash')}
+                    className="tab-btn"
+                >
+                    <Wallet size={18} /> Caja Chica
+                </Button>
             </div>
 
             {/* Tab Content */}
@@ -114,6 +122,7 @@ export function ConfigPage() {
                         : <PremiumUpgradeBanner feature="Menú Digital" />
                 )}
                 {activeTab === 'security' && <SecurityTab />}
+                {activeTab === 'pettycash' && <PettyCashConfigTab />}
             </div>
         </div>
     );

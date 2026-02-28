@@ -23,6 +23,7 @@ export const UserRole = {
     ADMIN: 'admin',
     WAITER: 'waiter',
     CHEF: 'chef',
+    SHIFT_MANAGER: 'shift_manager',
 } as const;
 export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 
@@ -83,6 +84,13 @@ export interface RestaurantConfig {
     deliveryCost?: number;
     paymentMethodsConfig?: { yape?: string; plin?: string; bankAccount?: string };
     usarPantallaCocina?: boolean; // Toggle for Kitchen Screen vs Printed Tickets
+    // Petty Cash (Caja Chica) Configuration
+    pettyCash?: {
+        maxPerExpense: number;       // Límite por gasto sin aprobación (default: 20)
+        maxDailyPerUser: number;     // Máximo diario por usuario (default: 50)
+        enableAutoApproval: boolean; // Auto-aprobar si cumple reglas (default: true)
+        requireReceipt: boolean;     // Requiere foto de comprobante (default: false)
+    };
 }
 
 export interface RestaurantTable {
@@ -246,8 +254,52 @@ export interface CashExpense {
     category: string;
     timestamp: Date;
     userId: string;
+    userName?: string;
+    pettyCashExpenseId?: string; // Link to PettyCashExpense if created from there
 }
 
+// ── Petty Cash (Caja Chica) ──────────────────────────────────────────────────
+
+export const PettyCashExpenseStatus = {
+    PENDING: 'pending',
+    AUTO_APPROVED: 'auto_approved',
+    APPROVED: 'approved',
+    REJECTED: 'rejected',
+    OBSERVED: 'observed',
+} as const;
+export type PettyCashExpenseStatus = (typeof PettyCashExpenseStatus)[keyof typeof PettyCashExpenseStatus];
+
+export const PettyCashCategory = {
+    INGREDIENTS: 'Ingredientes',
+    GAS: 'Gas',
+    CLEANING: 'Limpieza',
+    TRANSPORT: 'Transporte',
+    SUPPLIES: 'Insumos',
+    OTHER: 'Otro',
+} as const;
+export type PettyCashCategory = (typeof PettyCashCategory)[keyof typeof PettyCashCategory];
+
+export interface PettyCashExpense {
+    id: string;
+    restaurantId: string;
+    amount: number;
+    description: string;
+    category: PettyCashCategory;
+    receiptUrl?: string;           // Foto del comprobante (Firebase Storage)
+    requestedBy: string;           // userId
+    requestedByName: string;
+    requestedByRole: UserRole;
+    requestedAt: Date;
+    status: PettyCashExpenseStatus;
+    autoApproved: boolean;
+    approvedBy?: string;           // userId del admin
+    approvedByName?: string;
+    approvedAt?: Date;
+    rejectionReason?: string;
+    observation?: string;          // Notas del admin
+    closureId?: string;            // Link al cierre del día
+    date: string;                  // YYYY-MM-DD para queries
+}
 
 export interface User {
     id: string;

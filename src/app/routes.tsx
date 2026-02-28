@@ -3,6 +3,7 @@ import { LoginPage } from '@/pages/Login/LoginPage';
 import { MozoPage } from '@/pages/Mozo/MozoPage';
 import { CocinaPage } from '@/pages/Cocina/CocinaPage';
 import { CierreCajaPage } from '@/pages/CierreCaja/CierreCajaPage';
+import { CajaChicaPage } from '@/pages/CajaChica/CajaChicaPage';
 import { ConfigPage } from '@/pages/Configuracion/ConfigPage';
 import { AdminPage } from '@/pages/Admin/AdminPage';
 import { InventoryPage } from '@/pages/Admin/InventoryPage';
@@ -99,6 +100,11 @@ export const router = createBrowserRouter([
                         path: 'cierre-caja',
                         element: <ProtectedRoute allowedRoles={[UserRole.ADMIN]} />,
                         children: [{ index: true, element: <CierreCajaPage /> }],
+                    },
+                    {
+                        path: 'caja-chica',
+                        element: <ProtectedRoute allowedRoles={[UserRole.ADMIN, UserRole.WAITER, UserRole.CHEF, UserRole.SHIFT_MANAGER]} />,
+                        children: [{ index: true, element: <CajaChicaPage /> }],
                     },
                     {
                         path: 'inventario',

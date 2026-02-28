@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChefHat, DollarSign, BarChart3, Settings, AlertTriangle, ArrowRight, Package } from 'lucide-react';
+import { ChefHat, DollarSign, BarChart3, Settings, AlertTriangle, ArrowRight, Package, Wallet } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button, Card } from '@/components/shared';
 import { SalesDashboard } from '@/components/features/SalesDashboard';
@@ -166,6 +166,12 @@ export function AdminPage() {
                 gap: '1.5rem',
                 marginTop: '2rem'
             }}>
+                <Card style={{ padding: '2rem', textAlign: 'center', cursor: 'pointer', borderTop: '3px solid #f59e0b' }} onClick={() => navigate(`/${restaurantSlug}/caja-chica`)}>
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}><Wallet size={48} color="#f59e0b" /></div>
+                    <h3>Caja Chica</h3>
+                    <p style={{ color: '#666', fontSize: '0.9rem' }}>Gastos y fondo de caja chica</p>
+                </Card>
+
                 <Card style={{ padding: '2rem', textAlign: 'center', cursor: 'pointer' }} onClick={() => navigate(`/${restaurantSlug}/cierre-caja`)}>
                     <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}><DollarSign size={48} className="text-primary" /></div>
                     <h3>Cierre de Caja</h3>

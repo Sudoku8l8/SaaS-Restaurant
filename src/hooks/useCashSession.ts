@@ -6,14 +6,12 @@ import {
     where,
     onSnapshot,
     addDoc,
-    updateDoc,
-    doc,
     limit,
     Timestamp
 } from 'firebase/firestore';
 import { useAuth } from './useAuth';
 import { getPeruDateString, getPeruNow } from '@/utils/dateUtils';
-import type { Closure, CashExpense } from '@/types';
+import type { Closure } from '@/types';
 
 export function useCashSession() {
     const { user } = useAuth();
@@ -71,28 +69,11 @@ export function useCashSession() {
         await addDoc(collection(db, 'closures'), newSession);
     };
 
-    const addExpense = async (expense: Omit<CashExpense, 'id' | 'timestamp' | 'userId'>) => {
-        if (!currentSession?.id || !user) return;
 
-        const newExpense: CashExpense = {
-            id: crypto.randomUUID(),
-            ...expense,
-            timestamp: getPeruNow(),
-            userId: user.id
-        };
-
-        const sessionRef = doc(db, 'closures', currentSession.id);
-        const updatedExpenses = [...(currentSession.expenses || []), newExpense];
-
-        await updateDoc(sessionRef, {
-            expenses: updatedExpenses
-        });
-    };
 
     return {
         currentSession,
         isLoading,
         openSession,
-        addExpense
     };
 }
