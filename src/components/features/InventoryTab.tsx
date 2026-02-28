@@ -132,33 +132,39 @@ export function InventoryTab() {
         <div>
             {/* Summary Cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-                <Card style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid var(--divider-color)', boxShadow: 'var(--shadow-sm)' }}>
-                    <div>
-                        <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 500 }}>Total Productos</p>
-                        <h3 style={{ margin: '0.5rem 0 0', fontSize: '2rem', color: 'var(--text-primary)' }}>{stats.total}</h3>
-                    </div>
-                    <div style={{ padding: '1rem', background: 'rgba(37, 99, 235, 0.1)', borderRadius: 'var(--radius-md)', color: 'var(--primary-color)' }}>
-                        <Box size={24} />
-                    </div>
-                </Card>
-
-                <Card style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid var(--divider-color)', boxShadow: 'var(--shadow-sm)' }}>
-                    <div>
-                        <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 500 }}>Stock Bajo</p>
-                        <h3 style={{ margin: '0.5rem 0 0', fontSize: '2rem', color: 'var(--text-primary)' }}>{stats.low}</h3>
-                    </div>
-                    <div style={{ padding: '1rem', background: '#fdf5f2', borderRadius: 'var(--radius-md)', color: 'var(--warning-color)' }}>
-                        <AlertTriangle size={24} />
+                <Card style={{ padding: '1.5rem', border: '1px solid var(--divider-color)', boxShadow: 'var(--shadow-sm)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div>
+                            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 500 }}>Total Productos</p>
+                            <h3 style={{ margin: '0.5rem 0 0', fontSize: '2rem', color: 'var(--text-primary)' }}>{stats.total}</h3>
+                        </div>
+                        <div style={{ padding: '1rem', background: 'rgba(37, 99, 235, 0.1)', borderRadius: 'var(--radius-md)', color: 'var(--primary-color)' }}>
+                            <Box size={24} />
+                        </div>
                     </div>
                 </Card>
 
-                <Card style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid var(--divider-color)', boxShadow: 'var(--shadow-sm)' }}>
-                    <div>
-                        <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 500 }}>Sin Existencias</p>
-                        <h3 style={{ margin: '0.5rem 0 0', fontSize: '2rem', color: 'var(--text-primary)' }}>{stats.critical}</h3>
+                <Card style={{ padding: '1.5rem', border: '1px solid var(--divider-color)', boxShadow: 'var(--shadow-sm)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div>
+                            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 500 }}>Stock Bajo</p>
+                            <h3 style={{ margin: '0.5rem 0 0', fontSize: '2rem', color: 'var(--text-primary)' }}>{stats.low}</h3>
+                        </div>
+                        <div style={{ padding: '1rem', background: '#fdf5f2', borderRadius: 'var(--radius-md)', color: 'var(--warning-color)' }}>
+                            <AlertTriangle size={24} />
+                        </div>
                     </div>
-                    <div style={{ padding: '1rem', background: '#fff1f2', borderRadius: 'var(--radius-md)', color: 'var(--danger-color)' }}>
-                        <AlertCircle size={24} />
+                </Card>
+
+                <Card style={{ padding: '1.5rem', border: '1px solid var(--divider-color)', boxShadow: 'var(--shadow-sm)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div>
+                            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 500 }}>Sin Existencias</p>
+                            <h3 style={{ margin: '0.5rem 0 0', fontSize: '2rem', color: 'var(--text-primary)' }}>{stats.critical}</h3>
+                        </div>
+                        <div style={{ padding: '1rem', background: '#fff1f2', borderRadius: 'var(--radius-md)', color: 'var(--danger-color)' }}>
+                            <AlertCircle size={24} />
+                        </div>
                     </div>
                 </Card>
             </div>
@@ -313,7 +319,7 @@ export function InventoryTab() {
                                                     {actual}
                                                 </span>
                                                 <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                                                    / {minimo} min
+                                                    / {minimo} Min.
                                                 </span>
                                             </div>
 
