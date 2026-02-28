@@ -58,7 +58,9 @@ export function CierreCajaPage() {
 
         setIsClosing(true);
         try {
-            const totalCashSales = metrics.salesByPaymentMethod['cash'] || 0;
+            const totalCashSales = Object.entries(metrics.salesByPaymentMethod)
+                .filter(([method]) => ['cash', 'efectivo'].includes(method.toLowerCase()))
+                .reduce((sum, [_, amount]) => sum + amount, 0);
             const totalExpenses = currentSession.expenses?.reduce((acc, e) => acc + e.amount, 0) || 0;
             const expectedCash = (currentSession.openingBalance || 0) + totalCashSales - totalExpenses;
             const difference = actualCash - expectedCash;
@@ -258,6 +260,10 @@ export function CierreCajaPage() {
                             <span>Monto Inicial</span>
                             <strong style={{ color: 'var(--text-primary)' }}>S/ {currentSession?.openingBalance?.toFixed(2) || '0.00'}</strong>
                         </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--success-color)', fontSize: '0.88rem' }}>
+                            <span>Ventas (Solo Efectivo)</span>
+                            <strong>+ S/ {Object.entries(metrics.salesByPaymentMethod).filter(([m]) => ['cash', 'efectivo'].includes(m.toLowerCase())).reduce((s, [_, a]) => s + a, 0).toFixed(2)}</strong>
+                        </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--danger-color)', fontSize: '0.88rem' }}>
                             <span>Gastos</span>
                             <strong>- S/ {(currentSession?.expenses?.reduce((acc, e) => acc + e.amount, 0) || 0).toFixed(2)}</strong>
@@ -373,8 +379,8 @@ export function CierreCajaPage() {
                             maxWidth: '480px', margin: '0 auto'
                         }}>
                             {[
-                                { label: 'Sistema', value: `S/ ${currentSession?.expectedCash?.toFixed(2) ?? '—'}` },
-                                { label: 'Físico', value: `S/ ${currentSession?.actualCash?.toFixed(2) ?? '—'}` },
+                                { label: 'Efectivo (Sistema)', value: `S/ ${currentSession?.expectedCash?.toFixed(2) ?? '—'}` },
+                                { label: 'Efectivo Físico', value: `S/ ${currentSession?.actualCash?.toFixed(2) ?? '—'}` },
                                 {
                                     label: 'Diferencia',
                                     value: `S/ ${currentSession?.difference?.toFixed(2) ?? '—'}`,
