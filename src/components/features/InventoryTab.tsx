@@ -3,8 +3,9 @@ import { db } from '@/services/firebase/config';
 import { collection, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
 import { Button, Card, Input, Badge } from '@/components/shared';
-import { Edit2, Search, AlertTriangle } from 'lucide-react';
+import { Edit2, Search, AlertTriangle, Eye, Clock, ShoppingBag } from 'lucide-react';
 import type { Product } from '@/types';
+import { useProductMovements } from '@/hooks/useProductMovements';
 
 export function InventoryTab() {
     const { user } = useAuth();
@@ -16,6 +17,10 @@ export function InventoryTab() {
     const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
     const [adjustingProduct, setAdjustingProduct] = useState<Product | null>(null);
     const [newStockStr, setNewStockStr] = useState('');
+
+    // Inspect Modal State
+    const [inspectingProduct, setInspectingProduct] = useState<Product | null>(null);
+    const { movements: productMovements, isLoading: loadingMovements } = useProductMovements(inspectingProduct?.id || null);
 
     useEffect(() => {
         if (!user?.restaurantId) return;
@@ -69,6 +74,14 @@ export function InventoryTab() {
             console.error('Error al guardar ajuste de stock', error);
             alert('Ocurrió un error al actualizar el stock.');
         }
+    };
+
+    const handleInspect = (product: Product) => {
+        setInspectingProduct(product);
+    };
+
+    const handleCloseInspect = () => {
+        setInspectingProduct(null);
     };
 
     // Filter logic
@@ -179,9 +192,14 @@ export function InventoryTab() {
                                         {getStockStatus(actual, minimo)}
                                     </td>
                                     <td style={{ padding: '1rem', textAlign: 'right' }}>
-                                        <Button size="sm" variant="outline" onClick={() => handleOpenAdjust(product)}>
-                                            <Edit2 size={14} className="mr-1" /> Ajustar
-                                        </Button>
+                                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                                            <Button size="sm" variant="ghost" onClick={() => handleInspect(product)}>
+                                                <Eye size={14} className="mr-1" /> Detalle
+                                            </Button>
+                                            <Button size="sm" variant="outline" onClick={() => handleOpenAdjust(product)}>
+                                                <Edit2 size={14} className="mr-1" /> Ajustar
+                                            </Button>
+                                        </div>
                                     </td>
                                 </tr>
                             );
@@ -226,6 +244,75 @@ export function InventoryTab() {
                                 <Button type="submit" variant="primary" fullWidth>Guardar Ajuste</Button>
                             </div>
                         </form>
+                    </Card>
+                </div>
+            )}
+
+            {/* Inspect Modal */}
+            {inspectingProduct && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+                    padding: '1rem'
+                }}>
+                    <Card style={{ padding: '2rem', width: '600px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+                            <div>
+                                <h3 style={{ marginTop: 0, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <ShoppingBag size={20} className="text-primary" />
+                                    Detalle de Stock: {inspectingProduct.name}
+                                </h3>
+                                <div style={{ display: 'flex', gap: '1rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                                    <span>Stock Actual: <strong>{inspectingProduct.stockActual || 0}</strong></span>
+                                    <span>Mínimo: <strong>{inspectingProduct.stockMinimo || 0}</strong></span>
+                                </div>
+                            </div>
+                            <Button size="sm" variant="ghost" onClick={handleCloseInspect}>Cerrar</Button>
+                        </div>
+
+                        <div style={{ background: 'var(--background-color)', borderRadius: 'var(--radius-md)', padding: '1rem' }}>
+                            <h4 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1rem' }}>Movimientos de Hoy</h4>
+
+                            {loadingMovements ? (
+                                <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '1rem' }}>Cargando información...</p>
+                            ) : productMovements.length === 0 ? (
+                                <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '1rem', fontStyle: 'italic' }}>
+                                    No se registraron ventas hoy para este producto.
+                                </p>
+                            ) : (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                    {productMovements.map(mov => (
+                                        <div key={mov.orderId} style={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            padding: '0.75rem',
+                                            background: 'var(--surface-color)',
+                                            border: '1px solid var(--divider-color)',
+                                            borderRadius: 'var(--radius-sm)'
+                                        }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                                <div style={{
+                                                    width: '32px', height: '32px',
+                                                    borderRadius: '50%', background: 'rgba(230, 57, 70, 0.1)',
+                                                    color: 'var(--danger-color)',
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                                }}>
+                                                    -{mov.quantity}
+                                                </div>
+                                                <div>
+                                                    <div style={{ fontWeight: 500, fontSize: '0.9rem' }}>Venta #{mov.orderId.slice(-4).toUpperCase()}</div>
+                                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                        <Clock size={12} /> {mov.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • Mzo. {mov.waiterName}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <Badge variant="neutral">Salida</Badge>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </Card>
                 </div>
             )}
