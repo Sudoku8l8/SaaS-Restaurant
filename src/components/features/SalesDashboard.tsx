@@ -1,6 +1,7 @@
 import { useDailySales } from '@/hooks/useDailySales';
 import { Card, Badge } from '@/components/shared';
 import { DashboardSkeleton } from '@/components/shared/Skeleton';
+import { TrendingUp } from "lucide-react";
 
 export function SalesDashboard() {
     const { metrics, isLoading } = useDailySales();
@@ -9,9 +10,18 @@ export function SalesDashboard() {
 
     return (
         <div style={{ marginBottom: '2rem' }}>
-            <h2 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                📊 Ventas del Día
-                <Badge variant={metrics.totalSales > 0 ? 'success' : 'neutral'}>
+            <h2
+                style={{
+                    marginBottom: "1rem",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                }}
+            >
+                <TrendingUp size={22} strokeWidth={2} />
+                Ventas del Día
+
+                <Badge variant={metrics.totalSales > 0 ? "success" : "neutral"}>
                     {new Date().toLocaleDateString()}
                 </Badge>
             </h2>

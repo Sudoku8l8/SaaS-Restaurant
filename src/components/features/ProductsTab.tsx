@@ -23,6 +23,9 @@ export function ProductsTab() {
         descriptionEn: '',
         available: true,
         isPopular: false,
+        controlaStock: false,
+        stockActual: '',
+        stockMinimo: '',
         dietaryTags: [] as string[],
     });
 
@@ -83,6 +86,10 @@ export function ProductsTab() {
                 descriptionEn: formData.descriptionEn.trim(),
                 available: formData.available,
                 isPopular: formData.isPopular,
+                controlaStock: formData.controlaStock,
+                stockActual: formData.controlaStock ? (formData.stockActual === '' ? 0 : parseInt(formData.stockActual) || 0) : 0,
+                stockMinimo: formData.controlaStock ? (formData.stockMinimo === '' ? 0 : parseInt(formData.stockMinimo) || 0) : 0,
+                fechaActualizacionStock: new Date(),
                 dietaryTags: formData.dietaryTags,
             };
 
@@ -117,6 +124,9 @@ export function ProductsTab() {
                 descriptionEn: product.descriptionEn || '',
                 available: product.available,
                 isPopular: product.isPopular || false,
+                controlaStock: product.controlaStock || false,
+                stockActual: product.stockActual !== undefined ? product.stockActual.toString() : '',
+                stockMinimo: product.stockMinimo !== undefined ? product.stockMinimo.toString() : '',
                 dietaryTags: product.dietaryTags || [],
             });
         } else {
@@ -130,6 +140,9 @@ export function ProductsTab() {
                 descriptionEn: '',
                 available: true,
                 isPopular: false,
+                controlaStock: false,
+                stockActual: '',
+                stockMinimo: '',
                 dietaryTags: [],
             });
         }
@@ -306,6 +319,42 @@ export function ProductsTab() {
                                     />
                                     ⭐ Popular
                                 </label>
+                            </div>
+
+                            <div style={{ padding: '1rem', border: '1px solid var(--divider-color)', borderRadius: '8px', background: 'var(--surface-color)', marginTop: '0.5rem' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.controlaStock}
+                                        onChange={e => setFormData({ ...formData, controlaStock: e.target.checked })}
+                                    />
+                                    Controlar Stock (Inventario)
+                                </label>
+
+                                {formData.controlaStock && (
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
+                                        <Input
+                                            label="Stock Actual"
+                                            type="number"
+                                            min="0"
+                                            step="1"
+                                            value={formData.stockActual}
+                                            onChange={e => setFormData({ ...formData, stockActual: e.target.value })}
+                                            required={formData.controlaStock}
+                                            placeholder="Ej: 50"
+                                        />
+                                        <Input
+                                            label="Stock Mínimo (Alerta)"
+                                            type="number"
+                                            min="0"
+                                            step="1"
+                                            value={formData.stockMinimo}
+                                            onChange={e => setFormData({ ...formData, stockMinimo: e.target.value })}
+                                            required={formData.controlaStock}
+                                            placeholder="Ej: 10"
+                                        />
+                                    </div>
+                                )}
                             </div>
 
                             {/* Dietary Tags */}

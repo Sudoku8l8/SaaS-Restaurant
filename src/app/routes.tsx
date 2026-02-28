@@ -5,6 +5,7 @@ import { CocinaPage } from '@/pages/Cocina/CocinaPage';
 import { CierreCajaPage } from '@/pages/CierreCaja/CierreCajaPage';
 import { ConfigPage } from '@/pages/Configuracion/ConfigPage';
 import { AdminPage } from '@/pages/Admin/AdminPage';
+import { InventoryPage } from '@/pages/Admin/InventoryPage';
 import { ReportesPage } from '@/pages/Reportes/ReportesPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { DigitalMenuPage } from '@/pages/Public/DigitalMenuPage';
@@ -98,6 +99,11 @@ export const router = createBrowserRouter([
                         path: 'cierre-caja',
                         element: <ProtectedRoute allowedRoles={[UserRole.ADMIN]} />,
                         children: [{ index: true, element: <CierreCajaPage /> }],
+                    },
+                    {
+                        path: 'inventario',
+                        element: <ProtectedRoute allowedRoles={[UserRole.ADMIN]} />,
+                        children: [{ index: true, element: <InventoryPage /> }],
                     },
                     {
                         path: 'config',

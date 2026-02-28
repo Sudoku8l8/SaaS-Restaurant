@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChefHat, DollarSign, BarChart3, Settings, AlertTriangle, ArrowRight } from 'lucide-react';
+import { ChefHat, DollarSign, BarChart3, Settings, AlertTriangle, ArrowRight, Package } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button, Card } from '@/components/shared';
 import { SalesDashboard } from '@/components/features/SalesDashboard';
 import { usePendingClosures } from '@/hooks/usePendingClosures';
+import { useLowStock } from '@/hooks/useLowStock';
 
 export function AdminPage() {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const { restaurantSlug } = useParams<{ restaurantSlug: string }>();
     const { pendingClosures, isLoading: loadingPending } = usePendingClosures();
+    const { lowStockProducts, isLoading: loadingStock } = useLowStock();
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
     useEffect(() => {
@@ -108,6 +110,52 @@ export function AdminPage() {
                 </div>
             )}
 
+            {/* Low Stock Alerts */}
+            {!loadingStock && lowStockProducts.length > 0 && (
+                <div style={{ marginBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    <div style={{
+                        background: 'rgba(255, 152, 0, 0.08)',
+                        border: '1px solid rgba(255, 152, 0, 0.2)',
+                        borderRadius: 'var(--radius-lg)',
+                        padding: '1rem 1.5rem',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
+                        gap: '1rem'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                            <div style={{
+                                backgroundColor: 'var(--warning-color)',
+                                color: 'white',
+                                width: '40px',
+                                height: '40px',
+                                borderRadius: '50%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}>
+                                <AlertTriangle size={20} />
+                            </div>
+                            <div>
+                                <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1rem' }}>Alertas de Inventario</h4>
+                                <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                                    {lowStockProducts.length} producto{lowStockProducts.length > 1 ? 's' : ''} con stock bajo o crítico.
+                                </p>
+                            </div>
+                        </div>
+                        <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => navigate(`/${restaurantSlug}/config`)}
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: 'var(--warning-color)', color: '#000' }}
+                        >
+                            Ver Inventario <ArrowRight size={16} />
+                        </Button>
+                    </div>
+                </div>
+            )}
+
             {/* Daily Sales Dashboard */}
             <SalesDashboard />
 
@@ -128,6 +176,12 @@ export function AdminPage() {
                     <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}><BarChart3 size={48} className="text-primary" /></div>
                     <h3>Reportes</h3>
                     <p style={{ color: '#666', fontSize: '0.9rem' }}>Histórico de ventas</p>
+                </Card>
+
+                <Card style={{ padding: '2rem', textAlign: 'center', cursor: 'pointer' }} onClick={() => navigate(`/${restaurantSlug}/inventario`)}>
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}><Package size={48} className="text-primary" /></div>
+                    <h3>Inventario</h3>
+                    <p style={{ color: '#666', fontSize: '0.9rem' }}>Control de stock de productos</p>
                 </Card>
 
                 <Card style={{ padding: '2rem', textAlign: 'center', cursor: 'pointer' }} onClick={() => navigate(`/${restaurantSlug}/config`)}>

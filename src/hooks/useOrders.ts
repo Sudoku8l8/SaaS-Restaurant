@@ -9,6 +9,7 @@ import {
     doc,
     writeBatch,
     getDocs,
+    getDoc,
     addDoc,
     limit
 } from 'firebase/firestore';
@@ -178,6 +179,31 @@ export function useOrders() {
                     status: 'free',
                     currentOrderId: null // Firestore doesn't like undefined, use null or delete field
                 });
+            }
+        }
+
+        // 3. Discount Inventory
+        if (existingOrder && existingOrder.items?.length > 0) {
+            for (const item of existingOrder.items) {
+                const productRef = doc(db, 'products', item.productId);
+                const productSnap = await getDoc(productRef);
+
+                if (productSnap.exists()) {
+                    const productData = productSnap.data();
+                    if (productData.controlaStock) {
+                        const currentStock = productData.stockActual || 0;
+                        const qtyToDeduct = item.quantity || 1;
+                        let newStock = currentStock - qtyToDeduct;
+
+                        // El stock no puede ser negativo
+                        if (newStock < 0) newStock = 0;
+
+                        batch.update(productRef, {
+                            stockActual: newStock,
+                            fechaActualizacionStock: getPeruNow()
+                        });
+                    }
+                }
             }
         }
 

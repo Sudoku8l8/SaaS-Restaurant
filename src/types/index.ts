@@ -114,6 +114,10 @@ export interface Product {
     // Dietary & Allergen Tags
     dietaryTags?: string[]; // e.g. ['vegan', 'spicy', 'gluten-free', 'nut-free', 'vegetarian', 'dairy-free']
     // Inventory & Options
+    controlaStock?: boolean;
+    stockActual?: number;
+    stockMinimo?: number;
+    fechaActualizacionStock?: Date;
     stockCount?: number;
     trackStock?: boolean;
     modifiers?: ProductModifier[];
