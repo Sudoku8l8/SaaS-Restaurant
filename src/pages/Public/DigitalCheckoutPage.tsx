@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useTenant } from '@/app/providers/TenantProvider';
 import { ArrowLeft, MapPin, MessageCircle, Wallet, Utensils, ShoppingBag, CheckCircle2 } from 'lucide-react';
 import type { OrderItem } from '@/types';
@@ -15,6 +16,7 @@ export function DigitalCheckoutPage() {
 
     const navigate = useNavigate();
     const { tenant, isLoading } = useTenant();
+    const { t } = useTranslation();
 
     // State
     const [cart, setCart] = useState<OrderItem[]>([]);
@@ -151,10 +153,10 @@ export function DigitalCheckoutPage() {
             }}>
                 <CheckCircle2 size={72} color="#16a34a" strokeWidth={1.5} />
                 <h2 style={{ marginTop: '1.5rem', fontWeight: 800, color: '#14532d' }}>
-                    ¡Pedido Enviado a la Mesa!
+                    {t('checkout.successTableTitle')}
                 </h2>
                 <p style={{ color: '#16a34a', fontWeight: 600, marginTop: '0.5rem' }}>
-                    El mozo recibirá tu pedido en un momento.
+                    {t('checkout.successTableDesc')}
                 </p>
             </div>
         );
@@ -169,10 +171,10 @@ export function DigitalCheckoutPage() {
             }}>
                 <CheckCircle2 size={72} color="#25d366" strokeWidth={1.5} />
                 <h2 style={{ marginTop: '1.5rem', fontWeight: 800, color: '#14532d' }}>
-                    ¡Pedido Enviado por WhatsApp!
+                    {t('checkout.successWhatsappTitle')}
                 </h2>
                 <p style={{ color: '#16a34a', fontWeight: 600, marginTop: '0.5rem' }}>
-                    El personal ha sido notificado también.
+                    {t('checkout.successWhatsappDesc')}
                 </p>
             </div>
         );
@@ -184,12 +186,12 @@ export function DigitalCheckoutPage() {
                 <button className={styles.backBtn} onClick={() => navigate(-1)}>
                     <ArrowLeft size={24} />
                 </button>
-                <h1 className={styles.title}>Confirmar Pedido</h1>
+                <h1 className={styles.title}>{t('checkout.title')}</h1>
             </header>
 
             <main className={styles.content}>
                 <section className={styles.section}>
-                    <h2 className={styles.sectionTitle}>Tipo de Entrega</h2>
+                    <h2 className={styles.sectionTitle}>{t('checkout.deliveryType')}</h2>
                     <div className={styles.orderTypeGrid}>
                         {tableNumber && (
                             <button
@@ -197,7 +199,7 @@ export function DigitalCheckoutPage() {
                                 onClick={() => setOrderType('dine-in')}
                             >
                                 <Utensils size={20} />
-                                <span>En Mesa ({tableNumber})</span>
+                                <span>{t('checkout.dineIn')} ({tableNumber})</span>
                             </button>
                         )}
 
@@ -207,7 +209,7 @@ export function DigitalCheckoutPage() {
                                 onClick={() => setOrderType('pickup')}
                             >
                                 <ShoppingBag size={20} />
-                                <span>Recoger</span>
+                                <span>{t('checkout.pickup')}</span>
                             </button>
                         )}
 
@@ -217,21 +219,21 @@ export function DigitalCheckoutPage() {
                                 onClick={() => setOrderType('delivery')}
                             >
                                 <MapPin size={20} />
-                                <span>Delivery</span>
+                                <span>{t('checkout.delivery')}</span>
                             </button>
                         )}
                     </div>
                 </section>
 
                 <section className={styles.section}>
-                    <h2 className={styles.sectionTitle}>Datos del Cliente</h2>
+                    <h2 className={styles.sectionTitle}>{t('checkout.customerData')}</h2>
                     {orderType !== 'dine-in' && (
                         <div className={styles.formGroup}>
                             <Input
-                                label="Nombre y Apellido"
+                                label={t('checkout.nameLabel')}
                                 value={customerName}
                                 onChange={(e) => setCustomerName(e.target.value)}
-                                placeholder="Ej. Juan Pérez"
+                                placeholder={t('checkout.namePlaceholder')}
                                 required
                             />
                         </div>
@@ -239,20 +241,20 @@ export function DigitalCheckoutPage() {
                     {orderType === 'dine-in' && (
                         <div className={styles.formGroup}>
                             <Input
-                                label="Nombre (Opcional)"
+                                label={t('checkout.nameOptional')}
                                 value={customerName}
                                 onChange={(e) => setCustomerName(e.target.value)}
-                                placeholder="Para que el mozo te llame"
+                                placeholder={t('checkout.nameHint')}
                             />
                         </div>
                     )}
                     {orderType === 'delivery' && (
                         <div className={styles.formGroup}>
                             <Input
-                                label="Dirección de Entrega"
+                                label={t('checkout.addressLabel')}
                                 value={customerAddress}
                                 onChange={(e) => setCustomerAddress(e.target.value)}
-                                placeholder="Ej. Av. Principal 123"
+                                placeholder={t('checkout.addressPlaceholder')}
                                 required
                             />
                         </div>
@@ -260,14 +262,14 @@ export function DigitalCheckoutPage() {
                 </section>
 
                 <section className={styles.section}>
-                    <h2 className={styles.sectionTitle}>Método de Pago</h2>
+                    <h2 className={styles.sectionTitle}>{t('checkout.paymentMethod')}</h2>
                     <div className={styles.paymentMethodsGrid}>
                         <button
                             className={`${styles.paymentBtn} ${paymentMethod === 'efectivo' ? styles.active : ''}`}
                             onClick={() => setPaymentMethod('efectivo')}
                         >
                             <Wallet size={20} />
-                            <span>Efectivo</span>
+                            <span>{t('checkout.cash')}</span>
                         </button>
 
                         {config.paymentMethodsConfig?.yape && (
@@ -293,14 +295,14 @@ export function DigitalCheckoutPage() {
                                 className={`${styles.paymentBtn} ${paymentMethod === 'transferencia' ? styles.active : ''}`}
                                 onClick={() => setPaymentMethod('transferencia')}
                             >
-                                <span>Transferencia / Cuenta</span>
+                                <span>{t('checkout.transfer')}</span>
                             </button>
                         )}
                     </div>
                 </section>
 
                 <section className={styles.summarySection}>
-                    <h2 className={styles.sectionTitle}>Resumen</h2>
+                    <h2 className={styles.sectionTitle}>{t('checkout.summary')}</h2>
                     <div className={styles.cartList}>
                         {cart.map(item => (
                             <div key={item.productId} className={styles.cartItemRow}>
@@ -311,17 +313,17 @@ export function DigitalCheckoutPage() {
                         ))}
                     </div>
                     <div className={styles.totalRow}>
-                        <span>Subtotal</span>
+                        <span>{t('checkout.subtotal')}</span>
                         <span>{config.currency} {subtotal.toFixed(2)}</span>
                     </div>
                     {orderType === 'delivery' && (
                         <div className={styles.totalRow}>
-                            <span>Delivery</span>
+                            <span>{t('checkout.deliveryCost')}</span>
                             <span>{config.currency} {deliveryCost.toFixed(2)}</span>
                         </div>
                     )}
                     <div className={styles.finalTotalRow}>
-                        <span>Total a Pagar</span>
+                        <span>{t('checkout.total')}</span>
                         <span>{config.currency} {total.toFixed(2)}</span>
                     </div>
                 </section>
@@ -340,7 +342,7 @@ export function DigitalCheckoutPage() {
                         }}
                     >
                         <Utensils size={20} />
-                        {submitting ? 'Enviando...' : '\uD83C\uDF7D\uFE0F Confirmar Pedido a la Mesa'}
+                        {submitting ? t('checkout.sending') : t('checkout.confirmDineIn')}
                     </Button>
                 )}
 
@@ -356,7 +358,7 @@ export function DigitalCheckoutPage() {
                         }}
                     >
                         <MessageCircle size={20} />
-                        {submitting ? 'Enviando...' : 'Enviar Pedido por WhatsApp'}
+                        {submitting ? t('checkout.sending') : t('checkout.confirmWhatsapp')}
                     </Button>
                 )}
             </footer>

@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTenant } from '@/app/providers/TenantProvider';
 import { usePublicMenu } from '@/hooks/usePublicMenu';
-import { Utensils, MapPin, Phone, Plus, Minus, ShoppingBag, Search, X } from 'lucide-react';
+import { Utensils, MapPin, Phone, Plus, Minus, ShoppingBag, Search, X, Globe } from 'lucide-react';
 import type { OrderItem, Product } from '@/types';
 import styles from './DigitalMenuPage.module.css';
 
@@ -78,6 +79,12 @@ export function DigitalMenuPage() {
     const navRef = useRef<HTMLDivElement>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeTag, setActiveTag] = useState<string | null>(null);
+    const { t, i18n } = useTranslation();
+
+    const toggleLanguage = () => {
+        const newLang = i18n.language.startsWith('es') ? 'en' : 'es';
+        i18n.changeLanguage(newLang);
+    };
 
     const accentColor = tenant?.config?.menuAccentColor || '#c8a96e';
     const bgColor = tenant?.config?.menuBgColor || '#ffffff';
@@ -195,11 +202,10 @@ export function DigitalMenuPage() {
         navigate(`/${restaurantSlug}/menu/checkout${tableNumber ? `?table=${tableNumber}` : ''}`);
     };
 
-    // ── Loading state ──
     if (tenantLoading) {
         return (
             <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fafaf8' }}>
-                <p style={{ color: accentColor, fontWeight: 'bold', fontFamily: 'Inter, sans-serif' }}>Cargando Menú...</p>
+                <p style={{ color: accentColor, fontWeight: 'bold', fontFamily: 'Inter, sans-serif' }}>{t('menu.loading')}</p>
             </div>
         );
     }
@@ -209,8 +215,8 @@ export function DigitalMenuPage() {
         return (
             <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fafaf8', padding: '2rem', textAlign: 'center' }}>
                 <div>
-                    <h2 style={{ color: '#c0392b', fontFamily: 'Playfair Display, serif' }}>Restaurante no encontrado</h2>
-                    <p style={{ color: '#888', marginTop: '1rem', fontFamily: 'Inter, sans-serif' }}>El enlace que has escaneado parece no ser válido.</p>
+                    <h2 style={{ color: '#c0392b', fontFamily: 'Playfair Display, serif' }}>{t('menu.notFound')}</h2>
+                    <p style={{ color: '#888', marginTop: '1rem', fontFamily: 'Inter, sans-serif' }}>{t('menu.invalidLink')}</p>
                 </div>
             </div>
         );
@@ -230,21 +236,21 @@ export function DigitalMenuPage() {
 
     // ── Group products by category ──
     const DIETARY_FILTER_OPTIONS = [
-        { tag: 'vegan', label: '🌿 Vegano' },
-        { tag: 'vegetarian', label: '🥦 Vegetariano' },
-        { tag: 'spicy', label: '🌶️ Picante' },
-        { tag: 'gluten-free', label: '🌾 Sin Gluten' },
-        { tag: 'dairy-free', label: '🥛 Sin Lácteos' },
-        { tag: 'nut-free', label: '🥜 Sin Nueces' },
+        { tag: 'vegan', label: t('menu.tags.vegan') },
+        { tag: 'vegetarian', label: t('menu.tags.vegetarian') },
+        { tag: 'spicy', label: t('menu.tags.spicy') },
+        { tag: 'gluten-free', label: t('menu.tags.glutenFree') },
+        { tag: 'dairy-free', label: t('menu.tags.dairyFree') },
+        { tag: 'nut-free', label: t('menu.tags.nutFree') },
     ];
 
     const DIETARY_TAG_LABELS: Record<string, { label: string; cssClass: keyof typeof styles }> = {
-        vegan: { label: '🌿 Vegano', cssClass: 'vegan' },
-        vegetarian: { label: '🥦 Vegetariano', cssClass: 'vegetarian' },
-        spicy: { label: '🌶️ Picante', cssClass: 'spicy' },
-        'gluten-free': { label: '🌾 Sin Gluten', cssClass: 'glutenFree' },
-        'dairy-free': { label: '🥛 Sin Lácteos', cssClass: 'dairyFree' },
-        'nut-free': { label: '🥜 Sin Nueces', cssClass: 'nutFree' },
+        vegan: { label: t('menu.tags.vegan'), cssClass: 'vegan' },
+        vegetarian: { label: t('menu.tags.vegetarian'), cssClass: 'vegetarian' },
+        spicy: { label: t('menu.tags.spicy'), cssClass: 'spicy' },
+        'gluten-free': { label: t('menu.tags.glutenFree'), cssClass: 'glutenFree' },
+        'dairy-free': { label: t('menu.tags.dairyFree'), cssClass: 'dairyFree' },
+        'nut-free': { label: t('menu.tags.nutFree'), cssClass: 'nutFree' },
     };
 
     const filteredProducts = (prods: Product[]) => {
@@ -291,13 +297,24 @@ export function DigitalMenuPage() {
                         </div>
                     )}
                 </div>
+
+                <button
+                    onClick={toggleLanguage}
+                    className={styles.languageSwitcher}
+                    aria-label="Toggle language"
+                    style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', color: accentColor, fontWeight: 'bold' }}
+                >
+                    <Globe size={18} />
+                    <span>{i18n.language.startsWith('es') ? 'EN' : 'ES'}</span>
+                </button>
+
                 <h1 className={styles.restaurantName}>{name}</h1>
                 {config?.menuDescription && (
                     <p className={styles.restaurantDescription}>{config.menuDescription}</p>
                 )}
                 {tableNumber && (
                     <div className={styles.tableBadge}>
-                        Mesa {tableNumber}
+                        {t('menu.table')} {tableNumber}
                     </div>
                 )}
             </header>
@@ -310,7 +327,7 @@ export function DigitalMenuPage() {
                         <input
                             className={styles.searchInput}
                             type="text"
-                            placeholder="Buscar en la carta..."
+                            placeholder={t('menu.searchPlaceholder')}
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
                         />
@@ -372,13 +389,13 @@ export function DigitalMenuPage() {
                         <Utensils size={48} style={{ color: '#ddd', marginBottom: '1rem' }} />
                         {searchQuery || activeTag ? (
                             <>
-                                <h2>Sin resultados</h2>
-                                <p>No encontramos platos que coincidan con tu búsqueda.</p>
+                                <h2>{t('menu.noResultsTitle')}</h2>
+                                <p>{t('menu.noResultsDesc')}</p>
                             </>
                         ) : (
                             <>
-                                <h2>Carta no disponible</h2>
-                                <p>Estamos preparando nuestra carta digital. Por favor consulte con el mozo.</p>
+                                <h2>{t('menu.unavailableTitle')}</h2>
+                                <p>{t('menu.unavailableDesc')}</p>
                             </>
                         )}
                     </div>
@@ -405,25 +422,35 @@ export function DigitalMenuPage() {
                                     >
                                         <div className={styles.productInfo}>
                                             <div className={styles.productNameRow}>
-                                                <h3 className={styles.productName}>{product.name}</h3>
+                                                <h3 className={styles.productName}>
+                                                    {i18n.language.startsWith('en') && product.nameEn ? product.nameEn : product.name}
+                                                </h3>
                                                 {product.isPopular && (
-                                                    <span className={styles.popularBadge}>⭐ Popular</span>
+                                                    <span className={styles.popularBadge}>{t('menu.popular')}</span>
                                                 )}
                                                 {!product.available && (
-                                                    <span className={styles.unavailableBadge}>Agotado</span>
+                                                    <span className={styles.unavailableBadge}>{t('menu.soldOut')}</span>
                                                 )}
                                                 <span className={styles.productPrice}>
                                                     {currency} {product.price.toFixed(2)}
                                                 </span>
                                             </div>
-                                            {englishSubtitles && product.nameEn && (
+                                            {englishSubtitles && product.nameEn && i18n.language.startsWith('es') && (
                                                 <p className={styles.subtitleEn}>{product.nameEn}</p>
                                             )}
-                                            {product.description && (
-                                                <p className={styles.productDescription}>{product.description}</p>
+                                            {englishSubtitles && product.name && i18n.language.startsWith('en') && (
+                                                <p className={styles.subtitleEn}>{product.name}</p>
                                             )}
-                                            {englishSubtitles && product.descriptionEn && (
+                                            {(i18n.language.startsWith('en') && product.descriptionEn ? product.descriptionEn : product.description) && (
+                                                <p className={styles.productDescription}>
+                                                    {i18n.language.startsWith('en') && product.descriptionEn ? product.descriptionEn : product.description}
+                                                </p>
+                                            )}
+                                            {englishSubtitles && product.descriptionEn && i18n.language.startsWith('es') && (
                                                 <p className={styles.subtitleEn}>{product.descriptionEn}</p>
+                                            )}
+                                            {englishSubtitles && product.description && i18n.language.startsWith('en') && (
+                                                <p className={styles.subtitleEn}>{product.description}</p>
                                             )}
                                             {/* Dietary Tags */}
                                             {product.dietaryTags && product.dietaryTags.length > 0 && (
@@ -451,9 +478,9 @@ export function DigitalMenuPage() {
                                                         if (cartItem) {
                                                             return (
                                                                 <div className={styles.quantityControls}>
-                                                                    <button className={styles.qtyBtn} onClick={() => handleUpdateQuantity(product.id, -1)} aria-label="Decrease quantity"><Minus size={14} /></button>
+                                                                    <button className={styles.qtyBtn} onClick={() => handleUpdateQuantity(product.id, -1)} aria-label={t('menu.decreaseQty')}><Minus size={14} /></button>
                                                                     <span className={styles.qtyValue}>{cartItem.quantity}</span>
-                                                                    <button className={styles.qtyBtn} onClick={() => handleUpdateQuantity(product.id, 1)} aria-label="Increase quantity"><Plus size={14} /></button>
+                                                                    <button className={styles.qtyBtn} onClick={() => handleUpdateQuantity(product.id, 1)} aria-label={t('menu.increaseQty')}><Plus size={14} /></button>
                                                                 </div>
                                                             );
                                                         }
@@ -461,7 +488,7 @@ export function DigitalMenuPage() {
                                                             <button
                                                                 className={styles.addToCartBtn}
                                                                 onClick={() => handleAddToCart(product)}
-                                                                title="Agregar al Carrito"
+                                                                title={t('menu.addToCart')}
                                                             >
                                                                 <div className={styles.cartIconMiniWrapper}>
                                                                     <ShoppingBag size={18} strokeWidth={2} />
@@ -534,7 +561,7 @@ export function DigitalMenuPage() {
                             {currency} {cartTotal.toFixed(2)}
                         </span>
                     </div>
-                    <span className={styles.cartViewText}>Ver Pedido</span>
+                    <span className={styles.cartViewText}>{t('menu.viewOrder')}</span>
                 </div>
             )}
         </div>

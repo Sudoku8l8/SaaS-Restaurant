@@ -5,6 +5,7 @@ import { router } from './app/routes'
 import { AuthProvider } from './app/providers/AuthProvider'
 import { GlobalErrorBoundary, ToastProvider } from './components/shared'
 import { seedFirestore } from './services/firebase/seeders'
+import './i18n'; // i18n internalization
 import './index.css'
 
 // Init DB — Only in development
