@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Lock } from 'lucide-react';
+import { Lock, Wallet } from 'lucide-react';
 import { OrderModal } from '@/components/features/OrderModal';
 import { TableDetailModal } from '@/components/features/TableDetailModal';
 import { TableMap } from '@/components/features/TableMap';
 import { Button } from '@/components/shared';
 import { TableSkeleton } from '@/components/shared/Skeleton';
 import { useAuth } from '@/hooks/useAuth';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useTables } from '@/hooks/useTables';
 import { useOrders } from '@/hooks/useOrders';
 import { useClosureStatus } from '@/hooks/useClosureStatus';
@@ -16,6 +17,8 @@ export const TAKEOUT_NEW_ID = 'takeout-new-wildcard';
 
 export function MozoPage() {
     const { user, logout } = useAuth();
+    const navigate = useNavigate();
+    const { restaurantSlug } = useParams<{ restaurantSlug: string }>();
     const { tables } = useTables(); // Real-time tables from Firestore
     const { activeOrders } = useOrders();
     const { isClosed, isLoading: checkingClosure } = useClosureStatus();
@@ -194,6 +197,18 @@ export function MozoPage() {
                     flexShrink: 0
                 }}>
                     <NotificationBell />
+                    <button
+                        onClick={() => navigate(`/${restaurantSlug}/caja-chica`)}
+                        title="Caja Chica"
+                        style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            width: '36px', height: '36px', borderRadius: '50%',
+                            border: '1px solid rgba(245,158,11,0.3)', background: 'rgba(245,158,11,0.08)',
+                            color: '#f59e0b', cursor: 'pointer', transition: 'all 0.2s',
+                        }}
+                    >
+                        <Wallet size={18} />
+                    </button>
                     <div style={{ textAlign: 'right', minWidth: 'fit-content' }}>
                         <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: '800', letterSpacing: '0.05em', lineHeight: 1 }}>{user?.name}</p>
                         <p style={{ margin: 0, color: 'var(--text-primary)', fontWeight: '700', fontSize: '0.85rem' }}>Mozo</p>

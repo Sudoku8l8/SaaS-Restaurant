@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from 'react';
-import { Lock, ShieldCheck, ChefHat, LogOut, Menu } from 'lucide-react';
+import { Lock, ShieldCheck, ChefHat, LogOut, Menu, Wallet } from 'lucide-react';
 import type { RestaurantTable, Order } from '@/types';
 import { OrderModal } from '@/components/features/OrderModal';
 import { TableDetailModal } from '@/components/features/TableDetailModal';
@@ -259,6 +259,13 @@ export function CocinaPage() {
                                     >
                                         <ShieldCheck size={18} style={{ color: 'var(--primary-color)' }} />
                                         <span>Administración</span>
+                                    </button>
+                                    <button
+                                        className="cocina-dropdown-item"
+                                        onClick={() => { navigate(`/${restaurantSlug}/caja-chica`); setIsMenuOpen(false); }}
+                                    >
+                                        <Wallet size={18} style={{ color: '#f59e0b' }} />
+                                        <span>Caja Chica</span>
                                     </button>
                                     <button
                                         className="cocina-dropdown-item danger"
