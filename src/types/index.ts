@@ -217,6 +217,8 @@ export interface Order {
     orderType: 'dine-in' | 'takeout';
     customerName?: string;
     dailyNumber?: number;
+    dateStr?: string;        // 'YYYY-MM-DD' — optimized server-side date queries
+    tableId?: string;        // Direct Firestore table doc ID — avoids lookup queries
     statusHistory?: StatusChange[];
 }
 

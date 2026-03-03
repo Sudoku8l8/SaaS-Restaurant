@@ -71,11 +71,13 @@ export function ReportesPage() {
                 };
             });
 
-            // 2. Fetch all PAID orders in range to detect days without closure
+            // 2. OPT: Fetch PAID orders in range using dateStr index
             const ordersQ = query(
                 collection(db, 'orders'),
                 where('restaurantId', '==', user.restaurantId),
-                where('status', '==', 'paid')
+                where('status', '==', 'paid'),
+                where('dateStr', '>=', fromDate),
+                where('dateStr', '<=', toDate)
             );
             const ordersSnap = await getDocs(ordersQ);
 
@@ -84,11 +86,7 @@ export function ReportesPage() {
 
             ordersSnap.docs.forEach(d => {
                 const data = d.data();
-                const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
-                const dateStr = getPeruDateString(createdAt);
-
-                // Only process dates within the selected range
-                if (dateStr < fromDate || dateStr > toDate) return;
+                const dateStr = data.dateStr || getPeruDateString(data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt));
 
                 if (!ordersByDate[dateStr]) {
                     ordersByDate[dateStr] = { totalSales: 0, orderCount: 0, salesByWaiter: {}, salesByPaymentMethod: {} };
@@ -206,18 +204,22 @@ export function ReportesPage() {
         if (!user?.restaurantId || dayRecords.length === 0) return;
         setIsExporting(true);
         try {
-            const q = query(collection(db, 'orders'), where('restaurantId', '==', user.restaurantId));
+            // OPT: Use dateStr range filter instead of fetching ALL orders
+            const q = query(
+                collection(db, 'orders'),
+                where('restaurantId', '==', user.restaurantId),
+                where('status', '==', 'paid'),
+                where('dateStr', '>=', fromDate),
+                where('dateStr', '<=', toDate)
+            );
             const snapshot = await getDocs(q);
-            const startRange = new Date(fromDate);
-            const endRange = new Date(toDate + 'T23:59:59');
 
             const orders = snapshot.docs
                 .map(d => {
                     const data = d.data();
                     const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
                     return { id: d.id, ...data, createdAt } as any;
-                })
-                .filter(o => o.status === 'paid' && o.createdAt >= startRange && o.createdAt <= endRange);
+                });
 
             const summaryMetrics = {
                 totalSales,
@@ -247,19 +249,21 @@ export function ReportesPage() {
     const handleExportSingleDay = async (record: DayRecord) => {
         if (!user?.restaurantId) return;
         try {
-            const q = query(collection(db, 'orders'), where('restaurantId', '==', user.restaurantId));
+            // OPT: Use dateStr filter for single day export
+            const q = query(
+                collection(db, 'orders'),
+                where('restaurantId', '==', user.restaurantId),
+                where('status', '==', 'paid'),
+                where('dateStr', '==', record.date)
+            );
             const snapshot = await getDocs(q);
-            const date = parseISO(record.date);
-            const startOfDay = new Date(date); startOfDay.setHours(0, 0, 0, 0);
-            const endOfDay = new Date(date); endOfDay.setHours(23, 59, 59, 999);
 
             const orders = snapshot.docs
                 .map(d => {
                     const data = d.data();
                     const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
                     return { id: d.id, ...data, createdAt } as any;
-                })
-                .filter(o => o.status === 'paid' && o.createdAt >= startOfDay && o.createdAt <= endOfDay);
+                });
 
             const metrics = {
                 totalSales: record.totalSales,
