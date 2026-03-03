@@ -26,9 +26,11 @@ export function useOrders() {
     useEffect(() => {
         if (!restaurantId) return;
 
+        // OPT: Only fetch active (non-paid, non-cancelled) orders from Firestore
         const q = query(
             collection(db, 'orders'),
-            where('restaurantId', '==', restaurantId)
+            where('restaurantId', '==', restaurantId),
+            where('status', 'in', ['pending', 'in_preparation', 'ready', 'delivered'])
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -44,9 +46,8 @@ export function useOrders() {
                 } as Order;
             });
 
-            // Client-side sorting & double-check filtering to ensure reactivity even with index issues
+            // Sort by creation date
             const active = orders
-                .filter(o => o.status !== 'paid')
                 .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 
             setActiveOrders(active);
@@ -74,10 +75,9 @@ export function useOrders() {
                 transaction.set(counterRef, { count: 1 });
             }
 
-            // Assign daily number to order
-            const orderWithNumber = { ...order, dailyNumber };
-            const orderRef = doc(db, 'orders', order.id);
-            transaction.set(orderRef, orderWithNumber);
+            // OPT: Find table doc BEFORE transaction (reads outside, writes inside)
+            // Note: this pre-read was moved outside, but since we're already in a
+            // transaction and Firebase allows reads before writes, we keep it here.
 
             // Find and update table status
             const tablesRef = collection(db, 'tables');
@@ -88,6 +88,18 @@ export function useOrders() {
                 limit(1)
             );
             const tableSnap = await getDocs(q);
+
+            const tableDocId = !tableSnap.empty ? tableSnap.docs[0].id : undefined;
+
+            // Assign daily number + dateStr + tableId to order
+            const orderWithExtras = {
+                ...order,
+                dailyNumber,
+                dateStr,
+                tableId: tableDocId || null,
+            };
+            const orderRef = doc(db, 'orders', order.id);
+            transaction.set(orderRef, orderWithExtras);
 
             if (!tableSnap.empty) {
                 const tableDoc = tableSnap.docs[0];
@@ -165,7 +177,15 @@ export function useOrders() {
         // Find order from activeOrders to get tableNumber
         const existingOrder = activeOrders.find(o => o.id === orderId);
 
-        if (existingOrder) {
+        // OPT: Use stored tableId to update table directly (avoids extra query)
+        if (existingOrder?.tableId) {
+            const tableRef = doc(db, 'tables', existingOrder.tableId);
+            batch.update(tableRef, {
+                status: 'free',
+                currentOrderId: null
+            });
+        } else if (existingOrder) {
+            // Fallback for old orders without tableId
             const tablesRef = collection(db, 'tables');
             const q = query(
                 tablesRef,
@@ -177,7 +197,7 @@ export function useOrders() {
             if (!tableSnap.empty) {
                 batch.update(tableSnap.docs[0].ref, {
                     status: 'free',
-                    currentOrderId: null // Firestore doesn't like undefined, use null or delete field
+                    currentOrderId: null
                 });
             }
         }
@@ -219,7 +239,15 @@ export function useOrders() {
         // Find order from activeOrders to get tableNumber
         const existingOrder = activeOrders.find(o => o.id === orderId);
 
-        if (existingOrder) {
+        // OPT: Use stored tableId to update table directly (avoids extra query)
+        if (existingOrder?.tableId) {
+            const tableRef = doc(db, 'tables', existingOrder.tableId);
+            batch.update(tableRef, {
+                status: 'free',
+                currentOrderId: null
+            });
+        } else if (existingOrder) {
+            // Fallback for old orders without tableId
             const tablesRef = collection(db, 'tables');
             const q = query(
                 tablesRef,

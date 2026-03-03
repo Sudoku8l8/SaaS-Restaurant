@@ -34,9 +34,12 @@ export function useDailySales(targetDate?: Date) {
     useEffect(() => {
         if (!restaurantId) return;
 
+        // OPT: Query only paid orders for the target date using the dateStr index
         const q = query(
             collection(db, 'orders'),
-            where('restaurantId', '==', restaurantId)
+            where('restaurantId', '==', restaurantId),
+            where('status', '==', 'paid'),
+            where('dateStr', '==', targetDateStr)
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -45,13 +48,7 @@ export function useDailySales(targetDate?: Date) {
                 .map(doc => {
                     const data = doc.data();
                     return { ...data, createdAt: ensurePeruDate(data.createdAt) } as Order;
-                })
-                .filter(order => {
-                    const isPaid = order.status === 'paid';
-                    const orderDateStr = getPeruDateString(order.createdAt);
-                    return isPaid && (orderDateStr === targetDateStr);
                 });
-            // ... rest of the logic remains the same ...
 
             // Update Orders State
             setOrders(paidOrdersToday);

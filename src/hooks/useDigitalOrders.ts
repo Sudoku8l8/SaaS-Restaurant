@@ -175,7 +175,7 @@ export function useDigitalOrders() {
                 transaction.set(counterRef, { count: 1 });
             }
 
-            // 2. Create Order
+            // 2. Create Order (with dateStr + tableId for optimized queries)
             const orderId = doc(collection(db, 'orders')).id;
             const now = getPeruNow();
             const orderRef = doc(db, 'orders', orderId);
@@ -193,6 +193,8 @@ export function useDigitalOrders() {
                 orderType: 'dine-in',
                 customerName: digitalOrder.customerName || '',
                 dailyNumber,
+                dateStr: getPeruDateString(),
+                tableId: tableDocRef?.id || null,
                 fromDigitalMenu: true,
             });
 
