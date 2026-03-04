@@ -271,7 +271,7 @@ export function ReportesPage() {
                 salesByWaiter: record.salesByWaiter || {},
                 salesByPaymentMethod: record.salesByPaymentMethod || {}
             };
-            await exportDailySalesToExcel(metrics, orders, format(date, 'dd/MM/yyyy'));
+            await exportDailySalesToExcel(metrics, orders, format(parseISO(record.date), 'dd/MM/yyyy'));
         } catch (err) {
             console.error('Error exporting day:', err);
             alert('Error al exportar el reporte del día.');
