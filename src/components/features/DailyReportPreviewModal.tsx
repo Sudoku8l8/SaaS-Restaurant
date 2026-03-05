@@ -34,12 +34,14 @@ export function DailyReportPreviewModal({ restaurantId, record, onClose }: Daily
             setIsLoading(true);
             setError(null);
             try {
-                const q = query(collection(db, 'orders'), where('restaurantId', '==', restaurantId));
+                // OPT B1: Server-side filter by dateStr + status to avoid downloading all orders
+                const q = query(
+                    collection(db, 'orders'),
+                    where('restaurantId', '==', restaurantId),
+                    where('status', '==', 'paid'),
+                    where('dateStr', '==', record.date)
+                );
                 const snapshot = await getDocs(q);
-
-                const date = parseISO(record.date);
-                const startOfDay = new Date(date); startOfDay.setHours(0, 0, 0, 0);
-                const endOfDay = new Date(date); endOfDay.setHours(23, 59, 59, 999);
 
                 const paidOrders = snapshot.docs
                     .map(d => {
@@ -47,7 +49,6 @@ export function DailyReportPreviewModal({ restaurantId, record, onClose }: Daily
                         const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
                         return { id: d.id, ...data, createdAt } as Order;
                     })
-                    .filter(o => o.status === 'paid' && o.createdAt >= startOfDay && o.createdAt <= endOfDay)
                     .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); // Newer first
 
                 setOrders(paidOrders);
@@ -266,7 +267,7 @@ export function DailyReportPreviewModal({ restaurantId, record, onClose }: Daily
                                         <tbody>
                                             {orders.map((o) => (
                                                 <tr key={o.id} style={{ borderBottom: '1px solid var(--divider-color)', transition: 'background 0.2s' }}
-                                                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f8fafc'}
+                                                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--background-color)'}
                                                     onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
                                                 >
                                                     <td style={{ padding: '1rem', fontWeight: '500' }}>

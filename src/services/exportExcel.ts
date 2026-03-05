@@ -4,7 +4,20 @@ import { es } from 'date-fns/locale';
 import type { SalesMetrics } from '@/hooks/useDailySales';
 import type { Order } from '@/types';
 
-export const exportDailySalesToExcel = async (metrics: SalesMetrics, orders: Order[], customDateRange?: string) => {
+export interface PettyCashExportItem {
+    category: string;
+    description: string;
+    amount: number;
+    requestedByName: string;
+    status: string;
+}
+
+export const exportDailySalesToExcel = async (
+    metrics: SalesMetrics,
+    orders: Order[],
+    customDateRange?: string,
+    pettyCashExpenses?: PettyCashExportItem[]
+) => {
     const workbook = new ExcelJS.Workbook();
     workbook.creator = 'Restaurant App';
     workbook.created = new Date();
@@ -69,6 +82,29 @@ export const exportDailySalesToExcel = async (metrics: SalesMetrics, orders: Ord
     // Column Widths
     wsSummary.getColumn('A').width = 30;
     wsSummary.getColumn('B').width = 20;
+
+    // Petty Cash Summary (if provided)
+    if (pettyCashExpenses && pettyCashExpenses.length > 0) {
+        currentRow += 1;
+        wsSummary.getCell(`A${currentRow}`).value = 'Gastos Caja Chica';
+        wsSummary.getCell(`A${currentRow}`).font = { bold: true, size: 12 };
+        currentRow++;
+
+        const pettyCashTotal = pettyCashExpenses.reduce((sum, e) => sum + e.amount, 0);
+        wsSummary.getCell(`A${currentRow}`).value = 'Total Gastos Caja Chica';
+        wsSummary.getCell(`B${currentRow}`).value = pettyCashTotal;
+        wsSummary.getCell(`B${currentRow}`).numFmt = '"S/" #,##0.00';
+        wsSummary.getCell(`B${currentRow}`).font = { bold: true, color: { argb: 'FFFF0000' } };
+        currentRow++;
+
+        const cashSales = Object.entries(metrics.salesByPaymentMethod)
+            .filter(([m]) => ['cash', 'efectivo'].includes(m.toLowerCase()))
+            .reduce((s, [_, a]) => s + a, 0);
+        wsSummary.getCell(`A${currentRow}`).value = 'Efectivo Neto (Ventas - Gastos)';
+        wsSummary.getCell(`B${currentRow}`).value = cashSales - pettyCashTotal;
+        wsSummary.getCell(`B${currentRow}`).numFmt = '"S/" #,##0.00';
+        wsSummary.getCell(`B${currentRow}`).font = { bold: true };
+    }
 
 
     // ==========================================
@@ -168,6 +204,50 @@ export const exportDailySalesToExcel = async (metrics: SalesMetrics, orders: Ord
 
     wsWaiters.getColumn(1).width = 30;
     wsWaiters.getColumn(2).width = 20;
+
+
+    // ==========================================
+    // SHEET 4: GASTOS CAJA CHICA (if provided)
+    // ==========================================
+    if (pettyCashExpenses && pettyCashExpenses.length > 0) {
+        const wsPettyCash = workbook.addWorksheet('Gastos Caja Chica');
+
+        const pcHeader = wsPettyCash.addRow(['Categoría', 'Descripción', 'Monto', 'Solicitado por', 'Estado']);
+        pcHeader.eachCell(cell => {
+            cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFe67e22' } };
+            cell.alignment = { horizontal: 'center' };
+        });
+
+        pettyCashExpenses.forEach(expense => {
+            const row = wsPettyCash.addRow([
+                expense.category,
+                expense.description,
+                expense.amount,
+                expense.requestedByName,
+                expense.status === 'auto_approved' ? 'Auto-Aprobado'
+                    : expense.status === 'approved' ? 'Aprobado'
+                        : expense.status === 'rejected' ? 'Rechazado'
+                            : expense.status === 'observed' ? 'Observado'
+                                : 'Pendiente'
+            ]);
+            row.getCell(3).numFmt = '"S/" #,##0.00';
+            row.getCell(1).alignment = { horizontal: 'center' };
+            row.getCell(5).alignment = { horizontal: 'center' };
+        });
+
+        // Total row
+        const totalRow = wsPettyCash.addRow(['', 'TOTAL', pettyCashExpenses.reduce((s, e) => s + e.amount, 0), '', '']);
+        totalRow.getCell(2).font = { bold: true };
+        totalRow.getCell(3).font = { bold: true };
+        totalRow.getCell(3).numFmt = '"S/" #,##0.00';
+
+        wsPettyCash.getColumn(1).width = 18;
+        wsPettyCash.getColumn(2).width = 40;
+        wsPettyCash.getColumn(3).width = 15;
+        wsPettyCash.getColumn(4).width = 22;
+        wsPettyCash.getColumn(5).width = 16;
+    }
 
 
     // ==========================================
