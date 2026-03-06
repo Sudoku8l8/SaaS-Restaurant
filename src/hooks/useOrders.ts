@@ -274,7 +274,7 @@ export function useOrders() {
         const orderRef = doc(db, 'orders', orderId);
         await updateDoc(orderRef, {
             ...updates,
-            updatedAt: new Date()
+            updatedAt: getPeruNow()
         });
     };
 

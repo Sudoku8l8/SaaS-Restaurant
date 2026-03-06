@@ -10,6 +10,7 @@ import { Download, ArrowLeft, CheckCircle, AlertTriangle, Check, Lock, DollarSig
 import { updateDoc, doc, collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/services/firebase/config';
 import { exportDailySalesToExcel } from '@/services/exportExcel';
+import type { PettyCashExportItem } from '@/services/exportExcel';
 import { getPeruDateString, getPeruNow, formatPeruDisplay } from '@/utils/dateUtils';
 
 export function CierreCajaPage() {
@@ -29,6 +30,7 @@ export function CierreCajaPage() {
     // Petty Cash integration
     const [pettyCashPendingCount, setPettyCashPendingCount] = useState(0);
     const [pettyCashApprovedTotal, setPettyCashApprovedTotal] = useState(0);
+    const [pettyCashExpenseItems, setPettyCashExpenseItems] = useState<PettyCashExportItem[]>([]);
 
     const [isClosing, setIsClosing] = useState(false);
     const [openingBalanceInput, setOpeningBalanceInput] = useState('');
@@ -52,15 +54,27 @@ export function CierreCajaPage() {
         const unsubscribe = onSnapshot(q, (snapshot) => {
             let pending = 0;
             let approved = 0;
+            const expenseItems: PettyCashExportItem[] = [];
             snapshot.docs.forEach(d => {
                 const data = d.data();
                 if (data.status === 'pending') pending++;
                 if (data.status === 'auto_approved' || data.status === 'approved') {
                     approved += data.amount || 0;
                 }
+                // Capture all expenses (approved/auto-approved) for Excel export
+                if (data.status === 'auto_approved' || data.status === 'approved') {
+                    expenseItems.push({
+                        category: data.category || 'Otro',
+                        description: data.description || '',
+                        amount: data.amount || 0,
+                        requestedByName: data.requestedByName || 'Desconocido',
+                        status: data.status,
+                    });
+                }
             });
             setPettyCashPendingCount(pending);
             setPettyCashApprovedTotal(approved);
+            setPettyCashExpenseItems(expenseItems);
         });
 
         return () => unsubscribe();
@@ -181,7 +195,7 @@ export function CierreCajaPage() {
                     <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
 
                         <button
-                            onClick={() => exportDailySalesToExcel(metrics, orders)}
+                            onClick={() => exportDailySalesToExcel(metrics, orders, undefined, pettyCashExpenseItems.length > 0 ? pettyCashExpenseItems : undefined)}
                             disabled={metrics.orderCount === 0}
                             title="Exportar Excel"
                             style={{

@@ -179,6 +179,7 @@ export interface DigitalOrder {
 }
 
 export interface OrderItem {
+    itemId?: string;           // Unique per-item ID (for items with same product but different modifiers)
     productId: string;
     productName: string;
     quantity: number;

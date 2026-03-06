@@ -9,7 +9,7 @@ import { useOrders } from '@/hooks/useOrders';
 import { generateUUID } from '@/utils/uuid';
 import { onSnapshot } from 'firebase/firestore';
 import { printerService } from '@/services/printer/PrinterService';
-import { ensurePeruDate } from '@/utils/dateUtils';
+import { ensurePeruDate, getPeruNow } from '@/utils/dateUtils';
 
 interface OrderModalProps {
     table?: RestaurantTable; // Optional for takeout
@@ -141,6 +141,7 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                 );
             }
             return [...prev, {
+                itemId: generateUUID(),
                 productId: product.id,
                 productName: product.name,
                 quantity: 1,
@@ -181,14 +182,14 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
         });
     };
 
-    const removeFromOrder = (productId: string) => {
+    const removeFromOrder = (itemId: string, productId: string) => {
         if (!canRemoveItem(productId)) return;
-        setItems(prev => prev.filter(i => i.productId !== productId));
+        setItems(prev => prev.filter(i => (i.itemId || i.productId) !== itemId));
     };
 
-    const updateQuantity = (productId: string, delta: number) => {
+    const updateQuantity = (itemId: string, productId: string, delta: number) => {
         setItems(prev => prev.map(i => {
-            if (i.productId === productId) {
+            if ((i.itemId || i.productId) === itemId) {
                 // Check permission for decreasing
                 if (delta < 0 && !canDecreaseQuantity(productId, i.quantity)) {
                     return i;
@@ -200,12 +201,11 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
         }));
     };
 
-    const handleUpdateNote = (productId: string) => {
-        const item = items.find(i => i.productId === productId);
-        const newNote = prompt(`Observación para ${item?.productName}:`, item?.notes || '');
+    const handleUpdateNote = (itemId: string, productName: string, currentNotes?: string) => {
+        const newNote = prompt(`Observación para ${productName}:`, currentNotes || '');
         if (newNote !== null) {
             setItems(prev => prev.map(i =>
-                i.productId === productId ? { ...i, notes: newNote } : i
+                (i.itemId || i.productId) === itemId ? { ...i, notes: newNote } : i
             ));
         }
     };
@@ -224,7 +224,7 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                 await updateOrder(initialOrder.id, {
                     items,
                     total,
-                    updatedAt: new Date(),
+                    updatedAt: getPeruNow(),
                     ...(customerName.trim() ? { customerName: customerName.trim() } : { customerName: '' }) // Clear if empty
                 });
             } else {
@@ -238,8 +238,8 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                     items,
                     status: 'pending',
                     total,
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
+                    createdAt: getPeruNow(),
+                    updatedAt: getPeruNow(),
                     userId: user.id,
                     userName: user.name,
                     orderType,
@@ -582,7 +582,7 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                 </div>
                             ) : (
                                 items.map(item => (
-                                    <div key={item.productId} style={{
+                                    <div key={item.itemId || item.productId} style={{
                                         display: 'flex',
                                         justifyContent: 'space-between',
                                         alignItems: 'center',
@@ -601,7 +601,7 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                                     </div>
                                                 )}
                                                 <button
-                                                    onClick={() => handleUpdateNote(item.productId)}
+                                                    onClick={() => handleUpdateNote(item.itemId || item.productId, item.productName, item.notes)}
                                                     style={{
                                                         background: 'rgba(142, 115, 91, 0.1)',
                                                         border: 'none',
@@ -643,7 +643,7 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                                 border: '1px solid var(--border-color)'
                                             }}>
                                                 <button
-                                                    onClick={() => updateQuantity(item.productId, -1)}
+                                                    onClick={() => updateQuantity(item.itemId || item.productId, item.productId, -1)}
                                                     disabled={!canDecreaseQuantity(item.productId, item.quantity)}
                                                     style={{
                                                         width: '28px', height: '28px', borderRadius: '4px', border: 'none', background: 'transparent',
@@ -654,12 +654,12 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                                 >-</button>
                                                 <span style={{ fontWeight: '800', minWidth: '1.2rem', textAlign: 'center', color: 'var(--primary-color)' }}>{item.quantity}</span>
                                                 <button
-                                                    onClick={() => updateQuantity(item.productId, 1)}
+                                                    onClick={() => updateQuantity(item.itemId || item.productId, item.productId, 1)}
                                                     style={{ width: '28px', height: '28px', borderRadius: '4px', border: 'none', background: 'transparent', color: 'var(--text-primary)', cursor: 'pointer', fontWeight: 'bold' }}
                                                 >+</button>
                                             </div>
                                             <button
-                                                onClick={() => removeFromOrder(item.productId)}
+                                                onClick={() => removeFromOrder(item.itemId || item.productId, item.productId)}
                                                 disabled={!canRemoveItem(item.productId)}
                                                 style={{
                                                     width: '32px', height: '32px', borderRadius: '8px', border: 'none',

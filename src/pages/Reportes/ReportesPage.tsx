@@ -8,6 +8,7 @@ import { Button, Card, Badge, Input } from '@/components/shared';
 import { format, subDays, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { exportDailySalesToExcel } from '@/services/exportExcel';
+import type { PettyCashExportItem } from '@/services/exportExcel';
 import { getPeruDateString, getPeruNow } from '@/utils/dateUtils';
 import { DailyReportPreviewModal } from '@/components/features/DailyReportPreviewModal';
 
@@ -236,8 +237,32 @@ export function ReportesPage() {
                 });
             });
 
+            // Fetch petty cash expenses for the date range
+            const pcQuery = query(
+                collection(db, 'pettyCashExpenses'),
+                where('restaurantId', '==', user.restaurantId),
+                where('date', '>=', fromDate),
+                where('date', '<=', toDate)
+            );
+            const pcSnapshot = await getDocs(pcQuery);
+            const pettyCashItems: PettyCashExportItem[] = pcSnapshot.docs
+                .filter(d => {
+                    const s = d.data().status;
+                    return s === 'auto_approved' || s === 'approved';
+                })
+                .map(d => {
+                    const data = d.data();
+                    return {
+                        category: data.category || 'Otro',
+                        description: data.description || '',
+                        amount: data.amount || 0,
+                        requestedByName: data.requestedByName || 'Desconocido',
+                        status: data.status,
+                    };
+                });
+
             const periodLabel = `${format(parseISO(fromDate), 'dd/MM/yyyy')} - ${format(parseISO(toDate), 'dd/MM/yyyy')}`;
-            await exportDailySalesToExcel(summaryMetrics, orders, periodLabel);
+            await exportDailySalesToExcel(summaryMetrics, orders, periodLabel, pettyCashItems.length > 0 ? pettyCashItems : undefined);
         } catch (err) {
             console.error('Error exporting:', err);
             alert('Error al exportar los datos.');
@@ -271,7 +296,30 @@ export function ReportesPage() {
                 salesByWaiter: record.salesByWaiter || {},
                 salesByPaymentMethod: record.salesByPaymentMethod || {}
             };
-            await exportDailySalesToExcel(metrics, orders, format(parseISO(record.date), 'dd/MM/yyyy'));
+            // Fetch petty cash expenses for this day
+            const pcQuery = query(
+                collection(db, 'pettyCashExpenses'),
+                where('restaurantId', '==', user.restaurantId),
+                where('date', '==', record.date)
+            );
+            const pcSnapshot = await getDocs(pcQuery);
+            const pettyCashItems: PettyCashExportItem[] = pcSnapshot.docs
+                .filter(d => {
+                    const s = d.data().status;
+                    return s === 'auto_approved' || s === 'approved';
+                })
+                .map(d => {
+                    const data = d.data();
+                    return {
+                        category: data.category || 'Otro',
+                        description: data.description || '',
+                        amount: data.amount || 0,
+                        requestedByName: data.requestedByName || 'Desconocido',
+                        status: data.status,
+                    };
+                });
+
+            await exportDailySalesToExcel(metrics, orders, format(parseISO(record.date), 'dd/MM/yyyy'), pettyCashItems.length > 0 ? pettyCashItems : undefined);
         } catch (err) {
             console.error('Error exporting day:', err);
             alert('Error al exportar el reporte del día.');
@@ -353,8 +401,8 @@ export function ReportesPage() {
             {/* Info Banner for unclosed days */}
             {dayRecords.some(r => r.closureStatus !== 'closed') && (
                 <div style={{
-                    background: '#fffbeb',
-                    border: '1px solid #fcd34d',
+                    background: 'rgba(245,158,11,0.08)',
+                    border: '1px solid rgba(245,158,11,0.2)',
                     borderLeft: '5px solid #f59e0b',
                     borderRadius: 'var(--radius-md)',
                     padding: '1rem 1.25rem',
@@ -362,10 +410,10 @@ export function ReportesPage() {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.75rem',
-                    color: '#92400e',
+                    color: 'var(--text-primary)',
                     fontSize: '0.9rem'
                 }}>
-                    <AlertTriangle size={20} style={{ flexShrink: 0 }} />
+                    <AlertTriangle size={20} style={{ flexShrink: 0, color: '#f59e0b' }} />
                     <span>
                         <strong>Días sin cierre detectados.</strong> Las ventas están guardadas correctamente en el sistema.
                         Usa el botón <strong>"Cerrar Retroactivo"</strong> para regularizar los cierres pendientes.
