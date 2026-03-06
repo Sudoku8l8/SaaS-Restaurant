@@ -12,6 +12,15 @@ class PrinterService {
     private connectionType: 'bluetooth' | 'usb' | 'external' | null = null;
     private isAutoPrintEnabled: boolean = localStorage.getItem('printer_auto_print') === 'true';
 
+    constructor() {
+        // Restore external (RawBT) connection type from localStorage on app reload
+        const savedType = localStorage.getItem('printer_type');
+        if (savedType === 'external') {
+            this.connectionType = 'external';
+        }
+        // For bluetooth/usb, we DON'T restore because the real device connection is lost on reload
+    }
+
     // Bluetooth Connection
     async connectBluetooth() {
         if (!(navigator as any).bluetooth) {
@@ -19,8 +28,20 @@ class PrinterService {
         }
         try {
             const device = await (navigator as any).bluetooth.requestDevice({
-                filters: [{ services: ['000018f0-0000-1000-8000-00805f9b34fb'] }], // Generic printer service UUID
+                filters: [{ services: ['000018f0-0000-1000-8000-00805f9b34fb'] }],
                 optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
+            });
+
+            // Listen for disconnection
+            device.addEventListener('gattserverdisconnected', () => {
+                console.warn('Bluetooth device disconnected');
+                this.device = null;
+                this.characteristic = null;
+                if (this.connectionType === 'bluetooth') {
+                    this.connectionType = null;
+                    localStorage.removeItem('printer_type');
+                    localStorage.removeItem('printer_name');
+                }
             });
 
             const server = await device.gatt.connect();
@@ -31,7 +52,7 @@ class PrinterService {
             this.characteristic = characteristic;
             this.connectionType = 'bluetooth';
 
-            this.saveDevicePreference('bluetooth', device.name);
+            this.saveDevicePreference('bluetooth', device.name || 'Impresora BLE');
             return true;
         } catch (error) {
             console.error('Bluetooth connection error:', error);
@@ -46,7 +67,6 @@ class PrinterService {
             await device.open();
             await device.selectConfiguration(1);
 
-            // Find bulk out endpoint
             const iface = device.configuration.interfaces[0];
             await device.claimInterface(iface.interfaceNumber);
 
@@ -58,7 +78,7 @@ class PrinterService {
             this.endpointOut = endpoint;
             this.connectionType = 'usb';
 
-            this.saveDevicePreference('usb', device.productName);
+            this.saveDevicePreference('usb', device.productName || 'Impresora USB');
             return true;
         } catch (error) {
             console.error('USB connection error:', error);
@@ -78,16 +98,39 @@ class PrinterService {
         localStorage.setItem('printer_name', name);
     }
 
-    get isConnected() {
-        return this.connectionType !== null || localStorage.getItem('printer_type') !== null;
+    get isConnected(): boolean {
+        if (this.connectionType === 'external') {
+            return true; // RawBT is fire-and-forget, always "connected"
+        }
+        if (this.connectionType === 'bluetooth') {
+            return !!(this.device?.gatt?.connected && this.characteristic);
+        }
+        if (this.connectionType === 'usb') {
+            return !!(this.device?.opened);
+        }
+        // Check localStorage only for external/RawBT
+        const savedType = localStorage.getItem('printer_type');
+        if (savedType === 'external') {
+            this.connectionType = 'external';
+            return true;
+        }
+        return false;
     }
 
     get connectedDeviceName() {
+        if (!this.isConnected) return 'Ninguno';
         return localStorage.getItem('printer_name') || 'Ninguno';
     }
 
-    get activeConnectionType() {
-        return this.connectionType || localStorage.getItem('printer_type') as any;
+    get activeConnectionType(): 'bluetooth' | 'usb' | 'external' | null {
+        if (this.connectionType) return this.connectionType;
+        // Only restore external from localStorage
+        const savedType = localStorage.getItem('printer_type');
+        if (savedType === 'external') {
+            this.connectionType = 'external';
+            return 'external';
+        }
+        return null;
     }
 
     setAutoPrint(enabled: boolean) {
@@ -119,26 +162,20 @@ class PrinterService {
 
     // Print logic
     async printOrder(order: Order) {
-        if (!this.isConnected) {
-            throw new Error('La impresora no está conectada');
-        }
-
+        this.ensureConnected();
         const data = this.encodeOrder(order);
         await this.sendData(data);
     }
 
     // POS Receipt print
     async printReceipt(order: Order, restaurantName: string) {
-        if (!this.isConnected) {
-            throw new Error('La impresora no está conectada');
-        }
-
+        this.ensureConnected();
         const data = this.encodeReceipt(order, restaurantName);
         await this.sendData(data);
     }
 
     async testPrint() {
-        if (!this.isConnected) throw new Error('No conectado');
+        this.ensureConnected();
         const encoder = new TextEncoder();
         let data = new Uint8Array([
             ESC, 0x40, // Initialize
@@ -152,6 +189,26 @@ class PrinterService {
             GS, 0x56, 0x41, 0x03 // Cut
         ]);
         await this.sendData(data);
+    }
+
+    private ensureConnected() {
+        const type = this.activeConnectionType;
+        if (!type) {
+            throw new Error('La impresora no está conectada. Ve a Configuración > Impresora para conectarla.');
+        }
+        if (type === 'bluetooth' && (!this.device?.gatt?.connected || !this.characteristic)) {
+            // Clean up stale localStorage
+            this.connectionType = null;
+            localStorage.removeItem('printer_type');
+            localStorage.removeItem('printer_name');
+            throw new Error('La conexión Bluetooth se perdió. Reconecta la impresora desde Configuración.');
+        }
+        if (type === 'usb' && !this.device?.opened) {
+            this.connectionType = null;
+            localStorage.removeItem('printer_type');
+            localStorage.removeItem('printer_name');
+            throw new Error('La conexión USB se perdió. Reconecta la impresora desde Configuración.');
+        }
     }
 
     private encodeOrder(order: Order): Uint8Array {
@@ -318,6 +375,9 @@ class PrinterService {
         const type = this.activeConnectionType;
 
         if (type === 'bluetooth') {
+            if (!this.characteristic) {
+                throw new Error('La conexión Bluetooth se perdió. Reconecta la impresora.');
+            }
             const CHUNK_SIZE = 20;
             for (let i = 0; i < data.length; i += CHUNK_SIZE) {
                 const chunk = data.slice(i, i + CHUNK_SIZE);
@@ -328,26 +388,40 @@ class PrinterService {
             await this.device.transferOut(this.endpointOut.endpointNumber, data);
         } else if (type === 'external') {
             this.sendToRawBT(data);
+        } else {
+            throw new Error('No hay método de impresión configurado.');
         }
     }
 
     private sendToRawBT(data: Uint8Array) {
         try {
-            // Robust conversion to base64 for binary data
-            // We use a loop to avoid argument limit with spread operator
+            // Convert binary data to base64
             let binary = '';
             for (let i = 0; i < data.length; i++) {
                 binary += String.fromCharCode(data[i]);
             }
             const base64 = btoa(binary);
 
-            // This format combines the 'rawbt' scheme with the 'base64,' prefix in the data field
-            // The intent:DATA#Intent;scheme=rawbt format is very robust on Android browsers
+            // Build the RawBT intent URL
             const url = `intent:base64,${base64}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;`;
 
-            window.location.href = url;
+            // Use a temporary link element instead of window.location.href
+            // This prevents navigating away from the app and losing state
+            const link = document.createElement('a');
+            link.href = url;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+
+            // Clean up the link after a short delay
+            setTimeout(() => {
+                if (link.parentNode) {
+                    document.body.removeChild(link);
+                }
+            }, 100);
         } catch (err: any) {
-            alert('Error en RawBT: ' + err.message);
+            console.error('Error en RawBT:', err);
+            throw new Error('Error al enviar a RawBT: ' + (err.message || 'Desconocido'));
         }
     }
 }

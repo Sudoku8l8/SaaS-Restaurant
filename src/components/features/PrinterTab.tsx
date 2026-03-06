@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Bluetooth, Usb, Printer, Unlink, CheckCircle2, AlertCircle, ToggleLeft, ToggleRight, Smartphone } from 'lucide-react';
 import { Button } from '@/components/shared';
 import { printerService } from '@/services/printer/PrinterService';
@@ -9,6 +9,17 @@ export function PrinterTab() {
     const [autoPrint, setAutoPrint] = useState(printerService.autoPrint);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    // Sync connection state periodically (catches BLE disconnect, etc.)
+    useEffect(() => {
+        const interval = setInterval(() => {
+            const currentConnected = printerService.isConnected;
+            const currentName = printerService.connectedDeviceName;
+            if (currentConnected !== isConnected) setIsConnected(currentConnected);
+            if (currentName !== deviceName) setDeviceName(currentName);
+        }, 2000);
+        return () => clearInterval(interval);
+    }, [isConnected, deviceName]);
 
     const handleConnectBluetooth = async () => {
         setIsLoading(true);
