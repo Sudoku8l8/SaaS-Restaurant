@@ -889,12 +889,29 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                         justifyContent: 'center',
                         backdropFilter: 'blur(8px)'
                     }}>
-                        <Card style={{ width: '100%', maxWidth: '500px', padding: '2.5rem', boxShadow: 'var(--shadow-xl)' }}>
-                            <h2 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '1.5rem', color: 'var(--primary-color)' }}>
+                        <Card style={{ 
+                            width: '100%', 
+                            maxWidth: '500px', 
+                            maxHeight: '90vh', // Prevent it from being taller than the screen
+                            display: 'flex',
+                            flexDirection: 'column',
+                            padding: '1.5rem', // Reduced padding for mobile
+                            boxShadow: 'var(--shadow-xl)',
+                            overflow: 'hidden'
+                        }}>
+                            <h2 style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '1rem', color: 'var(--primary-color)' }}>
                                 Opciones para {modifierProduct.name}
                             </h2>
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginBottom: '2rem' }}>
+                            <div style={{ 
+                                display: 'flex', 
+                                flexDirection: 'column', 
+                                gap: '1.5rem', 
+                                marginBottom: '1.5rem',
+                                overflowY: 'auto', // Allow scrolling within the options area
+                                paddingRight: '0.5rem', // Small padding for scrollbar
+                                flexGrow: 1
+                            }}>
                                 {modifierProduct.modifiers?.map(mod => {
                                     const selected = selectedModifiers[mod.id] || [];
                                     const maxSel = mod.maxSelections || 1;
@@ -917,43 +934,126 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                                     {minSel > 0 && ` (mín ${minSel})`}
                                                 </span>
                                             </div>
-                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                            <div style={{ 
+                                                display: 'grid', 
+                                                gridTemplateColumns: maxSel > 1 ? '1fr' : 'repeat(auto-fill, minmax(120px, 1fr))', // Slightly smaller minmax for mobile
+                                                gap: '0.5rem' // Reduced gap 
+                                            }}>
                                                 {mod.options.map(opt => {
-                                                    const isSelected = selected.includes(opt.name);
-                                                    const isDisabled = !isSelected && atMax;
+                                                    const qty = selected.filter(n => n === opt.name).length;
+                                                    const isSelected = qty > 0;
+                                                    const canAddMore = !atMax;
+                                                    
+                                                    // Skip rendering empty options that might have been saved accidentally
+                                                    if (!opt.name.trim()) return null;
 
+                                                    if (maxSel === 1) {
+                                                        return (
+                                                            <button
+                                                                key={opt.name}
+                                                                onClick={() => setSelectedModifiers(prev => ({ ...prev, [mod.id]: [opt.name] }))}
+                                                                style={{
+                                                                    padding: '0.6rem 0.75rem', // Tighter padding
+                                                                    borderRadius: 'var(--radius-md)',
+                                                                    border: '2px solid',
+                                                                    borderColor: isSelected ? 'var(--primary-color)' : 'var(--border-color)',
+                                                                    backgroundColor: isSelected ? 'rgba(37, 99, 235, 0.05)' : 'var(--surface-color)',
+                                                                    color: isSelected ? 'var(--primary-color)' : 'var(--text-primary)',
+                                                                    fontWeight: '600',
+                                                                    fontSize: '0.85rem',
+                                                                    cursor: 'pointer',
+                                                                    transition: 'all 0.2s',
+                                                                    display: 'flex',
+                                                                    justifyContent: 'space-between',
+                                                                    alignItems: 'center',
+                                                                    gap: '0.5rem',
+                                                                    width: '100%'
+                                                                }}
+                                                            >
+                                                                <span style={{ fontSize: '0.85rem', textAlign: 'left', flex: 1, wordBreak: 'break-word' }}>{opt.name}</span>
+                                                                <span style={{ fontSize: '0.8rem', color: isSelected ? 'var(--primary-color)' : 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                                                                    {opt.price ? `+S/ ${opt.price.toFixed(2)}` : ''}
+                                                                </span>
+                                                            </button>
+                                                        );
+                                                    }
+
+                                                    // UI for multiple selections (quantity controls)
                                                     return (
-                                                        <button
-                                                            key={opt.name}
-                                                            disabled={isDisabled}
-                                                            onClick={() => {
-                                                                setSelectedModifiers(prev => {
-                                                                    const current = prev[mod.id] || [];
-                                                                    if (isSelected) {
-                                                                        return { ...prev, [mod.id]: current.filter(n => n !== opt.name) };
-                                                                    }
-                                                                    if (maxSel === 1) {
-                                                                        return { ...prev, [mod.id]: [opt.name] };
-                                                                    }
-                                                                    return { ...prev, [mod.id]: [...current, opt.name] };
-                                                                });
-                                                            }}
-                                                            style={{
-                                                                padding: '0.6rem 1rem',
-                                                                borderRadius: 'var(--radius-md)',
-                                                                border: '2px solid',
-                                                                borderColor: isSelected ? 'var(--primary-color)' : 'var(--border-color)',
-                                                                backgroundColor: isSelected ? 'var(--primary-color)' : 'transparent',
-                                                                color: isSelected ? 'white' : isDisabled ? 'var(--text-secondary)' : 'var(--text-primary)',
-                                                                fontWeight: '600',
-                                                                fontSize: '0.85rem',
-                                                                cursor: isDisabled ? 'not-allowed' : 'pointer',
-                                                                opacity: isDisabled ? 0.45 : 1,
-                                                                transition: 'all 0.2s'
-                                                            }}
-                                                        >
-                                                            {opt.name} {opt.price ? `(+S/ ${opt.price})` : ''}
-                                                        </button>
+                                                        <div key={opt.name} style={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'space-between',
+                                                            padding: '0.5rem 0.75rem', // Tighter padding
+                                                            borderRadius: 'var(--radius-md)',
+                                                            border: `2px solid ${isSelected ? 'var(--primary-color)' : 'var(--border-color)'}`,
+                                                            backgroundColor: isSelected ? 'rgba(37, 99, 235, 0.02)' : 'var(--surface-color)',
+                                                            transition: 'all 0.2s',
+                                                            gap: '0.5rem',
+                                                            width: '100%'
+                                                        }}>
+                                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                                                <div style={{ fontWeight: '600', fontSize: '0.9rem', color: isSelected ? 'var(--primary-color)' : 'var(--text-primary)', wordBreak: 'break-word', lineHeight: 1.2 }}>
+                                                                    {opt.name}
+                                                                </div>
+                                                                {opt.price ? (
+                                                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
+                                                                        +S/ {opt.price.toFixed(2)}
+                                                                    </div>
+                                                                ) : null}
+                                                            </div>
+                                                            
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--background-color)', padding: '0.2rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', flexShrink: 0 }}>
+                                                                <button
+                                                                    disabled={qty === 0}
+                                                                    onClick={() => {
+                                                                        setSelectedModifiers(prev => {
+                                                                            const current = prev[mod.id] || [];
+                                                                            const idx = current.lastIndexOf(opt.name);
+                                                                            if (idx === -1) return prev;
+                                                                            const newCurrent = [...current];
+                                                                            newCurrent.splice(idx, 1);
+                                                                            return { ...prev, [mod.id]: newCurrent };
+                                                                        });
+                                                                    }}
+                                                                    style={{
+                                                                        width: '24px', height: '24px', borderRadius: '6px', // Smaller buttons
+                                                                        border: 'none', background: qty > 0 ? 'var(--surface-color)' : 'transparent',
+                                                                        color: qty > 0 ? 'var(--danger-color)' : 'var(--text-secondary)',
+                                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                                        cursor: qty > 0 ? 'pointer' : 'not-allowed',
+                                                                        opacity: qty > 0 ? 1 : 0.5,
+                                                                        boxShadow: qty > 0 ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                                                                        fontWeight: 'bold', fontSize: '1.2rem', lineHeight: 1
+                                                                    }}
+                                                                >
+                                                                    -
+                                                                </button>
+                                                                <span style={{ minWidth: '16px', textAlign: 'center', fontWeight: '700', fontSize: '0.9rem', color: qty > 0 ? 'var(--primary-color)' : 'var(--text-secondary)' }}>
+                                                                    {qty}
+                                                                </span>
+                                                                <button
+                                                                    disabled={!canAddMore}
+                                                                    onClick={() => {
+                                                                        setSelectedModifiers(prev => {
+                                                                            const current = prev[mod.id] || [];
+                                                                            return { ...prev, [mod.id]: [...current, opt.name] };
+                                                                        });
+                                                                    }}
+                                                                    style={{
+                                                                        width: '24px', height: '24px', borderRadius: '6px', // Smaller buttons
+                                                                        border: 'none', background: canAddMore ? 'var(--primary-color)' : 'var(--divider-color)',
+                                                                        color: canAddMore ? 'white' : 'var(--text-secondary)',
+                                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                                        cursor: canAddMore ? 'pointer' : 'not-allowed',
+                                                                        fontWeight: 'bold', fontSize: '1.2rem', lineHeight: 1,
+                                                                        boxShadow: canAddMore ? '0 1px 3px rgba(37,99,235,0.3)' : 'none'
+                                                                    }}
+                                                                >
+                                                                    +
+                                                                </button>
+                                                            </div>
+                                                        </div>
                                                     );
                                                 })}
                                             </div>
@@ -962,7 +1062,7 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                 })}
                             </div>
 
-                            <div style={{ display: 'flex', gap: '1rem' }}>
+                            <div style={{ display: 'flex', gap: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--divider-color)' }}>
                                 <Button variant="ghost" fullWidth onClick={() => setModifierProduct(null)}>Cancelar</Button>
                                 <Button
                                     fullWidth
