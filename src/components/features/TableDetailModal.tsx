@@ -1,7 +1,7 @@
 import { Button } from '@/components/shared';
 import { OrderCard } from '@/components/features/OrderCard';
 import { useOrders } from '@/hooks/useOrders';
-import { X, Pencil, Table2 } from 'lucide-react';
+import { X, Pencil, Table2, CheckCircle2 } from 'lucide-react';
 import type { RestaurantTable } from '@/types';
 
 interface TableDetailModalProps {
@@ -12,13 +12,17 @@ interface TableDetailModalProps {
 
 export function TableDetailModal({ table, onClose, onEdit }: TableDetailModalProps) {
     const { activeOrders } = useOrders();
-    const order = activeOrders?.find(o => o.tableNumber === table.number && o.id === table.currentOrderId);
-    const fallbackOrder = activeOrders?.find(o => o.tableNumber === table.number);
-    const activeOrder = order || fallbackOrder;
+    
+    // For takeout orders (table.number === 0), we must rely ONLY on the exact ID.
+    // For physical tables, we can fallback to finding by table number if ID isn't linked yet.
+    const activeOrder = table.number === 0
+        ? activeOrders?.find(o => o.id === table.currentOrderId)
+        : activeOrders?.find(o => o.tableNumber === table.number);
 
     const isFree = table.status === 'free';
     const statusColor = isFree ? 'var(--success-color)' : 'var(--warning-color)';
     const statusBg = isFree ? 'rgba(127, 176, 105, 0.1)' : 'rgba(220, 158, 130, 0.15)';
+    const isTakeout = table.number === 0;
 
     return (
         <div style={{
@@ -67,12 +71,14 @@ export function TableDetailModal({ table, onClose, onEdit }: TableDetailModalPro
                             lineHeight: 1
                         }}>
                             <Table2 size={16} />
-                            <span>{table.number}</span>
+                            <span>{isTakeout ? 'LL' : table.number}</span>
                         </div>
                         <div>
-                            <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-primary)' }}>Mesa {table.number}</h3>
+                            <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+                                {isTakeout ? 'Para Llevar' : `Mesa ${table.number}`}
+                            </h3>
                             <span style={{ fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', color: statusColor, letterSpacing: '0.05em' }}>
-                                {isFree ? 'Disponible' : 'En Servicio'}
+                                {isFree ? (isTakeout ? 'Completado' : 'Disponible') : 'En Servicio'}
                             </span>
                         </div>
                     </div>
@@ -126,19 +132,27 @@ export function TableDetailModal({ table, onClose, onEdit }: TableDetailModalPro
                             <div style={{
                                 width: '64px',
                                 height: '64px',
-                                background: 'var(--divider-color)',
+                                background: isTakeout ? 'rgba(67, 160, 71, 0.1)' : 'var(--divider-color)',
                                 borderRadius: '50%',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 margin: '0 auto 1.5rem',
-                                color: 'var(--success-color)'
+                                color: isTakeout ? 'var(--success-color)' : 'var(--text-secondary)'
                             }}>
-                                <X size={32} /> {/* Using X as a placeholder for check or similar if needed, but let's just use text for now */}
+                                {isTakeout ? <CheckCircle2 size={32} /> : <X size={32} />}
                             </div>
-                            <p style={{ marginBottom: '1.5rem', fontWeight: '500' }}>Esta mesa no tiene pedidos activos.</p>
-                            <Button variant="primary" onClick={onClose} style={{ background: 'var(--primary-color)', width: '100%' }}>
-                                Entendido
+                            <p style={{ marginBottom: '1.5rem', fontWeight: '600', fontSize: '1.1rem', color: 'var(--text-primary)' }}>
+                                {isTakeout ? '¡Pedido Completado!' : 'Esta mesa no tiene pedidos activos.'}
+                            </p>
+                            <Button variant="primary" onClick={onClose} style={{
+                                background: isTakeout ? 'var(--success-color)' : 'var(--primary-color)', 
+                                width: '100%',
+                                borderRadius: 'var(--radius-md)',
+                                fontWeight: '700',
+                                height: '48px'
+                            }}>
+                                {isTakeout ? 'Cerrar' : 'Entendido'}
                             </Button>
                         </div>
                     )}
