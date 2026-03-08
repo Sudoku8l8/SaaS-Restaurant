@@ -40,7 +40,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3 MiB
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MiB
         // Offline-first strategy
         runtimeCaching: [
           {
@@ -86,6 +86,9 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    chunkSizeWarningLimit: 3000, // 3000 kB limit
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

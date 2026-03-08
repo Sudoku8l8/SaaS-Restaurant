@@ -23,7 +23,7 @@ export function useOrderCreation() {
     const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [orderToEdit, setOrderToEdit] = useState<Order | undefined>(undefined);
-    const [takeoutOrderType, setTakeoutOrderType] = useState<'dine-in' | 'takeout'>('dine-in');
+    const [takeoutOrderType, setTakeoutOrderType] = useState<'dine-in' | 'takeout' | 'quick-sale'>('dine-in');
 
     const takeoutOrders = activeOrders?.filter(o => o.orderType === 'takeout') || [];
 
