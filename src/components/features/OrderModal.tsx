@@ -37,6 +37,7 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
     const [lastSavedOrder, setLastSavedOrder] = useState<Order | null>(null);
     const [modifierProduct, setModifierProduct] = useState<Product | null>(null);
     const [selectedModifiers, setSelectedModifiers] = useState<Record<string, string[]>>({});
+    const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
     // Quick Sale flow state
     const isQuickSale = orderType === 'quick-sale';
@@ -630,62 +631,149 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                 items.map(item => (
                                     <div key={item.itemId || item.productId} style={{
                                         display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
+                                        flexDirection: 'column',
+                                        gap: '0.6rem',
                                         backgroundColor: 'var(--surface-color)',
                                         padding: '1rem',
                                         borderRadius: 'var(--radius-md)',
                                         border: '1px solid var(--border-color)',
                                         boxShadow: 'var(--shadow-sm)'
                                     }}>
-                                        <div style={{ flex: 1 }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                                                <div style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{item.productName}</div>
-                                                {item.selectedOptions && item.selectedOptions.length > 0 && (
-                                                    <div style={{ fontSize: '0.75rem', color: 'var(--primary-color)', fontWeight: '600' }}>
-                                                        {item.selectedOptions.map(opt => `${opt.modifierName}: ${opt.optionName}`).join(' | ')}
-                                                    </div>
-                                                )}
+                                        {/* Top Row: Name && Actions */}
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
+                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                                <div style={{ fontWeight: '700', color: 'var(--text-primary)', lineHeight: 1.2, wordBreak: 'break-word' }}>
+                                                    {item.productName}
+                                                </div>
+                                                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                                                    S/ {item.price.toFixed(2)} c/u
+                                                </div>
+                                            </div>
+                                            
+                                            <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
                                                 <button
                                                     onClick={() => handleUpdateNote(item.itemId || item.productId, item.productName, item.notes)}
                                                     style={{
-                                                        background: 'rgba(142, 115, 91, 0.1)',
-                                                        border: 'none',
-                                                        color: 'var(--primary-color)',
+                                                        background: 'var(--surface-color)',
+                                                        border: '1px solid var(--border-color)',
+                                                        color: item.notes ? 'var(--primary-color)' : 'var(--text-secondary)',
                                                         cursor: 'pointer',
-                                                        padding: '4px',
-                                                        borderRadius: '4px',
+                                                        width: '32px',
+                                                        height: '32px',
+                                                        borderRadius: '6px',
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         justifyContent: 'center',
-                                                        transition: 'all 0.2s'
+                                                        transition: 'all 0.2s',
                                                     }}
                                                     title="Agregar observación"
                                                 >
                                                     <MessageSquare size={14} />
                                                 </button>
+                                                <button
+                                                    onClick={() => removeFromOrder(item.itemId || item.productId, item.productId)}
+                                                    disabled={!canRemoveItem(item.productId)}
+                                                    style={{
+                                                        width: '32px', height: '32px', borderRadius: '6px', border: 'none',
+                                                        background: 'rgba(192, 110, 82, 0.1)', color: 'var(--danger-color)',
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                        opacity: canRemoveItem(item.productId) ? 1 : 0.3,
+                                                        cursor: canRemoveItem(item.productId) ? 'pointer' : 'not-allowed',
+                                                        visibility: (!canRemoveItem(item.productId) && isWaiter) ? 'hidden' : 'visible'
+                                                    }}
+                                                    title="Eliminar producto"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
                                             </div>
+                                        </div>
+
+                                        {/* Middle Row: Options Toggle, Options List, Notes */}
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                            {item.selectedOptions && item.selectedOptions.length > 0 && (
+                                                <div>
+                                                    <button
+                                                        onClick={() => {
+                                                            const id = item.itemId || item.productId;
+                                                            setExpandedItems(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+                                                        }}
+                                                        style={{
+                                                            background: 'transparent',
+                                                            border: 'none',
+                                                            color: 'var(--primary-color)',
+                                                            cursor: 'pointer',
+                                                            padding: '2px 0',
+                                                            display: 'inline-flex',
+                                                            alignItems: 'center',
+                                                            gap: '4px',
+                                                            fontSize: '0.75rem',
+                                                            fontWeight: '600',
+                                                            textDecoration: 'underline'
+                                                        }}
+                                                    >
+                                                        {expandedItems.includes(item.itemId || item.productId) ? 'Ocultar opciones ↑' : 'Ver opciones ↓'}
+                                                    </button>
+
+                                                    {expandedItems.includes(item.itemId || item.productId) && (
+                                                        <div style={{ 
+                                                            display: 'flex', 
+                                                            flexDirection: 'column', 
+                                                            gap: '2px', 
+                                                            marginTop: '6px', 
+                                                            marginBottom: '2px',
+                                                            paddingLeft: '10px',
+                                                            borderLeft: '2px solid rgba(37, 99, 235, 0.2)',
+                                                            animation: 'fade-in-down 0.2s ease-out'
+                                                        }}>
+                                                            {item.selectedOptions.map((opt, idx) => (
+                                                                <div key={idx} style={{ 
+                                                                    fontSize: '0.75rem', 
+                                                                    color: 'var(--text-secondary)',
+                                                                    display: 'flex',
+                                                                    alignItems: 'flex-start',
+                                                                    gap: '4px',
+                                                                    flexWrap: 'wrap'
+                                                                }}>
+                                                                    <span style={{ fontWeight: '600', color: 'var(--primary-color)' }}>{opt.modifierName}:</span>
+                                                                    <span style={{ wordBreak: 'break-word', lineHeight: 1.2 }}>{opt.optionName}</span>
+                                                                    {opt.price ? (
+                                                                        <span style={{ color: 'var(--success-color)', fontWeight: '600', whiteSpace: 'nowrap' }}>
+                                                                            (+S/ {opt.price.toFixed(2)})
+                                                                        </span>
+                                                                    ) : null}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+
                                             {item.notes && (
                                                 <div style={{
                                                     fontSize: '0.85rem',
                                                     color: 'var(--primary-color)',
                                                     fontStyle: 'italic',
-                                                    marginTop: '2px',
-                                                    fontWeight: '600'
+                                                    marginTop: '4px',
+                                                    fontWeight: '600',
+                                                    background: 'rgba(234, 179, 8, 0.1)',
+                                                    padding: '6px 8px',
+                                                    borderRadius: '4px',
+                                                    borderLeft: '2px solid var(--primary-color)'
                                                 }}>
                                                     "{item.notes}"
                                                 </div>
                                             )}
-                                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '2px' }}>S/ {item.price.toFixed(2)} c/u</div>
                                         </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginLeft: '1rem' }}>
+
+                                        {/* Bottom Row: Quantity Controls */}
+                                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 'auto' }}>
                                             <div style={{
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 gap: '0.5rem',
                                                 background: 'var(--background-color)',
-                                                padding: '4px',
-                                                borderRadius: 'var(--radius-sm)',
+                                                padding: '2px',
+                                                borderRadius: '6px',
                                                 border: '1px solid var(--border-color)'
                                             }}>
                                                 <button
@@ -693,31 +781,22 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                                     disabled={!canDecreaseQuantity(item.productId, item.quantity)}
                                                     style={{
                                                         width: '28px', height: '28px', borderRadius: '4px', border: 'none', background: 'transparent',
-                                                        color: 'var(--text-primary)', fontWeight: 'bold',
+                                                        color: 'var(--text-primary)', fontWeight: 'bold', fontSize: '1.2rem',
                                                         opacity: canDecreaseQuantity(item.productId, item.quantity) ? 1 : 0.3,
-                                                        cursor: canDecreaseQuantity(item.productId, item.quantity) ? 'pointer' : 'not-allowed'
+                                                        cursor: canDecreaseQuantity(item.productId, item.quantity) ? 'pointer' : 'not-allowed',
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'center'
                                                     }}
                                                 >-</button>
-                                                <span style={{ fontWeight: '800', minWidth: '1.2rem', textAlign: 'center', color: 'var(--primary-color)' }}>{item.quantity}</span>
+                                                <span style={{ fontWeight: '800', minWidth: '1.2rem', textAlign: 'center', color: 'var(--primary-color)', fontSize: '0.9rem' }}>{item.quantity}</span>
                                                 <button
                                                     onClick={() => updateQuantity(item.itemId || item.productId, item.productId, 1)}
-                                                    style={{ width: '28px', height: '28px', borderRadius: '4px', border: 'none', background: 'transparent', color: 'var(--text-primary)', cursor: 'pointer', fontWeight: 'bold' }}
+                                                    style={{ 
+                                                        width: '28px', height: '28px', borderRadius: '4px', border: 'none', background: 'transparent', 
+                                                        color: 'var(--text-primary)', cursor: 'pointer', fontWeight: 'bold', fontSize: '1.2rem',
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                                    }}
                                                 >+</button>
                                             </div>
-                                            <button
-                                                onClick={() => removeFromOrder(item.itemId || item.productId, item.productId)}
-                                                disabled={!canRemoveItem(item.productId)}
-                                                style={{
-                                                    width: '32px', height: '32px', borderRadius: '8px', border: 'none',
-                                                    background: 'rgba(192, 110, 82, 0.1)', color: 'var(--danger-color)',
-                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                    opacity: canRemoveItem(item.productId) ? 1 : 0.3,
-                                                    cursor: canRemoveItem(item.productId) ? 'pointer' : 'not-allowed',
-                                                    visibility: (!canRemoveItem(item.productId) && isWaiter) ? 'hidden' : 'visible'
-                                                }}
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
                                         </div>
                                     </div>
                                 ))
