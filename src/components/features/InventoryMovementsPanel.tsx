@@ -72,7 +72,7 @@ export function InventoryMovementsPanel({ productId, productName, collectionType
                 type: formType,
                 quantity: signedQty,
                 unit: formUnit,
-                reason: formReason.trim() || undefined,
+                reason: formReason.trim() || '',
                 referenceType: 'manual',
             });
 

@@ -102,9 +102,9 @@ export function InventoryItemsTab() {
             unit: form.unit,
             stockActual: parseFloat(form.stockActual) || 0,
             stockMinimo: parseFloat(form.stockMinimo) || 0,
-            stockMaximo: form.stockMaximo ? parseFloat(form.stockMaximo) : null,
-            costPerUnit: form.costPerUnit ? parseFloat(form.costPerUnit) : null,
-            category: form.category.trim() || null,
+            stockMaximo: form.stockMaximo ? parseFloat(form.stockMaximo) : 0,
+            costPerUnit: form.costPerUnit ? parseFloat(form.costPerUnit) : 0,
+            category: form.category.trim() || '',
             updatedAt: now,
         };
 
