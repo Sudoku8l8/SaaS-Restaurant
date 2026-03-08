@@ -2,6 +2,14 @@
 
 // ========== CONSTANTS & TYPES ==========
 
+export const BusinessType = {
+    RESTAURANT: 'restaurant',
+    ICE_CREAM: 'ice_cream',
+    COFFEE: 'coffee',
+    BAR: 'bar',
+} as const;
+export type BusinessType = (typeof BusinessType)[keyof typeof BusinessType];
+
 export const OrderStatus = {
     PENDING: 'pending',
     IN_PREPARATION: 'in_preparation',
@@ -66,6 +74,11 @@ export interface RestaurantConfig {
     tablesCount: number;
     currency: string;
     timezone: string;
+    // Business Type & Sector Configuration
+    businessType?: BusinessType;       // Tipo de negocio (default: 'restaurant')
+    enableTables?: boolean;            // Activar módulo de mesas (default: true)
+    enableKitchenOrders?: boolean;     // Activar comandas de cocina (default: true)
+    enableQuickSale?: boolean;         // Activar ventas rápidas POS (default: false)
     menuSpanishUrl?: string;
     menuEnglishUrl?: string;
     // Native Digital Menu
@@ -224,7 +237,7 @@ export interface Order {
     payments?: OrderPayment[];
     userId: string; // Waiter who created the order
     userName: string;
-    orderType: 'dine-in' | 'takeout';
+    orderType: 'dine-in' | 'takeout' | 'quick-sale';
     customerName?: string;
     dailyNumber?: number;
     dateStr?: string;        // 'YYYY-MM-DD' — optimized server-side date queries

@@ -3,8 +3,9 @@ import { db } from '@/services/firebase/config';
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { useTenant } from '@/app/providers/TenantProvider';
 import { Card, Button, Input } from '@/components/shared';
-import { Settings, ToggleLeft, ToggleRight, Building2, Plus, Package, MapPin, AlertTriangle } from 'lucide-react';
-import type { Restaurant, RestaurantConfig } from '@/types';
+import { Settings, ToggleLeft, ToggleRight, Building2, Plus, Package, MapPin, AlertTriangle, Store } from 'lucide-react';
+import type { Restaurant, RestaurantConfig, BusinessType } from '@/types';
+import { BusinessType as BT } from '@/types';
 
 export function GeneralTab() {
     const { tenant } = useTenant();
@@ -13,6 +14,12 @@ export function GeneralTab() {
     const [multiSucursal, setMultiSucursal] = useState(false);
     const [outOfStockBehavior, setOutOfStockBehavior] = useState<'allow' | 'alert'>('alert');
     const [isSaving, setIsSaving] = useState(false);
+
+    // Sector / Business Type state
+    const [businessType, setBusinessType] = useState<BusinessType>(BT.RESTAURANT);
+    const [enableTables, setEnableTables] = useState(true);
+    const [enableKitchenOrders, setEnableKitchenOrders] = useState(true);
+    const [enableQuickSale, setEnableQuickSale] = useState(false);
 
     // Branch creation state
     const [showBranchForm, setShowBranchForm] = useState(false);
@@ -26,8 +33,75 @@ export function GeneralTab() {
             setUsarPantallaCocina(tenant.config.usarPantallaCocina ?? false);
             setMultiSucursal(tenant.config.multiSucursal ?? false);
             setOutOfStockBehavior(tenant.config.outOfStockBehavior ?? 'alert');
+            setBusinessType((tenant.config.businessType as BusinessType) ?? BT.RESTAURANT);
+            setEnableTables(tenant.config.enableTables ?? true);
+            setEnableKitchenOrders(tenant.config.enableKitchenOrders ?? true);
+            setEnableQuickSale(tenant.config.enableQuickSale ?? false);
         }
     }, [tenant]);
+
+    // Sector presets — auto-config when changing business type
+    const SECTOR_PRESETS: Record<BusinessType, { enableTables: boolean; enableKitchenOrders: boolean; enableQuickSale: boolean }> = {
+        [BT.RESTAURANT]: { enableTables: true, enableKitchenOrders: true, enableQuickSale: false },
+        [BT.ICE_CREAM]:  { enableTables: false, enableKitchenOrders: false, enableQuickSale: true },
+        [BT.COFFEE]:     { enableTables: true, enableKitchenOrders: false, enableQuickSale: true },
+        [BT.BAR]:        { enableTables: true, enableKitchenOrders: false, enableQuickSale: true },
+    };
+
+    const SECTOR_OPTIONS: { value: BusinessType; label: string; emoji: string; desc: string }[] = [
+        { value: BT.RESTAURANT, label: 'Restaurante', emoji: '🍽️', desc: 'Mesas, cocina, comandas' },
+        { value: BT.ICE_CREAM, label: 'Heladería', emoji: '🍦', desc: 'Ventas rápidas, pocas mesas' },
+        { value: BT.COFFEE, label: 'Coffee Shop', emoji: '☕', desc: 'Pedidos rápidos + mesas' },
+        { value: BT.BAR, label: 'Bar', emoji: '🍸', desc: 'Bebidas, control de barra' },
+    ];
+
+    const handleBusinessTypeChange = async (newType: BusinessType) => {
+        if (!tenant || isSaving) return;
+        const preset = SECTOR_PRESETS[newType];
+        setBusinessType(newType);
+        setEnableTables(preset.enableTables);
+        setEnableKitchenOrders(preset.enableKitchenOrders);
+        setEnableQuickSale(preset.enableQuickSale);
+
+        try {
+            setIsSaving(true);
+            await updateDoc(doc(db, 'restaurants', tenant.id), {
+                'config.businessType': newType,
+                'config.enableTables': preset.enableTables,
+                'config.enableKitchenOrders': preset.enableKitchenOrders,
+                'config.enableQuickSale': preset.enableQuickSale,
+            });
+        } catch (error) {
+            console.error('Error saving business type:', error);
+            alert('Error al guardar el tipo de negocio');
+            // Revert
+            if (tenant.config) {
+                setBusinessType((tenant.config.businessType as BusinessType) ?? BT.RESTAURANT);
+                setEnableTables(tenant.config.enableTables ?? true);
+                setEnableKitchenOrders(tenant.config.enableKitchenOrders ?? true);
+                setEnableQuickSale(tenant.config.enableQuickSale ?? false);
+            }
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleSectorToggle = async (field: 'enableTables' | 'enableKitchenOrders' | 'enableQuickSale', newValue: boolean, setter: (v: boolean) => void) => {
+        if (!tenant || isSaving) return;
+        setter(newValue);
+        try {
+            setIsSaving(true);
+            await updateDoc(doc(db, 'restaurants', tenant.id), {
+                [`config.${field}`]: newValue,
+            });
+        } catch (error) {
+            console.error('Error saving sector toggle:', error);
+            alert('Error al guardar la configuración');
+            setter(!newValue);
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     const handleToggle = async (field: keyof RestaurantConfig, newValue: boolean, setter: (v: boolean) => void) => {
         if (!tenant) return;
@@ -149,13 +223,75 @@ export function GeneralTab() {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            {/* Business Type Selector */}
+            <section>
+                <h3 style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Store size={20} /> Tipo de Negocio
+                </h3>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+                    Selecciona el tipo de establecimiento. El sistema se adapta automáticamente.
+                </p>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                    {SECTOR_OPTIONS.map(opt => {
+                        const isActive = businessType === opt.value;
+                        return (
+                            <button
+                                key={opt.value}
+                                onClick={() => handleBusinessTypeChange(opt.value)}
+                                disabled={isSaving}
+                                style={{
+                                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem',
+                                    padding: '1.25rem 1rem', borderRadius: 'var(--radius-lg)', cursor: isSaving ? 'wait' : 'pointer',
+                                    border: `2px solid ${isActive ? 'var(--primary-color)' : 'var(--border-color)'}`,
+                                    background: isActive ? 'rgba(142, 115, 91, 0.08)' : 'var(--surface-color)',
+                                    transition: 'all 0.2s', textAlign: 'center',
+                                    boxShadow: isActive ? '0 2px 8px rgba(142, 115, 91, 0.15)' : 'none',
+                                    transform: isActive ? 'scale(1.02)' : 'scale(1)',
+                                }}
+                            >
+                                <span style={{ fontSize: '2rem' }}>{opt.emoji}</span>
+                                <span style={{ fontWeight: 700, fontSize: '0.95rem', color: isActive ? 'var(--primary-color)' : 'var(--text-primary)' }}>{opt.label}</span>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.3 }}>{opt.desc}</span>
+                            </button>
+                        );
+                    })}
+                </div>
+
+                {/* Sector-specific toggles */}
+                <ToggleSwitch
+                    value={enableTables}
+                    label="Módulo de Mesas"
+                    description={enableTables
+                        ? 'Activado: Los pedidos se gestionan por mesas asignadas.'
+                        : 'Desactivado: El sistema opera sin mesas. Ideal para ventas rápidas.'}
+                    onToggle={() => handleSectorToggle('enableTables', !enableTables, setEnableTables)}
+                />
+                <ToggleSwitch
+                    value={enableKitchenOrders}
+                    label="Comandas de Cocina"
+                    description={enableKitchenOrders
+                        ? 'Activado: Los pedidos se envían a la cocina para preparación.'
+                        : 'Desactivado: Los productos se entregan directamente sin pasar por cocina.'}
+                    onToggle={() => handleSectorToggle('enableKitchenOrders', !enableKitchenOrders, setEnableKitchenOrders)}
+                />
+                <ToggleSwitch
+                    value={enableQuickSale}
+                    label="Ventas Rápidas (POS)"
+                    description={enableQuickSale
+                        ? 'Activado: Botón de venta rápida disponible. Permite vender sin mesa ni comanda.'
+                        : 'Desactivado: Las ventas solo se realizan a través del flujo de mesas.'}
+                    onToggle={() => handleSectorToggle('enableQuickSale', !enableQuickSale, setEnableQuickSale)}
+                />
+            </section>
+
             {/* Kitchen Screen Toggle */}
             <section>
                 <h3 style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <Settings size={20} /> Opciones Generales
                 </h3>
                 <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
-                    Configuraciones principales del funcionamiento del restaurante.
+                    Configuraciones principales del funcionamiento del sistema.
                 </p>
 
                 <ToggleSwitch

@@ -16,7 +16,7 @@ interface OrderModalProps {
     initialOrder?: Order;
     onClose: () => void;
     onOrderCreated: () => void;
-    orderType?: 'dine-in' | 'takeout';
+    orderType?: 'dine-in' | 'takeout' | 'quick-sale';
 }
 
 export function OrderModal({ table, initialOrder, onClose, onOrderCreated, orderType = 'dine-in' }: OrderModalProps) {

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Lock, Wallet } from 'lucide-react';
+import { Lock, Wallet, Zap } from 'lucide-react';
 import { OrderModal } from '@/components/features/OrderModal';
 import { TableDetailModal } from '@/components/features/TableDetailModal';
 import { TableMap } from '@/components/features/TableMap';
@@ -11,6 +11,7 @@ import { useTables } from '@/hooks/useTables';
 import { useOrders } from '@/hooks/useOrders';
 import { useClosureStatus } from '@/hooks/useClosureStatus';
 import { NotificationBell } from '@/components/shared/NotificationBell';
+import { useTenant } from '@/app/providers/TenantProvider';
 import type { RestaurantTable, Order } from '@/types';
 
 export const TAKEOUT_NEW_ID = 'takeout-new-wildcard';
@@ -22,11 +23,14 @@ export function MozoPage() {
     const { tables } = useTables(); // Real-time tables from Firestore
     const { activeOrders } = useOrders();
     const { isClosed, isLoading: checkingClosure } = useClosureStatus();
+    const { tenant } = useTenant();
+    const enableTables = tenant?.config?.enableTables ?? true;
+    const enableQuickSale = tenant?.config?.enableQuickSale ?? false;
     const [selectedTable, setSelectedTable] = useState<RestaurantTable | null>(null);
     const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [orderToEdit, setOrderToEdit] = useState<Order | undefined>(undefined);
-    const [takeoutOrderType, setTakeoutOrderType] = useState<'dine-in' | 'takeout'>('dine-in');
+    const [takeoutOrderType, setTakeoutOrderType] = useState<'dine-in' | 'takeout' | 'quick-sale'>('dine-in');
 
     const takeoutOrders = activeOrders?.filter(o => o.orderType === 'takeout') || [];
 
@@ -124,9 +128,13 @@ export function MozoPage() {
         );
     }
 
-    // Concatenate physical tables first, then virtual tables (Active Takeouts + New)
+    // Build visible table list based on config
+    const physicalTables = enableTables
+        ? [...tables].sort((a, b) => a.number - b.number)
+        : [];
+
     const allTables = [
-        ...[...tables].sort((a, b) => a.number - b.number),
+        ...physicalTables,
         ...dynamicTakeoutCards,
         newTakeoutCard
     ];
@@ -181,7 +189,7 @@ export function MozoPage() {
                         overflow: 'hidden',
                         textOverflow: 'ellipsis'
                     }}>
-                        Mesas
+                        {enableTables ? 'Mesas' : 'Pedidos'}
                     </h1>
                 </div>
 
@@ -242,6 +250,51 @@ export function MozoPage() {
                     onEdit={handleEditOrder}
                 />
             )}
+
+            {/* Quick Sale FAB */}
+            {enableQuickSale && (
+                <button
+                    onClick={handleOpenTakeoutModal}
+                    style={{
+                        position: 'fixed',
+                        bottom: '2rem',
+                        right: '2rem',
+                        width: '64px',
+                        height: '64px',
+                        borderRadius: '50%',
+                        border: 'none',
+                        background: 'linear-gradient(135deg, var(--primary-color) 0%, #6d4c41 100%)',
+                        color: 'white',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        boxShadow: '0 6px 20px rgba(142, 115, 91, 0.4), 0 2px 6px rgba(0,0,0,0.15)',
+                        zIndex: 900,
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        animation: 'fab-pulse 2s ease-in-out infinite',
+                    }}
+                    onMouseEnter={e => {
+                        e.currentTarget.style.transform = 'scale(1.1)';
+                        e.currentTarget.style.boxShadow = '0 8px 28px rgba(142, 115, 91, 0.5), 0 4px 10px rgba(0,0,0,0.2)';
+                    }}
+                    onMouseLeave={e => {
+                        e.currentTarget.style.transform = 'scale(1)';
+                        e.currentTarget.style.boxShadow = '0 6px 20px rgba(142, 115, 91, 0.4), 0 2px 6px rgba(0,0,0,0.15)';
+                    }}
+                    title="Venta Rápida"
+                >
+                    <Zap size={28} fill="white" />
+                </button>
+            )}
+
+            {/* FAB pulse animation */}
+            <style>{`
+                @keyframes fab-pulse {
+                    0%, 100% { box-shadow: 0 6px 20px rgba(142, 115, 91, 0.4), 0 2px 6px rgba(0,0,0,0.15); }
+                    50% { box-shadow: 0 6px 20px rgba(142, 115, 91, 0.6), 0 2px 6px rgba(0,0,0,0.2), 0 0 0 8px rgba(142, 115, 91, 0.1); }
+                }
+            `}</style>
         </div>
     );
 }
