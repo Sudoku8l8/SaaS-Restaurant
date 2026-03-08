@@ -162,6 +162,8 @@ export interface ProductModifier {
     options: ModifierOption[];
     required?: boolean;
     multiple?: boolean;
+    minSelections?: number; // Minimum number of selections required (e.g. 2 for "choose exactly 2 flavors")
+    maxSelections?: number; // Maximum number of selections allowed (e.g. 3 for "up to 3 toppings")
 }
 
 export interface ModifierOption {

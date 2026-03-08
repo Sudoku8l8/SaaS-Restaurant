@@ -36,7 +36,7 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
     const [isSaved, setIsSaved] = useState(false);
     const [lastSavedOrder, setLastSavedOrder] = useState<Order | null>(null);
     const [modifierProduct, setModifierProduct] = useState<Product | null>(null);
-    const [selectedModifiers, setSelectedModifiers] = useState<Record<string, string>>({});
+    const [selectedModifiers, setSelectedModifiers] = useState<Record<string, string[]>>({});
 
     // Quick Sale flow state
     const isQuickSale = orderType === 'quick-sale';
@@ -200,9 +200,9 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
         let extraPrice = 0;
 
         modifierProduct.modifiers?.forEach(mod => {
-            const selectedOptionName = selectedModifiers[mod.id];
-            if (selectedOptionName) {
-                const option = mod.options.find(o => o.name === selectedOptionName);
+            const selectedNames = selectedModifiers[mod.id] || [];
+            selectedNames.forEach(optName => {
+                const option = mod.options.find(o => o.name === optName);
                 if (option) {
                     finalOptions.push({
                         modifierId: mod.id,
@@ -212,7 +212,7 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                     });
                     extraPrice += (option.price || 0);
                 }
-            }
+            });
         });
 
         addToOrder(modifierProduct, {
@@ -895,35 +895,71 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                             </h2>
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginBottom: '2rem' }}>
-                                {modifierProduct.modifiers?.map(mod => (
-                                    <div key={mod.id}>
-                                        <label style={{ display: 'block', fontWeight: '700', marginBottom: '0.75rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                                            {mod.name} {mod.required && <span style={{ color: 'var(--danger-color)' }}>*</span>}
-                                        </label>
-                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                                            {mod.options.map(opt => (
-                                                <button
-                                                    key={opt.name}
-                                                    onClick={() => setSelectedModifiers(prev => ({ ...prev, [mod.id]: opt.name }))}
-                                                    style={{
-                                                        padding: '0.6rem 1rem',
-                                                        borderRadius: 'var(--radius-md)',
-                                                        border: '2px solid',
-                                                        borderColor: selectedModifiers[mod.id] === opt.name ? 'var(--primary-color)' : 'var(--border-color)',
-                                                        backgroundColor: selectedModifiers[mod.id] === opt.name ? 'var(--primary-color)' : 'transparent',
-                                                        color: selectedModifiers[mod.id] === opt.name ? 'white' : 'var(--text-primary)',
-                                                        fontWeight: '600',
-                                                        fontSize: '0.85rem',
-                                                        cursor: 'pointer',
-                                                        transition: 'all 0.2s'
-                                                    }}
-                                                >
-                                                    {opt.name} {opt.price ? `(+S/ ${opt.price})` : ''}
-                                                </button>
-                                            ))}
+                                {modifierProduct.modifiers?.map(mod => {
+                                    const selected = selectedModifiers[mod.id] || [];
+                                    const maxSel = mod.maxSelections || 1;
+                                    const minSel = mod.minSelections || (mod.required ? 1 : 0);
+                                    const atMax = selected.length >= maxSel;
+
+                                    return (
+                                        <div key={mod.id}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                                                <label style={{ fontWeight: '700', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                                                    {mod.name} {mod.required && <span style={{ color: 'var(--danger-color)' }}>*</span>}
+                                                </label>
+                                                <span style={{
+                                                    fontSize: '0.72rem', fontWeight: 700,
+                                                    padding: '0.15rem 0.5rem', borderRadius: '10px',
+                                                    background: selected.length >= minSel ? 'rgba(67,160,71,0.1)' : 'rgba(244,67,54,0.1)',
+                                                    color: selected.length >= minSel ? 'var(--success-color)' : 'var(--danger-color)',
+                                                }}>
+                                                    {selected.length}/{maxSel}
+                                                    {minSel > 0 && ` (mín ${minSel})`}
+                                                </span>
+                                            </div>
+                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                                {mod.options.map(opt => {
+                                                    const isSelected = selected.includes(opt.name);
+                                                    const isDisabled = !isSelected && atMax;
+
+                                                    return (
+                                                        <button
+                                                            key={opt.name}
+                                                            disabled={isDisabled}
+                                                            onClick={() => {
+                                                                setSelectedModifiers(prev => {
+                                                                    const current = prev[mod.id] || [];
+                                                                    if (isSelected) {
+                                                                        return { ...prev, [mod.id]: current.filter(n => n !== opt.name) };
+                                                                    }
+                                                                    if (maxSel === 1) {
+                                                                        return { ...prev, [mod.id]: [opt.name] };
+                                                                    }
+                                                                    return { ...prev, [mod.id]: [...current, opt.name] };
+                                                                });
+                                                            }}
+                                                            style={{
+                                                                padding: '0.6rem 1rem',
+                                                                borderRadius: 'var(--radius-md)',
+                                                                border: '2px solid',
+                                                                borderColor: isSelected ? 'var(--primary-color)' : 'var(--border-color)',
+                                                                backgroundColor: isSelected ? 'var(--primary-color)' : 'transparent',
+                                                                color: isSelected ? 'white' : isDisabled ? 'var(--text-secondary)' : 'var(--text-primary)',
+                                                                fontWeight: '600',
+                                                                fontSize: '0.85rem',
+                                                                cursor: isDisabled ? 'not-allowed' : 'pointer',
+                                                                opacity: isDisabled ? 0.45 : 1,
+                                                                transition: 'all 0.2s'
+                                                            }}
+                                                        >
+                                                            {opt.name} {opt.price ? `(+S/ ${opt.price})` : ''}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
 
                             <div style={{ display: 'flex', gap: '1rem' }}>
@@ -931,7 +967,11 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                 <Button
                                     fullWidth
                                     onClick={handleConfirmModifiers}
-                                    disabled={modifierProduct.modifiers?.some(m => m.required && !selectedModifiers[m.id])}
+                                    disabled={modifierProduct.modifiers?.some(m => {
+                                        const sel = selectedModifiers[m.id] || [];
+                                        const minSel = m.minSelections || (m.required ? 1 : 0);
+                                        return sel.length < minSel;
+                                    })}
                                 >
                                     Agregar al Pedido
                                 </Button>

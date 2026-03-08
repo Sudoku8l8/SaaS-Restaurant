@@ -3,10 +3,11 @@ import { db } from '@/services/firebase/config';
 import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
 import { Button, Input, Card, Badge } from '@/components/shared';
-import { Trash2, Edit2, ChefHat } from 'lucide-react';
-import type { Product, Category, InventoryType, UnitOfMeasure } from '@/types';
+import { Trash2, Edit2, ChefHat, Plus, X, Settings2 } from 'lucide-react';
+import type { Product, Category, InventoryType, UnitOfMeasure, ProductModifier, ModifierOption } from '@/types';
 import { UnitOfMeasure as UC } from '@/types';
 import { RecipeModal } from './RecipeModal';
+import { generateUUID } from '@/utils/uuid';
 
 export function ProductsTab() {
     const { user } = useAuth();
@@ -16,6 +17,7 @@ export function ProductsTab() {
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     const [recipeModalOpen, setRecipeModalOpen] = useState(false);
     const [recipeProduct, setRecipeProduct] = useState<Product | null>(null);
+    const [modifiers, setModifiers] = useState<ProductModifier[]>([]);
 
     const UNIT_OPTIONS: { value: UnitOfMeasure; label: string }[] = [
         { value: UC.UNIT, label: 'Unidad' },
@@ -111,6 +113,7 @@ export function ProductsTab() {
                 stockMaximo: formData.controlaStock && formData.tipoInventario === 'product' && formData.stockMaximo ? parseFloat(formData.stockMaximo) : 0,
                 fechaActualizacionStock: new Date(),
                 dietaryTags: formData.dietaryTags,
+                modifiers: modifiers.filter(m => m.name.trim() && m.options.length > 0),
             };
 
             if (editingProduct) {
@@ -152,6 +155,7 @@ export function ProductsTab() {
                 unidadMedida: product.unidadMedida || UC.UNIT,
                 dietaryTags: product.dietaryTags || [],
             });
+            setModifiers(product.modifiers || []);
         } else {
             setEditingProduct(null);
             setFormData({
@@ -171,8 +175,48 @@ export function ProductsTab() {
                 unidadMedida: UC.UNIT,
                 dietaryTags: [],
             });
+            setModifiers([]);
         }
         setIsModalOpen(true);
+    };
+
+    // ── Modifier helpers ──
+    const addModifier = () => {
+        setModifiers(prev => [...prev, {
+            id: generateUUID(),
+            name: '',
+            options: [{ name: '', price: 0 }],
+            required: false,
+            multiple: true,
+            minSelections: 0,
+            maxSelections: 1,
+        }]);
+    };
+
+    const updateModifier = (idx: number, patch: Partial<ProductModifier>) => {
+        setModifiers(prev => prev.map((m, i) => i === idx ? { ...m, ...patch } : m));
+    };
+
+    const removeModifier = (idx: number) => {
+        setModifiers(prev => prev.filter((_, i) => i !== idx));
+    };
+
+    const addOption = (modIdx: number) => {
+        setModifiers(prev => prev.map((m, i) =>
+            i === modIdx ? { ...m, options: [...m.options, { name: '', price: 0 }] } : m
+        ));
+    };
+
+    const updateOption = (modIdx: number, optIdx: number, patch: Partial<ModifierOption>) => {
+        setModifiers(prev => prev.map((m, i) =>
+            i === modIdx ? { ...m, options: m.options.map((o, j) => j === optIdx ? { ...o, ...patch } : o) } : m
+        ));
+    };
+
+    const removeOption = (modIdx: number, optIdx: number) => {
+        setModifiers(prev => prev.map((m, i) =>
+            i === modIdx ? { ...m, options: m.options.filter((_, j) => j !== optIdx) } : m
+        ));
     };
 
     const closeModal = () => {
@@ -460,6 +504,133 @@ export function ProductsTab() {
                                         );
                                     })}
                                 </div>
+                            </div>
+
+                            {/* ── Modifier Editor ── */}
+                            <div style={{ padding: '1rem', border: '1px solid var(--divider-color)', borderRadius: '8px', background: 'var(--surface-color)', marginTop: '0.5rem' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: modifiers.length > 0 ? '0.75rem' : 0 }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>
+                                        <Settings2 size={16} /> Modificadores
+                                    </label>
+                                    <button
+                                        type="button"
+                                        onClick={addModifier}
+                                        style={{
+                                            display: 'flex', alignItems: 'center', gap: '0.3rem',
+                                            padding: '0.35rem 0.75rem', borderRadius: '6px',
+                                            border: '1px dashed var(--primary-color)', background: 'transparent',
+                                            color: 'var(--primary-color)', fontSize: '0.8rem', fontWeight: 600,
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        <Plus size={14} /> Añadir
+                                    </button>
+                                </div>
+
+                                {modifiers.map((mod, modIdx) => (
+                                    <div key={mod.id} style={{
+                                        padding: '0.75rem', border: '1px solid var(--divider-color)',
+                                        borderRadius: '8px', marginBottom: '0.75rem',
+                                        background: 'var(--background-color)'
+                                    }}>
+                                        {/* Modifier header */}
+                                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                            <input
+                                                type="text"
+                                                value={mod.name}
+                                                onChange={e => updateModifier(modIdx, { name: e.target.value })}
+                                                placeholder="Ej: Sabores, Toppings, Salsas..."
+                                                style={{
+                                                    flex: 1, padding: '0.4rem 0.6rem', borderRadius: '6px',
+                                                    border: '1px solid var(--divider-color)',
+                                                    background: 'var(--surface-color)', color: 'var(--text-primary)',
+                                                    fontSize: '0.88rem', fontWeight: 600
+                                                }}
+                                            />
+                                            <button type="button" onClick={() => removeModifier(modIdx)} style={{
+                                                background: 'transparent', border: 'none', color: 'var(--danger-color)',
+                                                cursor: 'pointer', padding: '0.25rem'
+                                            }}>
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+
+                                        {/* Modifier config row */}
+                                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.78rem', cursor: 'pointer' }}>
+                                                <input type="checkbox" checked={mod.required || false}
+                                                    onChange={e => updateModifier(modIdx, { required: e.target.checked, minSelections: e.target.checked ? Math.max(mod.minSelections || 0, 1) : 0 })} />
+                                                Obligatorio
+                                            </label>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.78rem' }}>
+                                                <span>Mín:</span>
+                                                <input type="number" min={0} max={20} value={mod.minSelections || 0}
+                                                    onChange={e => updateModifier(modIdx, { minSelections: parseInt(e.target.value) || 0, required: parseInt(e.target.value) > 0 })}
+                                                    style={{ width: '42px', padding: '0.2rem 0.35rem', borderRadius: '4px', border: '1px solid var(--divider-color)', textAlign: 'center', fontSize: '0.82rem', background: 'var(--surface-color)', color: 'var(--text-primary)' }} />
+                                            </div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.78rem' }}>
+                                                <span>Máx:</span>
+                                                <input type="number" min={1} max={20} value={mod.maxSelections || 1}
+                                                    onChange={e => updateModifier(modIdx, { maxSelections: parseInt(e.target.value) || 1, multiple: parseInt(e.target.value) > 1 })}
+                                                    style={{ width: '42px', padding: '0.2rem 0.35rem', borderRadius: '4px', border: '1px solid var(--divider-color)', textAlign: 'center', fontSize: '0.82rem', background: 'var(--surface-color)', color: 'var(--text-primary)' }} />
+                                            </div>
+                                        </div>
+
+                                        {/* Options list */}
+                                        {mod.options.map((opt, optIdx) => (
+                                            <div key={optIdx} style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', marginBottom: '0.3rem' }}>
+                                                <input
+                                                    type="text"
+                                                    value={opt.name}
+                                                    onChange={e => updateOption(modIdx, optIdx, { name: e.target.value })}
+                                                    placeholder="Nombre opción"
+                                                    style={{
+                                                        flex: 1, padding: '0.35rem 0.5rem', borderRadius: '5px',
+                                                        border: '1px solid var(--divider-color)', fontSize: '0.82rem',
+                                                        background: 'var(--surface-color)', color: 'var(--text-primary)'
+                                                    }}
+                                                />
+                                                <input
+                                                    type="number"
+                                                    min={0}
+                                                    step="0.1"
+                                                    value={opt.price || 0}
+                                                    onChange={e => updateOption(modIdx, optIdx, { price: parseFloat(e.target.value) || 0 })}
+                                                    placeholder="+S/"
+                                                    style={{
+                                                        width: '60px', padding: '0.35rem 0.4rem', borderRadius: '5px',
+                                                        border: '1px solid var(--divider-color)', textAlign: 'center',
+                                                        fontSize: '0.82rem', background: 'var(--surface-color)', color: 'var(--text-primary)'
+                                                    }}
+                                                />
+                                                <button type="button" onClick={() => removeOption(modIdx, optIdx)} style={{
+                                                    background: 'transparent', border: 'none', color: 'var(--text-secondary)',
+                                                    cursor: 'pointer', padding: '0.2rem'
+                                                }}>
+                                                    <X size={14} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                        <button
+                                            type="button"
+                                            onClick={() => addOption(modIdx)}
+                                            style={{
+                                                display: 'flex', alignItems: 'center', gap: '0.3rem',
+                                                padding: '0.25rem 0.5rem', border: 'none',
+                                                background: 'transparent', color: 'var(--primary-color)',
+                                                fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', marginTop: '0.2rem'
+                                            }}
+                                        >
+                                            <Plus size={12} /> Opción
+                                        </button>
+                                    </div>
+                                ))}
+
+                                {modifiers.length === 0 && (
+                                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0', fontStyle: 'italic' }}>
+                                        Sin modificadores. Usa esto para agregar sabores, toppings, extras, etc.
+                                    </p>
+                                )}
                             </div>
 
                             <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
