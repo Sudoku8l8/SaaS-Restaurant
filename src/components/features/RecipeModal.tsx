@@ -193,7 +193,7 @@ export function RecipeModal({ productId, productName, isOpen, onClose }: Props) 
                             <div style={{ textAlign: 'center', padding: '2rem', background: 'var(--background-color)', borderRadius: 'var(--radius-md)', marginBottom: '1rem' }}>
                                 <Package size={32} style={{ opacity: 0.3, marginBottom: '0.5rem' }} />
                                 <p style={{ color: 'var(--text-secondary)', margin: 0 }}>
-                                    No hay insumos registrados. Ve a Configuración → Insumos para crearlos.
+                                    No hay insumos registrados. Ve a Inventario → Insumos para crearlos.
                                 </p>
                             </div>
                         ) : (

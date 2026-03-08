@@ -212,7 +212,7 @@ export function ProductsTab() {
                             {product.tipoInventario === 'recipe' && (
                                 <Button size="sm" variant="outline" onClick={() => { setRecipeProduct(product); setRecipeModalOpen(true); }}
                                     style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--primary-color)', borderColor: 'var(--primary-color)' }}>
-                                    <ChefHat size={14} /> Receta
+                                    <ChefHat size={14} />
                                 </Button>
                             )}
                             <Button size="sm" variant="danger" onClick={() => handleDelete(product.id)}><Trash2 size={14} /></Button>

@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { db } from '@/services/firebase/config';
-import { collection, query, where, onSnapshot, updateDoc, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, updateDoc, doc, addDoc, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
 import { Button, Card, Badge, Input } from '@/components/shared';
-import { Search, Package, Box, AlertTriangle, AlertCircle, ClipboardList, ArrowUpDown } from 'lucide-react';
-import type { Product, InventoryItem } from '@/types';
+import { Search, Package, Box, AlertTriangle, AlertCircle, ClipboardList, ArrowUpDown, Plus, Edit2, Trash2 } from 'lucide-react';
+import type { Product, InventoryItem, UnitOfMeasure } from '@/types';
+import { UnitOfMeasure as UnitConst } from '@/types';
 import { InventoryMovementsPanel } from './InventoryMovementsPanel';
 import { getPeruNow } from '@/utils/dateUtils';
 
@@ -25,6 +26,29 @@ export function InventoryTab() {
     const [adjustQty, setAdjustQty] = useState('');
     const [inspectProduct, setInspectProduct] = useState<Product | null>(null);
 
+    // ── Insumos CRUD modal state ──
+    const [isItemModalOpen, setIsItemModalOpen] = useState(false);
+    const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
+    const [itemForm, setItemForm] = useState({
+        name: '',
+        unit: UnitConst.UNIT as UnitOfMeasure,
+        stockActual: '',
+        stockMinimo: '',
+        stockMaximo: '',
+        costPerUnit: '',
+        category: '',
+    });
+
+    const UNIT_OPTIONS: { value: UnitOfMeasure; label: string }[] = [
+        { value: UnitConst.UNIT, label: 'Unidad' },
+        { value: UnitConst.GRAM, label: 'Gramos (g)' },
+        { value: UnitConst.KILOGRAM, label: 'Kilogramos (kg)' },
+        { value: UnitConst.LITER, label: 'Litros (L)' },
+        { value: UnitConst.MILLILITER, label: 'Mililitros (mL)' },
+        { value: UnitConst.PIECE, label: 'Piezas' },
+        { value: UnitConst.BOTTLE, label: 'Botellas' },
+    ];
+
     useEffect(() => {
         if (!user?.restaurantId) return;
 
@@ -42,11 +66,13 @@ export function InventoryTab() {
             where('restaurantId', '==', user.restaurantId)
         );
         const unsub2 = onSnapshot(iQuery, (snap) => {
-            setInventoryItems(snap.docs.map(d => ({
+            const data = snap.docs.map(d => ({
                 id: d.id, ...d.data(),
                 createdAt: d.data().createdAt?.toDate?.() || new Date(),
                 updatedAt: d.data().updatedAt?.toDate?.() || new Date(),
-            } as InventoryItem)));
+            } as InventoryItem));
+            data.sort((a, b) => a.name.localeCompare(b.name));
+            setInventoryItems(data);
         });
 
         return () => { unsub1(); unsub2(); };
@@ -88,6 +114,63 @@ export function InventoryTab() {
         });
         setAdjustProduct(null);
         setAdjustQty('');
+    };
+
+    // ── Insumos CRUD handlers ──
+    const openItemModal = (item?: InventoryItem) => {
+        if (item) {
+            setEditingItem(item);
+            setItemForm({
+                name: item.name,
+                unit: item.unit,
+                stockActual: item.stockActual.toString(),
+                stockMinimo: item.stockMinimo.toString(),
+                stockMaximo: item.stockMaximo?.toString() || '',
+                costPerUnit: item.costPerUnit?.toString() || '',
+                category: item.category || '',
+            });
+        } else {
+            setEditingItem(null);
+            setItemForm({ name: '', unit: UnitConst.UNIT, stockActual: '', stockMinimo: '', stockMaximo: '', costPerUnit: '', category: '' });
+        }
+        setIsItemModalOpen(true);
+    };
+
+    const handleItemSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!user?.restaurantId) return;
+
+        const now = getPeruNow();
+        const data = {
+            restaurantId: user.restaurantId,
+            name: itemForm.name.trim(),
+            unit: itemForm.unit,
+            stockActual: parseFloat(itemForm.stockActual) || 0,
+            stockMinimo: parseFloat(itemForm.stockMinimo) || 0,
+            stockMaximo: itemForm.stockMaximo ? parseFloat(itemForm.stockMaximo) : 0,
+            costPerUnit: itemForm.costPerUnit ? parseFloat(itemForm.costPerUnit) : 0,
+            category: itemForm.category.trim() || '',
+            updatedAt: now,
+        };
+
+        try {
+            if (editingItem) {
+                await updateDoc(doc(db, 'inventory_items', editingItem.id), data);
+            } else {
+                await addDoc(collection(db, 'inventory_items'), { ...data, createdAt: now });
+            }
+            setIsItemModalOpen(false);
+            setEditingItem(null);
+        } catch (err) {
+            console.error('Error saving inventory item:', err);
+            alert('Error al guardar el insumo.');
+        }
+    };
+
+    const handleItemDelete = async (id: string) => {
+        if (confirm('¿Eliminar este insumo? Los productos con recetas que lo usen pueden verse afectados.')) {
+            await deleteDoc(doc(db, 'inventory_items', id));
+        }
     };
 
     const getStatusBadge = (actual: number, minimo: number) => {
@@ -170,6 +253,11 @@ export function InventoryTab() {
                         <option value="low">Stock Bajo</option>
                         <option value="critical">Sin Existencias</option>
                     </select>
+                    {subTab === 'items' && (
+                        <Button variant="primary" onClick={() => openItemModal()} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <Plus size={18} /> Nuevo Insumo
+                        </Button>
+                    )}
                 </div>
             )}
 
@@ -257,6 +345,7 @@ export function InventoryTab() {
             {/* Insumos Sub-tab */}
             {subTab === 'items' && (
                 <>
+                    {/* Desktop Table */}
                     <div className="hidden-mobile">
                         <Card style={{ overflowX: 'auto', padding: 0, border: '1px solid var(--divider-color)' }}>
                             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -267,6 +356,7 @@ export function InventoryTab() {
                                         <th style={{ padding: '1rem', textAlign: 'center', fontWeight: 600, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>Stock</th>
                                         <th style={{ padding: '1rem', textAlign: 'center', fontWeight: 600, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>Mínimo</th>
                                         <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>Estado</th>
+                                        <th style={{ padding: '1rem', textAlign: 'right', fontWeight: 600, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -280,33 +370,55 @@ export function InventoryTab() {
                                             }}>{i.stockActual}</td>
                                             <td style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>{i.stockMinimo}</td>
                                             <td style={{ padding: '1rem' }}>{getStatusBadge(i.stockActual, i.stockMinimo)}</td>
+                                            <td style={{ padding: '1rem', textAlign: 'right' }}>
+                                                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                                                    <Button size="sm" variant="outline" onClick={() => openItemModal(i)} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                                        <Edit2 size={14} /> Editar
+                                                    </Button>
+                                                    <Button size="sm" variant="danger" onClick={() => handleItemDelete(i.id)}>
+                                                        <Trash2 size={14} />
+                                                    </Button>
+                                                </div>
+                                            </td>
                                         </tr>
                                     ))}
                                     {filteredItems.length === 0 && (
-                                        <tr><td colSpan={5} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>No hay insumos. Crea algunos en Configuración → Insumos.</td></tr>
+                                        <tr><td colSpan={6} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>No hay insumos. Usa el botón "Nuevo Insumo" para crear uno.</td></tr>
                                     )}
                                 </tbody>
                             </table>
                         </Card>
                     </div>
-                    {/* Mobile */}
+                    {/* Mobile Cards */}
                     <div className="hidden-desktop block">
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                             {filteredItems.map(i => (
                                 <Card key={i.id} style={{ padding: '1.25rem' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
                                         <div>
-                                            <div style={{ fontWeight: 600 }}>{i.name}</div>
+                                            <div style={{ fontWeight: 600, fontSize: '1.05rem' }}>{i.name}</div>
                                             <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>{i.unit}</div>
                                         </div>
                                         {getStatusBadge(i.stockActual, i.stockMinimo)}
                                     </div>
-                                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem', marginTop: '0.5rem' }}>
-                                        <span style={{ fontSize: '1.3rem', fontWeight: 700 }}>{i.stockActual}</span>
-                                        <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>/ {i.stockMinimo} Min.</span>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem' }}>
+                                            <span style={{
+                                                fontSize: '1.5rem', fontWeight: 700,
+                                                color: i.stockActual === 0 ? 'var(--danger-color)' : (i.stockActual <= i.stockMinimo ? 'var(--warning-color)' : 'var(--text-primary)')
+                                            }}>{i.stockActual}</span>
+                                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>/ {i.stockMinimo} Min.</span>
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                            <Button size="sm" variant="outline" onClick={() => openItemModal(i)}><Edit2 size={14} /></Button>
+                                            <Button size="sm" variant="danger" onClick={() => handleItemDelete(i.id)}><Trash2 size={14} /></Button>
+                                        </div>
                                     </div>
                                 </Card>
                             ))}
+                            {filteredItems.length === 0 && (
+                                <Card style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>No hay insumos. Usa el botón "Nuevo Insumo" para crear uno.</Card>
+                            )}
                         </div>
                     </div>
                 </>
@@ -345,6 +457,44 @@ export function InventoryTab() {
                             productName={inspectProduct.name}
                             collectionType="products"
                         />
+                    </Card>
+                </div>
+            )}
+
+            {/* Create/Edit Insumo Modal */}
+            {isItemModalOpen && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
+                    <Card style={{ padding: '2rem', width: '480px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+                        <h3 style={{ marginTop: 0, marginBottom: '1.5rem' }}>{editingItem ? 'Editar' : 'Nuevo'} Insumo</h3>
+                        <form onSubmit={handleItemSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                            <Input label="Nombre" value={itemForm.name} onChange={e => setItemForm({ ...itemForm, name: e.target.value })} required placeholder="Ej: Queso Mozzarella" />
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 700 }}>Unidad de Medida</label>
+                                    <select
+                                        value={itemForm.unit} onChange={e => setItemForm({ ...itemForm, unit: e.target.value as UnitOfMeasure })}
+                                        style={{ width: '100%', padding: '0.56rem', borderRadius: '8px', border: '1px solid var(--divider-color)', background: 'var(--background-color)', color: 'var(--text-primary)', fontSize: '0.9rem' }}
+                                    >
+                                        {UNIT_OPTIONS.map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
+                                    </select>
+                                </div>
+                                <Input label="Categoría (opcional)" value={itemForm.category} onChange={e => setItemForm({ ...itemForm, category: e.target.value })} placeholder="Ej: Lácteos" />
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+                                <Input label="Stock Actual" type="number" step="0.01" min="0" value={itemForm.stockActual} onChange={e => setItemForm({ ...itemForm, stockActual: e.target.value })} required />
+                                <Input label="Stock Mínimo" type="number" step="0.01" min="0" value={itemForm.stockMinimo} onChange={e => setItemForm({ ...itemForm, stockMinimo: e.target.value })} required />
+                                <Input label="Stock Máximo" type="number" step="0.01" min="0" value={itemForm.stockMaximo} onChange={e => setItemForm({ ...itemForm, stockMaximo: e.target.value })} placeholder="Opcional" />
+                            </div>
+
+                            <Input label="Costo Unitario (opcional)" type="number" step="0.01" min="0" value={itemForm.costPerUnit} onChange={e => setItemForm({ ...itemForm, costPerUnit: e.target.value })} placeholder="S/ 0.00" />
+
+                            <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                                <Button type="button" variant="ghost" onClick={() => setIsItemModalOpen(false)} fullWidth>Cancelar</Button>
+                                <Button type="submit" variant="primary" fullWidth>Guardar Insumo</Button>
+                            </div>
+                        </form>
                     </Card>
                 </div>
             )}

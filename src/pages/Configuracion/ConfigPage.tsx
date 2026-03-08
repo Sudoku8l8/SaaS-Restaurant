@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Utensils, Users, LayoutGrid, ArrowLeft, FolderKanban, Printer, Globe, Shield, Settings, Crown, Wallet, Package, Menu, X, ChevronRight } from 'lucide-react';
+import { Utensils, Users, LayoutGrid, ArrowLeft, FolderKanban, Printer, Globe, Shield, Settings, Crown, Wallet, Menu, X, ChevronRight } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/shared';
 import { useTenant } from '@/app/providers/TenantProvider';
@@ -14,11 +14,11 @@ import { SecurityTab } from '@/components/features/SecurityTab';
 import { GeneralTab } from '@/components/features/GeneralTab';
 import { PremiumUpgradeBanner } from '@/components/features/PremiumUpgradeBanner';
 import { PettyCashConfigTab } from '@/components/features/PettyCashConfigTab';
-import { InventoryItemsTab } from '@/components/features/InventoryItemsTab';
+
 
 import './ConfigPage.css';
 
-type Tab = 'general' | 'products' | 'categories' | 'ingredients' | 'users' | 'tables' | 'printer' | 'menu' | 'security' | 'pettycash';
+type Tab = 'general' | 'products' | 'categories' | 'users' | 'tables' | 'printer' | 'menu' | 'security' | 'pettycash';
 
 interface TabItem {
     id: Tab;
@@ -39,7 +39,7 @@ export function ConfigPage() {
         { id: 'general', label: 'General', icon: Settings },
         { id: 'products', label: 'Productos', icon: Utensils },
         { id: 'categories', label: 'Categorías', icon: FolderKanban },
-        { id: 'ingredients', label: 'Insumos', icon: Package },
+
         { id: 'users', label: 'Usuarios', icon: Users },
         { id: 'tables', label: 'Mesas', icon: LayoutGrid },
         { id: 'printer', label: 'Impresora', icon: Printer },
@@ -145,7 +145,7 @@ export function ConfigPage() {
                 {activeTab === 'general' && <GeneralTab />}
                 {activeTab === 'products' && <ProductsTab />}
                 {activeTab === 'categories' && <CategoriesTab />}
-                {activeTab === 'ingredients' && <InventoryItemsTab />}
+
                 {activeTab === 'users' && <UsersTab />}
                 {activeTab === 'tables' && <TablesTab />}
                 {activeTab === 'printer' && <PrinterTab />}
