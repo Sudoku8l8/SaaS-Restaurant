@@ -111,6 +111,16 @@ export function MozoPage() {
         setIsOrderModalOpen(true);
     };
 
+    const handleOpenQuickSaleModal = () => {
+        if (isClosed) {
+            alert('⚠️ Caja Cerrada\n\nNo se pueden crear nuevos pedidos hoy.');
+            return;
+        }
+        setOrderToEdit(undefined);
+        setTakeoutOrderType('quick-sale');
+        setIsOrderModalOpen(true);
+    };
+
     if (!tables || checkingClosure) {
         return (
             <div className="container mt-md">
@@ -233,7 +243,7 @@ export function MozoPage() {
                 onTableClick={handleTableClick}
             />
 
-            {(isOrderModalOpen && (selectedTable || takeoutOrderType === 'takeout') && !isClosed) && (
+            {(isOrderModalOpen && (selectedTable || takeoutOrderType !== 'dine-in') && !isClosed) && (
                 <OrderModal
                     table={selectedTable || undefined}
                     initialOrder={orderToEdit}
@@ -254,7 +264,7 @@ export function MozoPage() {
             {/* Quick Sale FAB */}
             {enableQuickSale && (
                 <button
-                    onClick={handleOpenTakeoutModal}
+                    onClick={handleOpenQuickSaleModal}
                     style={{
                         position: 'fixed',
                         bottom: '2rem',

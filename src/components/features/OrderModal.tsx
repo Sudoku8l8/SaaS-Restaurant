@@ -1,13 +1,14 @@
-import { useState, useEffect } from 'react';
-import { ShoppingCart, Utensils, Search, Trash2, Printer, MessageSquare } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { ShoppingCart, Utensils, Search, Trash2, Printer, MessageSquare, Banknote } from 'lucide-react';
 import { db } from '@/services/firebase/config';
-import { collection, query, where } from 'firebase/firestore';
-import { Button, Input, Card } from '@/components/shared';
-import type { Product, OrderItem, RestaurantTable, Order, Category } from '@/types';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { generateUUID } from '@/utils/uuid';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrders } from '@/hooks/useOrders';
-import { generateUUID } from '@/utils/uuid';
-import { onSnapshot } from 'firebase/firestore';
+import { useTenant } from '@/app/providers/TenantProvider';
+import type { Product, Category, Order, OrderItem, OrderPayment, RestaurantTable } from '@/types';
+import { Card, Button, Input } from '@/components/shared';
+import { PaymentModal } from '@/components/features/PaymentModal';
 import { printerService } from '@/services/printer/PrinterService';
 import { ensurePeruDate, getPeruNow } from '@/utils/dateUtils';
 
@@ -21,7 +22,8 @@ interface OrderModalProps {
 
 export function OrderModal({ table, initialOrder, onClose, onOrderCreated, orderType = 'dine-in' }: OrderModalProps) {
     const { user } = useAuth();
-    const { createOrder, updateOrder } = useOrders();
+    const { createOrder, updateOrder, payOrder } = useOrders();
+    const { tenant } = useTenant();
     const [items, setItems] = useState<OrderItem[]>(initialOrder?.items || []);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string>('popular'); // Default to popular
@@ -35,6 +37,43 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
     const [lastSavedOrder, setLastSavedOrder] = useState<Order | null>(null);
     const [modifierProduct, setModifierProduct] = useState<Product | null>(null);
     const [selectedModifiers, setSelectedModifiers] = useState<Record<string, string>>({});
+
+    // Quick Sale flow state
+    const isQuickSale = orderType === 'quick-sale';
+    const [showQuickPayment, setShowQuickPayment] = useState(false);
+    const [itemsChangedAfterSave, setItemsChangedAfterSave] = useState(false);
+    const savedItemsSnapshot = useRef<string>('');
+
+    // Quick Sale: detect items changes after save
+    useEffect(() => {
+        if (isQuickSale && isSaved && savedItemsSnapshot.current) {
+            const currentSnapshot = JSON.stringify(items);
+            if (currentSnapshot !== savedItemsSnapshot.current) {
+                setItemsChangedAfterSave(true);
+            }
+        }
+    }, [items, isQuickSale, isSaved]);
+
+    // Quick Sale: handle payment
+    const handleQuickPayment = async (payments: OrderPayment[], shouldPrintReceipt: boolean) => {
+        try {
+            const orderToPay = lastSavedOrder;
+            if (!orderToPay) return;
+            await payOrder(orderToPay.id, payments);
+            if (shouldPrintReceipt && printerService.isConnected) {
+                try {
+                    await printerService.printReceipt({ ...orderToPay, payments, status: 'paid' }, tenant?.name || 'Negocio');
+                } catch (printError) {
+                    console.error('Error printing receipt:', printError);
+                }
+            }
+            setShowQuickPayment(false);
+            onClose();
+        } catch (error) {
+            console.error('Quick payment failed', error);
+            alert('Error al registrar pago');
+        }
+    };
 
     // Track confirmed items to prevent deletion exploit
     const [confirmedProductIds, setConfirmedProductIds] = useState<Set<string>>(() => {
@@ -285,6 +324,12 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
 
             setIsSaved(true);
 
+            // For Quick Sale: snapshot the items so we can detect later changes
+            if (isQuickSale) {
+                savedItemsSnapshot.current = JSON.stringify(items);
+                setItemsChangedAfterSave(false);
+            }
+
             // Immediately lock the confirmed items in the UI to prevent exploit
             setConfirmedProductIds(prev => {
                 const next = new Set(prev);
@@ -293,6 +338,7 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
             });
 
             onOrderCreated();
+            setIsSaving(false); // Fix: Reset saving state on success
             // onClose(); // Modal no longer closes here
         } catch (err: any) {
             console.error('Failed to save order:', err);
@@ -719,35 +765,69 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                         Cancelar
                                     </Button>
                                 )}
-                                <Button
-                                    variant="primary"
-                                    onClick={handleSaveOrder}
-                                    disabled={items.length === 0 || isSaving || isSaved}
-                                    style={{
-                                        background: isSaved ? 'var(--success-color)' : 'var(--primary-color)',
-                                        height: '54px',
-                                        borderRadius: 'var(--radius-md)',
-                                        fontSize: '1.1rem',
-                                        fontWeight: '700',
-                                        boxShadow: isSaved ? 'none' : '0 4px 12px rgba(142, 115, 91, 0.2)',
-                                        opacity: isSaving ? 0.7 : 1
-                                    }}
-                                >
-                                    {isSaving ? 'Pedido Guardado' : (isSaved ? '¡Pedido Guardado!' : (initialOrder ? 'Confirmar Cambios' : 'Confirmar Pedido'))}
-                                </Button>
+
+                                {/* Quick Sale: "Pagar" button when confirmed & no changes */}
+                                {isQuickSale && isSaved && !itemsChangedAfterSave ? (
+                                    <Button
+                                        variant="primary"
+                                        onClick={() => setShowQuickPayment(true)}
+                                        style={{
+                                            background: 'linear-gradient(135deg, #43a047 0%, #2e7d32 100%)',
+                                            height: '54px',
+                                            borderRadius: 'var(--radius-md)',
+                                            fontSize: '1.1rem',
+                                            fontWeight: '700',
+                                            boxShadow: '0 4px 12px rgba(46, 125, 50, 0.3)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: '0.5rem',
+                                            animation: 'btn-glow 1.5s ease-in-out infinite alternate',
+                                        }}
+                                    >
+                                        <Banknote size={22} /> Pagar
+                                    </Button>
+                                ) : (
+                                    /* Normal flow OR Quick Sale with pending changes */
+                                    <Button
+                                        variant="primary"
+                                        onClick={() => {
+                                            handleSaveOrder();
+                                        }}
+                                        disabled={items.length === 0 || isSaving || (isSaved && !itemsChangedAfterSave)}
+                                        style={{
+                                            background: (isSaved && !itemsChangedAfterSave) ? 'var(--success-color)' : 'var(--primary-color)',
+                                            height: '54px',
+                                            borderRadius: 'var(--radius-md)',
+                                            fontSize: '1.1rem',
+                                            fontWeight: '700',
+                                            boxShadow: (isSaved && !itemsChangedAfterSave) ? 'none' : '0 4px 12px rgba(142, 115, 91, 0.2)',
+                                            opacity: isSaving ? 0.7 : 1
+                                        }}
+                                    >
+                                        {isSaving
+                                            ? 'Guardando...'
+                                            : (isSaved && !itemsChangedAfterSave)
+                                                ? '¡Pedido Guardado!'
+                                                : (isSaved && itemsChangedAfterSave)
+                                                    ? 'Confirmar Cambios'
+                                                    : (initialOrder ? 'Confirmar Cambios' : 'Confirmar Pedido')}
+                                    </Button>
+                                )}
+
                                 <Button
                                     variant="outline"
                                     disabled={!isSaved && !initialOrder}
                                     onClick={async () => {
                                         if (!printerService.isConnected) {
-                                            alert('La impresora no está conectada. Configúrala en el panel de Administración.');
+                                            alert('La impresora no está conectada. Confígúrala en el panel de Administración.');
                                             return;
                                         }
                                         try {
                                             const orderToPrint = lastSavedOrder || {
                                                 id: initialOrder?.id || 'new',
                                                 restaurantId: user?.restaurantId || '',
-                                                tableNumber: orderType === 'takeout' ? 0 : (table?.number || 0),
+                                                tableNumber: orderType === 'takeout' || orderType === 'quick-sale' ? 0 : (table?.number || 0),
                                                 items,
                                                 total,
                                                 createdAt: initialOrder?.createdAt || new Date(),
@@ -785,6 +865,14 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                     </button>
                                 )}
                             </div>
+
+                            {/* Pagar glow animation */}
+                            <style>{`
+                                @keyframes btn-glow {
+                                    from { box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3); }
+                                    to { box-shadow: 0 4px 20px rgba(46, 125, 50, 0.5), 0 0 0 4px rgba(46, 125, 50, 0.1); }
+                                }
+                            `}</style>
                         </div>
                     </div>
                 </div>
@@ -850,6 +938,15 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                             </div>
                         </Card>
                     </div>
+                )}
+
+                {/* Quick Sale Payment Modal */}
+                {showQuickPayment && lastSavedOrder && (
+                    <PaymentModal
+                        order={lastSavedOrder}
+                        onClose={() => setShowQuickPayment(false)}
+                        onConfirmPayment={handleQuickPayment}
+                    />
                 )}
             </div>
         </div>
