@@ -1,449 +1,350 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { db } from '@/services/firebase/config';
-import { collection, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, updateDoc, doc } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
-import { Button, Card, Input, Badge } from '@/components/shared';
-import { Edit2, Search, AlertTriangle, Eye, Clock, ShoppingBag, Box, AlertCircle } from 'lucide-react';
-import type { Product } from '@/types';
-import { useProductMovements } from '@/hooks/useProductMovements';
+import { Button, Card, Badge, Input } from '@/components/shared';
+import { Search, Package, Box, AlertTriangle, AlertCircle, ClipboardList, ArrowUpDown } from 'lucide-react';
+import type { Product, InventoryItem } from '@/types';
+import { InventoryMovementsPanel } from './InventoryMovementsPanel';
+import { getPeruNow } from '@/utils/dateUtils';
+
+type SubTab = 'products' | 'items' | 'movements';
 
 export function InventoryTab() {
     const { user } = useAuth();
+    const [subTab, setSubTab] = useState<SubTab>('products');
+
+    // Products state
     const [products, setProducts] = useState<Product[]>([]);
+    const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterState, setFilterState] = useState<'all' | 'low' | 'critical'>('all');
 
-    // Edit Modal State
-    const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
-    const [adjustingProduct, setAdjustingProduct] = useState<Product | null>(null);
-    const [newStockStr, setNewStockStr] = useState('');
-
-    // Inspect Modal State
-    const [inspectingProduct, setInspectingProduct] = useState<Product | null>(null);
-    const { movements: productMovements, isLoading: loadingMovements } = useProductMovements(inspectingProduct?.id || null);
+    // Adjustment modal
+    const [adjustProduct, setAdjustProduct] = useState<Product | null>(null);
+    const [adjustQty, setAdjustQty] = useState('');
+    const [inspectProduct, setInspectProduct] = useState<Product | null>(null);
 
     useEffect(() => {
         if (!user?.restaurantId) return;
 
-        // Sólo traemos productos que tienen "controlaStock" en true
-        const q = query(
+        const pQuery = query(
             collection(db, 'products'),
             where('restaurantId', '==', user.restaurantId),
             where('controlaStock', '==', true)
         );
-
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
-            // Ordenamos alfabéticamente
-            data.sort((a, b) => a.name.localeCompare(b.name));
-            setProducts(data);
+        const unsub1 = onSnapshot(pQuery, (snap) => {
+            setProducts(snap.docs.map(d => ({ id: d.id, ...d.data() } as Product)));
         });
 
-        return () => unsubscribe();
+        const iQuery = query(
+            collection(db, 'inventory_items'),
+            where('restaurantId', '==', user.restaurantId)
+        );
+        const unsub2 = onSnapshot(iQuery, (snap) => {
+            setInventoryItems(snap.docs.map(d => ({
+                id: d.id, ...d.data(),
+                createdAt: d.data().createdAt?.toDate?.() || new Date(),
+                updatedAt: d.data().updatedAt?.toDate?.() || new Date(),
+            } as InventoryItem)));
+        });
+
+        return () => { unsub1(); unsub2(); };
     }, [user?.restaurantId]);
 
-    const handleOpenAdjust = (product: Product) => {
-        setAdjustingProduct(product);
-        setNewStockStr(product.stockActual?.toString() || '0');
-        setIsAdjustModalOpen(true);
+    // Stats
+    const productStats = {
+        total: products.length,
+        low: products.filter(p => (p.stockActual || 0) <= (p.stockMinimo || 0) && (p.stockActual || 0) > 0).length,
+        critical: products.filter(p => (p.stockActual || 0) === 0).length,
+    };
+    const itemStats = {
+        total: inventoryItems.length,
+        low: inventoryItems.filter(i => i.stockActual <= i.stockMinimo && i.stockActual > 0).length,
+        critical: inventoryItems.filter(i => i.stockActual === 0).length,
     };
 
-    const handleCloseAdjust = () => {
-        setIsAdjustModalOpen(false);
-        setAdjustingProduct(null);
-        setNewStockStr('');
-    };
-
-    const handleSaveAdjust = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!adjustingProduct) return;
-
-        const parsedStock = parseInt(newStockStr);
-        if (isNaN(parsedStock) || parsedStock < 0) {
-            alert('El stock debe ser un número entero mayor o igual a cero.');
-            return;
-        }
-
-        try {
-            await updateDoc(doc(db, 'products', adjustingProduct.id), {
-                stockActual: parsedStock,
-                fechaActualizacionStock: new Date()
-            });
-            handleCloseAdjust();
-        } catch (error) {
-            console.error('Error al guardar ajuste de stock', error);
-            alert('Ocurrió un error al actualizar el stock.');
-        }
-    };
-
-    const handleInspect = (product: Product) => {
-        setInspectingProduct(product);
-    };
-
-    const handleCloseInspect = () => {
-        setInspectingProduct(null);
-    };
-
-    // Filter logic
     const filteredProducts = products.filter(p => {
-        const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
-        const stockActual = p.stockActual || 0;
-        const stockMinimo = p.stockMinimo || 0;
-
-        let matchesState = true;
-        if (filterState === 'low') {
-            matchesState = stockActual <= stockMinimo && stockActual > 0;
-        } else if (filterState === 'critical') {
-            matchesState = stockActual === 0;
-        }
-
-        return matchesSearch && matchesState;
+        const match = p.name.toLowerCase().includes(searchTerm.toLowerCase());
+        if (filterState === 'low') return match && (p.stockActual || 0) <= (p.stockMinimo || 0) && (p.stockActual || 0) > 0;
+        if (filterState === 'critical') return match && (p.stockActual || 0) === 0;
+        return match;
     });
 
-    const getStockStatus = (actual: number = 0, minimo: number = 0) => {
+    const filteredItems = inventoryItems.filter(i => {
+        const match = i.name.toLowerCase().includes(searchTerm.toLowerCase());
+        if (filterState === 'low') return match && i.stockActual <= i.stockMinimo && i.stockActual > 0;
+        if (filterState === 'critical') return match && i.stockActual === 0;
+        return match;
+    });
+
+    const handleAdjust = async () => {
+        if (!adjustProduct) return;
+        const qty = parseInt(adjustQty);
+        if (isNaN(qty)) { alert('Cantidad inválida'); return; }
+        await updateDoc(doc(db, 'products', adjustProduct.id), {
+            stockActual: qty,
+            fechaActualizacionStock: getPeruNow(),
+        });
+        setAdjustProduct(null);
+        setAdjustQty('');
+    };
+
+    const getStatusBadge = (actual: number, minimo: number) => {
         if (actual === 0) return <Badge variant="error">Sin Stock</Badge>;
         if (actual <= minimo) return <Badge variant="warning">Bajo Stock</Badge>;
         return <Badge variant="success">Normal</Badge>;
     };
 
-    // Calculate Summary Stats
-    const stats = useMemo(() => {
-        let low = 0;
-        let critical = 0;
-
-        products.forEach(p => {
-            const actual = p.stockActual || 0;
-            const minimo = p.stockMinimo || 0;
-            if (actual === 0) {
-                critical++;
-            } else if (actual <= minimo) {
-                low++;
-            }
-        });
-
-        return {
-            total: products.length,
-            low,
-            critical
-        };
-    }, [products]);
+    const tabs: { id: SubTab; label: string; icon: typeof Package }[] = [
+        { id: 'products', label: 'Productos', icon: Package },
+        { id: 'items', label: 'Insumos', icon: Box },
+        { id: 'movements', label: 'Movimientos', icon: ArrowUpDown },
+    ];
 
     return (
         <div>
             {/* Summary Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-                <Card style={{ padding: '1.5rem', border: '1px solid var(--divider-color)', boxShadow: 'var(--shadow-sm)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div>
-                            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 500 }}>Total Productos</p>
-                            <h3 style={{ margin: '0.5rem 0 0', fontSize: '2rem', color: 'var(--text-primary)' }}>{stats.total}</h3>
-                        </div>
-                        <div style={{ padding: '1rem', background: 'rgba(37, 99, 235, 0.1)', borderRadius: 'var(--radius-md)', color: 'var(--primary-color)' }}>
-                            <Box size={24} />
-                        </div>
-                    </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+                <Card style={{ padding: '1rem', border: '1px solid var(--divider-color)', textAlign: 'center' }}>
+                    <p style={{ margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                        <Package size={16} /> Productos con Stock
+                    </p>
+                    <h3 style={{ margin: '0.25rem 0 0', fontSize: '1.5rem' }}>{productStats.total}</h3>
                 </Card>
-
-                <Card style={{ padding: '1.5rem', border: '1px solid var(--divider-color)', boxShadow: 'var(--shadow-sm)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div>
-                            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 500 }}>Stock Bajo</p>
-                            <h3 style={{ margin: '0.5rem 0 0', fontSize: '2rem', color: 'var(--text-primary)' }}>{stats.low}</h3>
-                        </div>
-                        <div style={{ padding: '1rem', background: '#fdf5f2', borderRadius: 'var(--radius-md)', color: 'var(--warning-color)' }}>
-                            <AlertTriangle size={24} />
-                        </div>
-                    </div>
+                <Card style={{ padding: '1rem', border: '1px solid var(--divider-color)', textAlign: 'center' }}>
+                    <p style={{ margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                        <Box size={16} /> Insumos
+                    </p>
+                    <h3 style={{ margin: '0.25rem 0 0', fontSize: '1.5rem' }}>{itemStats.total}</h3>
                 </Card>
-
-                <Card style={{ padding: '1.5rem', border: '1px solid var(--divider-color)', boxShadow: 'var(--shadow-sm)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div>
-                            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 500 }}>Sin Existencias</p>
-                            <h3 style={{ margin: '0.5rem 0 0', fontSize: '2rem', color: 'var(--text-primary)' }}>{stats.critical}</h3>
-                        </div>
-                        <div style={{ padding: '1rem', background: '#fff1f2', borderRadius: 'var(--radius-md)', color: 'var(--danger-color)' }}>
-                            <AlertCircle size={24} />
-                        </div>
-                    </div>
+                <Card style={{ padding: '1rem', border: '1px solid var(--divider-color)', textAlign: 'center' }}>
+                    <p style={{ margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: 'var(--warning-color)', fontSize: '0.85rem' }}>
+                        <AlertTriangle size={16} /> Stock Bajo
+                    </p>
+                    <h3 style={{ margin: '0.25rem 0 0', fontSize: '1.5rem', color: 'var(--warning-color)' }}>
+                        {productStats.low + itemStats.low}
+                    </h3>
+                </Card>
+                <Card style={{ padding: '1rem', border: '1px solid var(--divider-color)', textAlign: 'center' }}>
+                    <p style={{ margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: 'var(--danger-color)', fontSize: '0.85rem' }}>
+                        <AlertCircle size={16} /> Sin Stock
+                    </p>
+                    <h3 style={{ margin: '0.25rem 0 0', fontSize: '1.5rem', color: 'var(--danger-color)' }}>
+                        {productStats.critical + itemStats.critical}
+                    </h3>
                 </Card>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-                <div style={{ flex: 1, minWidth: '300px', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        background: 'var(--surface-color)',
-                        border: '1px solid var(--divider-color)',
-                        borderRadius: 'var(--radius-md)',
-                        padding: '0.5rem 1rem',
-                        gap: '0.5rem',
-                        flex: 1,
-                        minWidth: '250px',
-                        boxShadow: 'var(--shadow-sm)'
-                    }}>
-                        <Search size={18} color="var(--text-secondary)" />
-                        <input
-                            type="text"
-                            placeholder="Buscar productos..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            style={{ border: 'none', background: 'transparent', outline: 'none', color: 'var(--text-primary)', width: '100%', fontSize: '0.95rem' }}
-                        />
-                    </div>
+            {/* Sub-tabs */}
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', borderBottom: '2px solid var(--divider-color)', paddingBottom: '0' }}>
+                {tabs.map(tab => {
+                    const Icon = tab.icon;
+                    const active = subTab === tab.id;
+                    return (
+                        <button key={tab.id} onClick={() => setSubTab(tab.id)} style={{
+                            padding: '0.75rem 1.25rem', border: 'none', background: 'transparent',
+                            cursor: 'pointer', fontSize: '0.95rem', fontWeight: active ? 700 : 500,
+                            color: active ? 'var(--primary-color)' : 'var(--text-secondary)',
+                            borderBottom: active ? '3px solid var(--primary-color)' : '3px solid transparent',
+                            marginBottom: '-2px', transition: 'all 0.15s',
+                            display: 'flex', alignItems: 'center', gap: '0.5rem',
+                        }}>
+                            <Icon size={16} /> {tab.label}
+                        </button>
+                    );
+                })}
+            </div>
 
-                    <select
-                        style={{
-                            padding: '0.6rem 1rem',
-                            borderRadius: 'var(--radius-md)',
-                            border: '1px solid var(--divider-color)',
-                            background: 'var(--surface-color)',
-                            color: 'var(--text-primary)',
-                            outline: 'none',
-                            fontSize: '0.95rem',
-                            boxShadow: 'var(--shadow-sm)'
-                        }}
-                        value={filterState}
-                        onChange={(e) => setFilterState(e.target.value as any)}
-                    >
-                        <option value="all">Todos los estados</option>
+            {/* Products & Items shared controls */}
+            {subTab !== 'movements' && (
+                <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', background: 'var(--surface-color)', border: '1px solid var(--divider-color)', borderRadius: 'var(--radius-md)', padding: '0.5rem 1rem', gap: '0.5rem', flex: 1, minWidth: '200px' }}>
+                        <Search size={18} color="var(--text-secondary)" />
+                        <input type="text" placeholder="Buscar..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
+                            style={{ border: 'none', background: 'transparent', outline: 'none', color: 'var(--text-primary)', width: '100%', fontSize: '0.95rem' }} />
+                    </div>
+                    <select value={filterState} onChange={e => setFilterState(e.target.value as 'all' | 'low' | 'critical')}
+                        style={{ padding: '0.6rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--divider-color)', background: 'var(--surface-color)', color: 'var(--text-primary)', fontSize: '0.95rem' }}>
+                        <option value="all">Todos</option>
                         <option value="low">Stock Bajo</option>
                         <option value="critical">Sin Existencias</option>
                     </select>
                 </div>
-            </div>
+            )}
 
-            {/* Desktop View */}
-            <div className="hidden-mobile">
-                <Card style={{ overflowX: 'auto', padding: '0', border: '1px solid var(--divider-color)', boxShadow: 'var(--shadow-sm)' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                        <thead>
-                            <tr style={{ borderBottom: '1px solid var(--divider-color)', background: '#f8fafc' }}>
-                                <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Producto</th>
-                                <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Categoría</th>
-                                <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' }}>Stock Actual</th>
-                                <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' }}>Stock Min.</th>
-                                <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Estado</th>
-                                <th style={{ padding: '1.25rem 1.5rem', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'right' }}>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredProducts.map(product => {
-                                const actual = product.stockActual || 0;
-                                const minimo = product.stockMinimo || 0;
-                                const isCritico = actual === 0;
-
-                                return (
-                                    <tr key={product.id} style={{ borderBottom: '1px solid var(--divider-color)', background: 'transparent', transition: 'background 0.2s ease' }} className="hover-row">
-                                        <td style={{ padding: '1rem 1.5rem', fontWeight: 500 }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                                <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'var(--background-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
-                                                    <Box size={20} />
-                                                </div>
-                                                <div>
-                                                    <div style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{product.name}</div>
-                                                </div>
-                                            </div>
+            {/* Products Sub-tab */}
+            {subTab === 'products' && (
+                <div className="hidden-mobile">
+                    <Card style={{ overflowX: 'auto', padding: 0, border: '1px solid var(--divider-color)' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                            <thead>
+                                <tr style={{ borderBottom: '1px solid var(--divider-color)', background: '#f8fafc' }}>
+                                    <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>Producto</th>
+                                    <th style={{ padding: '1rem', textAlign: 'center', fontWeight: 600, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>Tipo</th>
+                                    <th style={{ padding: '1rem', textAlign: 'center', fontWeight: 600, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>Stock</th>
+                                    <th style={{ padding: '1rem', textAlign: 'center', fontWeight: 600, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>Mínimo</th>
+                                    <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>Estado</th>
+                                    <th style={{ padding: '1rem', textAlign: 'right', fontWeight: 600, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredProducts.map(p => (
+                                    <tr key={p.id} style={{ borderBottom: '1px solid var(--divider-color)' }}>
+                                        <td style={{ padding: '1rem 1.5rem', fontWeight: 600 }}>
+                                            {p.name}
+                                            {p.unidadMedida && <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginLeft: '0.5rem' }}>({p.unidadMedida})</span>}
                                         </td>
-                                        <td style={{ padding: '1rem 1.5rem', color: 'var(--text-secondary)' }}>{product.category}</td>
-                                        <td style={{ padding: '1rem 1.5rem', textAlign: 'center', fontWeight: 'bold', fontSize: '1.1rem', color: isCritico ? 'var(--danger-color)' : (actual <= minimo ? 'var(--warning-color)' : 'var(--text-primary)') }}>
-                                            {actual}
+                                        <td style={{ padding: '1rem', textAlign: 'center' }}>
+                                            <Badge variant={p.tipoInventario === 'recipe' ? 'info' : 'neutral'}>
+                                                {p.tipoInventario === 'recipe' ? 'Receta' : 'Producto'}
+                                            </Badge>
                                         </td>
-                                        <td style={{ padding: '1rem 1.5rem', textAlign: 'center', color: 'var(--text-secondary)' }}>{minimo}</td>
-                                        <td style={{ padding: '1rem 1.5rem' }}>
-                                            {getStockStatus(actual, minimo)}
-                                        </td>
-                                        <td style={{ padding: '1rem 1.5rem', textAlign: 'right' }}>
+                                        <td style={{
+                                            padding: '1rem', textAlign: 'center', fontWeight: 700, fontSize: '1.1rem',
+                                            color: (p.stockActual || 0) === 0 ? 'var(--danger-color)' : ((p.stockActual || 0) <= (p.stockMinimo || 0) ? 'var(--warning-color)' : 'var(--text-primary)')
+                                        }}>{p.stockActual || 0}</td>
+                                        <td style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>{p.stockMinimo || 0}</td>
+                                        <td style={{ padding: '1rem' }}>{getStatusBadge(p.stockActual || 0, p.stockMinimo || 0)}</td>
+                                        <td style={{ padding: '1rem', textAlign: 'right' }}>
                                             <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                                                <Button size="sm" variant="ghost" onClick={() => handleInspect(product)}>
-                                                    <Eye size={16} />
-                                                </Button>
-                                                <Button size="sm" variant="outline" onClick={() => handleOpenAdjust(product)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                    <Edit2 size={14} /> Ajustar
+                                                <Button size="sm" variant="outline" onClick={() => { setAdjustProduct(p); setAdjustQty((p.stockActual || 0).toString()); }}>Ajustar</Button>
+                                                <Button size="sm" variant="ghost" onClick={() => setInspectProduct(p)}>
+                                                    <ClipboardList size={14} /> Historial
                                                 </Button>
                                             </div>
                                         </td>
                                     </tr>
-                                );
-                            })}
-                            {filteredProducts.length === 0 && (
-                                <tr>
-                                    <td colSpan={6} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                                        <Box size={40} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
-                                        <p style={{ margin: 0 }}>No se encontraron productos con estos filtros.</p>
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </Card>
-            </div>
-
-            {/* Mobile View */}
-            <div className="hidden-desktop block">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                    <p style={{ margin: 0, fontWeight: 600, color: 'var(--text-secondary)', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        INVENTARIO ({filteredProducts.length} PRODUCTOS)
-                    </p>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    {filteredProducts.map(product => {
-                        const actual = product.stockActual || 0;
-                        const minimo = product.stockMinimo || 0;
-                        const isCritico = actual === 0;
-
-                        return (
-                            <Card key={product.id} style={{ padding: '1.25rem', border: `1px solid ${isCritico ? '#ffccd5' : (actual <= minimo ? '#ffedd5' : 'var(--divider-color)')}`, position: 'relative', overflow: 'hidden', boxShadow: 'var(--shadow-sm)' }}>
-                                <div style={{ display: 'flex', gap: '1rem' }}>
-                                    <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'var(--background-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', flexShrink: 0 }}>
-                                        <Box size={24} />
-                                    </div>
-                                    <div style={{ flex: 1, minWidth: 0 }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.25rem' }}>
-                                            <h4 style={{ margin: 0, fontSize: '1.05rem', color: 'var(--text-primary)', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingRight: '0.5rem' }}>
-                                                {product.name}
-                                            </h4>
-                                            <div style={{ flexShrink: 0 }}>
-                                                {getStockStatus(actual, minimo)}
-                                            </div>
-                                        </div>
-                                        <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1rem' }}>
-                                            {product.category}
-                                        </p>
-
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                                            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem' }}>
-                                                <span style={{ fontSize: '1.5rem', fontWeight: 700, color: isCritico ? 'var(--danger-color)' : (actual <= minimo ? 'var(--warning-color)' : 'var(--text-primary)'), lineHeight: 1 }}>
-                                                    {actual}
-                                                </span>
-                                                <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                                                    / {minimo} Min.
-                                                </span>
-                                            </div>
-
-                                            <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                                <Button size="sm" variant="ghost" onClick={() => handleInspect(product)} style={{ padding: '0.5rem' }}>
-                                                    <Eye size={18} />
-                                                </Button>
-                                                <Button size="sm" variant="primary" onClick={() => handleOpenAdjust(product)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                    <Edit2 size={14} /> Ajustar
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </Card>
-                        );
-                    })}
-                    {filteredProducts.length === 0 && (
-                        <div style={{ padding: '3rem 1rem', textAlign: 'center', color: 'var(--text-secondary)', background: 'var(--surface-color)', borderRadius: 'var(--radius-md)', border: '1px solid var(--divider-color)' }}>
-                            <Box size={40} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
-                            <p style={{ margin: 0 }}>No se encontraron productos.</p>
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {/* Adjust Modal */}
-            {isAdjustModalOpen && adjustingProduct && (
-                <div style={{
-                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                    background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
-                }}>
-                    <Card style={{ padding: '2rem', width: '400px', maxWidth: '90%' }}>
-                        <h3 style={{ marginTop: 0, marginBottom: '0.5rem' }}>Ajustar Stock Manual</h3>
-                        <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
-                            Producto: <strong>{adjustingProduct.name}</strong>
-                        </p>
-
-                        <form onSubmit={handleSaveAdjust} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                            <Input
-                                label="Nuevo Stock Actual"
-                                type="number"
-                                min="0"
-                                step="1"
-                                value={newStockStr}
-                                onChange={(e) => setNewStockStr(e.target.value)}
-                                required
-                                autoFocus
-                            />
-
-                            <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-                                <Button type="button" variant="ghost" onClick={handleCloseAdjust} fullWidth>Cancelar</Button>
-                                <Button type="submit" variant="primary" fullWidth>Guardar Ajuste</Button>
-                            </div>
-                        </form>
+                                ))}
+                                {filteredProducts.length === 0 && (
+                                    <tr><td colSpan={6} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>No hay productos con stock controlado.</td></tr>
+                                )}
+                            </tbody>
+                        </table>
                     </Card>
                 </div>
             )}
 
-            {/* Inspect Modal */}
-            {inspectingProduct && (
-                <div style={{
-                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                    background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
-                    padding: '1rem'
-                }}>
-                    <Card style={{ padding: '2rem', width: '600px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
-                            <div>
-                                <h3 style={{ marginTop: 0, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <ShoppingBag size={20} className="text-primary" />
-                                    Detalle de Stock: {inspectingProduct.name}
-                                </h3>
-                                <div style={{ display: 'flex', gap: '1rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                                    <span>Stock Actual: <strong>{inspectingProduct.stockActual || 0}</strong></span>
-                                    <span>Mínimo: <strong>{inspectingProduct.stockMinimo || 0}</strong></span>
+            {/* Products Mobile */}
+            {subTab === 'products' && (
+                <div className="hidden-desktop block">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        {filteredProducts.map(p => (
+                            <Card key={p.id} style={{ padding: '1.25rem' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                                    <div>
+                                        <div style={{ fontWeight: 600, fontSize: '1.05rem' }}>{p.name}</div>
+                                        <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>{p.tipoInventario === 'recipe' ? 'Receta' : 'Producto'}</div>
+                                    </div>
+                                    {getStatusBadge(p.stockActual || 0, p.stockMinimo || 0)}
                                 </div>
-                            </div>
-                            <Button size="sm" variant="ghost" onClick={handleCloseInspect}>Cerrar</Button>
-                        </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem' }}>
+                                        <span style={{ fontSize: '1.5rem', fontWeight: 700, color: (p.stockActual || 0) === 0 ? 'var(--danger-color)' : 'var(--text-primary)' }}>{p.stockActual || 0}</span>
+                                        <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>/ {p.stockMinimo || 0} Min.</span>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                        <Button size="sm" variant="outline" onClick={() => { setAdjustProduct(p); setAdjustQty((p.stockActual || 0).toString()); }}>Ajustar</Button>
+                                        <Button size="sm" variant="ghost" onClick={() => setInspectProduct(p)}><ClipboardList size={14} /></Button>
+                                    </div>
+                                </div>
+                            </Card>
+                        ))}
+                    </div>
+                </div>
+            )}
 
-                        <div style={{ background: 'var(--background-color)', borderRadius: 'var(--radius-md)', padding: '1rem' }}>
-                            <h4 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1rem' }}>Movimientos de Hoy</h4>
-
-                            {loadingMovements ? (
-                                <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '1rem' }}>Cargando información...</p>
-                            ) : productMovements.length === 0 ? (
-                                <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '1rem', fontStyle: 'italic' }}>
-                                    No se registraron ventas hoy para este producto.
-                                </p>
-                            ) : (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                                    {productMovements.map(mov => (
-                                        <div key={mov.orderId} style={{
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center',
-                                            padding: '0.75rem',
-                                            background: 'var(--surface-color)',
-                                            border: '1px solid var(--divider-color)',
-                                            borderRadius: 'var(--radius-sm)'
-                                        }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                                <div style={{
-                                                    width: '32px', height: '32px',
-                                                    borderRadius: '50%', background: 'rgba(230, 57, 70, 0.1)',
-                                                    color: 'var(--danger-color)',
-                                                    display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                                }}>
-                                                    -{mov.quantity}
-                                                </div>
-                                                <div>
-                                                    <div style={{ fontWeight: 500, fontSize: '0.9rem' }}>Venta #{mov.orderId.slice(-4).toUpperCase()}</div>
-                                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                        <Clock size={12} /> {mov.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • Mzo. {mov.waiterName}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <Badge variant="neutral">Salida</Badge>
-                                        </div>
+            {/* Insumos Sub-tab */}
+            {subTab === 'items' && (
+                <>
+                    <div className="hidden-mobile">
+                        <Card style={{ overflowX: 'auto', padding: 0, border: '1px solid var(--divider-color)' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                <thead>
+                                    <tr style={{ borderBottom: '1px solid var(--divider-color)', background: '#f8fafc' }}>
+                                        <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>Insumo</th>
+                                        <th style={{ padding: '1rem', textAlign: 'center', fontWeight: 600, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>Unidad</th>
+                                        <th style={{ padding: '1rem', textAlign: 'center', fontWeight: 600, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>Stock</th>
+                                        <th style={{ padding: '1rem', textAlign: 'center', fontWeight: 600, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>Mínimo</th>
+                                        <th style={{ padding: '1rem', textAlign: 'left', fontWeight: 600, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredItems.map(i => (
+                                        <tr key={i.id} style={{ borderBottom: '1px solid var(--divider-color)' }}>
+                                            <td style={{ padding: '1rem 1.5rem', fontWeight: 600 }}>{i.name}</td>
+                                            <td style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>{i.unit}</td>
+                                            <td style={{
+                                                padding: '1rem', textAlign: 'center', fontWeight: 700, fontSize: '1.1rem',
+                                                color: i.stockActual === 0 ? 'var(--danger-color)' : (i.stockActual <= i.stockMinimo ? 'var(--warning-color)' : 'var(--text-primary)')
+                                            }}>{i.stockActual}</td>
+                                            <td style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>{i.stockMinimo}</td>
+                                            <td style={{ padding: '1rem' }}>{getStatusBadge(i.stockActual, i.stockMinimo)}</td>
+                                        </tr>
                                     ))}
-                                </div>
-                            )}
+                                    {filteredItems.length === 0 && (
+                                        <tr><td colSpan={5} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>No hay insumos. Crea algunos en Configuración → Insumos.</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </Card>
+                    </div>
+                    {/* Mobile */}
+                    <div className="hidden-desktop block">
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                            {filteredItems.map(i => (
+                                <Card key={i.id} style={{ padding: '1.25rem' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                        <div>
+                                            <div style={{ fontWeight: 600 }}>{i.name}</div>
+                                            <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>{i.unit}</div>
+                                        </div>
+                                        {getStatusBadge(i.stockActual, i.stockMinimo)}
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem', marginTop: '0.5rem' }}>
+                                        <span style={{ fontSize: '1.3rem', fontWeight: 700 }}>{i.stockActual}</span>
+                                        <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>/ {i.stockMinimo} Min.</span>
+                                    </div>
+                                </Card>
+                            ))}
                         </div>
+                    </div>
+                </>
+            )}
+
+            {/* Movements Sub-tab */}
+            {subTab === 'movements' && (
+                <InventoryMovementsPanel />
+            )}
+
+            {/* Adjust Stock Modal */}
+            {adjustProduct && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
+                    <Card style={{ padding: '2rem', width: '400px', maxWidth: '100%' }}>
+                        <h3 style={{ marginTop: 0 }}>Ajustar Stock: {adjustProduct.name}</h3>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Stock actual: {adjustProduct.stockActual || 0}</p>
+                        <Input label="Nuevo Stock" type="number" min="0" value={adjustQty} onChange={e => setAdjustQty(e.target.value)} />
+                        <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+                            <Button type="button" variant="ghost" onClick={() => setAdjustProduct(null)} fullWidth>Cancelar</Button>
+                            <Button variant="primary" onClick={handleAdjust} fullWidth>Guardar</Button>
+                        </div>
+                    </Card>
+                </div>
+            )}
+
+            {/* Inspect Product Movements Modal */}
+            {inspectProduct && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
+                    <Card style={{ padding: '2rem', width: '700px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                            <h3 style={{ margin: 0 }}>Movimientos: {inspectProduct.name}</h3>
+                            <Button variant="ghost" onClick={() => setInspectProduct(null)}>✕</Button>
+                        </div>
+                        <InventoryMovementsPanel
+                            productId={inspectProduct.id}
+                            productName={inspectProduct.name}
+                            collectionType="products"
+                        />
                     </Card>
                 </div>
             )}

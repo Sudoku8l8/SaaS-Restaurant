@@ -3,8 +3,10 @@ import { db } from '@/services/firebase/config';
 import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
 import { Button, Input, Card, Badge } from '@/components/shared';
-import { Trash2, Edit2 } from 'lucide-react';
-import type { Product, Category } from '@/types';
+import { Trash2, Edit2, ChefHat } from 'lucide-react';
+import type { Product, Category, InventoryType, UnitOfMeasure } from '@/types';
+import { UnitOfMeasure as UC } from '@/types';
+import { RecipeModal } from './RecipeModal';
 
 export function ProductsTab() {
     const { user } = useAuth();
@@ -12,6 +14,18 @@ export function ProductsTab() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+    const [recipeModalOpen, setRecipeModalOpen] = useState(false);
+    const [recipeProduct, setRecipeProduct] = useState<Product | null>(null);
+
+    const UNIT_OPTIONS: { value: UnitOfMeasure; label: string }[] = [
+        { value: UC.UNIT, label: 'Unidad' },
+        { value: UC.GRAM, label: 'Gramos (g)' },
+        { value: UC.KILOGRAM, label: 'Kilogramos (kg)' },
+        { value: UC.LITER, label: 'Litros (L)' },
+        { value: UC.MILLILITER, label: 'Mililitros (mL)' },
+        { value: UC.PIECE, label: 'Piezas' },
+        { value: UC.BOTTLE, label: 'Botellas' },
+    ];
 
     // Form State
     const [formData, setFormData] = useState({
@@ -26,6 +40,9 @@ export function ProductsTab() {
         controlaStock: false,
         stockActual: '',
         stockMinimo: '',
+        stockMaximo: '',
+        tipoInventario: 'product' as InventoryType,
+        unidadMedida: UC.UNIT as UnitOfMeasure,
         dietaryTags: [] as string[],
     });
 
@@ -87,8 +104,11 @@ export function ProductsTab() {
                 available: formData.available,
                 isPopular: formData.isPopular,
                 controlaStock: formData.controlaStock,
-                stockActual: formData.controlaStock ? (formData.stockActual === '' ? 0 : parseInt(formData.stockActual) || 0) : 0,
-                stockMinimo: formData.controlaStock ? (formData.stockMinimo === '' ? 0 : parseInt(formData.stockMinimo) || 0) : 0,
+                tipoInventario: formData.controlaStock ? formData.tipoInventario : null,
+                unidadMedida: formData.controlaStock && formData.tipoInventario === 'product' ? formData.unidadMedida : null,
+                stockActual: formData.controlaStock && formData.tipoInventario === 'product' ? (formData.stockActual === '' ? 0 : parseFloat(formData.stockActual) || 0) : 0,
+                stockMinimo: formData.controlaStock && formData.tipoInventario === 'product' ? (formData.stockMinimo === '' ? 0 : parseFloat(formData.stockMinimo) || 0) : 0,
+                stockMaximo: formData.controlaStock && formData.tipoInventario === 'product' && formData.stockMaximo ? parseFloat(formData.stockMaximo) : null,
                 fechaActualizacionStock: new Date(),
                 dietaryTags: formData.dietaryTags,
             };
@@ -127,6 +147,9 @@ export function ProductsTab() {
                 controlaStock: product.controlaStock || false,
                 stockActual: product.stockActual !== undefined ? product.stockActual.toString() : '',
                 stockMinimo: product.stockMinimo !== undefined ? product.stockMinimo.toString() : '',
+                stockMaximo: product.stockMaximo !== undefined ? product.stockMaximo.toString() : '',
+                tipoInventario: product.tipoInventario || 'product',
+                unidadMedida: product.unidadMedida || UC.UNIT,
                 dietaryTags: product.dietaryTags || [],
             });
         } else {
@@ -143,6 +166,9 @@ export function ProductsTab() {
                 controlaStock: false,
                 stockActual: '',
                 stockMinimo: '',
+                stockMaximo: '',
+                tipoInventario: 'product',
+                unidadMedida: UC.UNIT,
                 dietaryTags: [],
             });
         }
@@ -167,6 +193,7 @@ export function ProductsTab() {
                         <div style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                             {product.name}
                             {product.isPopular && <span title="Popular">⭐</span>}
+                            {product.tipoInventario === 'recipe' && <span title="Tiene receta"><ChefHat size={14} color="var(--primary-color)" /></span>}
                             {(product.dietaryTags || []).map(tag => (
                                 <span key={tag} title={tag} style={{ fontSize: '0.85rem' }}>
                                     {tag === 'vegan' ? '🌿' : tag === 'vegetarian' ? '🥦' : tag === 'spicy' ? '🌶️' : tag === 'gluten-free' ? '🌾' : tag === 'dairy-free' ? '🥛' : tag === 'nut-free' ? '🥜' : ''}
@@ -182,6 +209,12 @@ export function ProductsTab() {
                         )}
                         <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
                             <Button size="sm" variant="outline" onClick={() => openModal(product)}><Edit2 size={14} className="mr-1" /> Editar</Button>
+                            {product.tipoInventario === 'recipe' && (
+                                <Button size="sm" variant="outline" onClick={() => { setRecipeProduct(product); setRecipeModalOpen(true); }}
+                                    style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--primary-color)', borderColor: 'var(--primary-color)' }}>
+                                    <ChefHat size={14} /> Receta
+                                </Button>
+                            )}
                             <Button size="sm" variant="danger" onClick={() => handleDelete(product.id)}><Trash2 size={14} /></Button>
                         </div>
                         {!product.available && <Badge variant="warning" style={{ position: 'absolute', top: 5, right: 5 }}>Agotado</Badge>}
@@ -332,27 +365,62 @@ export function ProductsTab() {
                                 </label>
 
                                 {formData.controlaStock && (
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
-                                        <Input
-                                            label="Stock Actual"
-                                            type="number"
-                                            min="0"
-                                            step="1"
-                                            value={formData.stockActual}
-                                            onChange={e => setFormData({ ...formData, stockActual: e.target.value })}
-                                            required={formData.controlaStock}
-                                            placeholder="Ej: 50"
-                                        />
-                                        <Input
-                                            label="Stock Mínimo (Alerta)"
-                                            type="number"
-                                            min="0"
-                                            step="1"
-                                            value={formData.stockMinimo}
-                                            onChange={e => setFormData({ ...formData, stockMinimo: e.target.value })}
-                                            required={formData.controlaStock}
-                                            placeholder="Ej: 10"
-                                        />
+                                    <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                        {/* Inventory Type Selector */}
+                                        <div>
+                                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 700 }}>Tipo de Inventario</label>
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                                                {([['product', '📦 Producto', 'Stock directo del producto'] as const, ['recipe', '🍳 Receta', 'Descuenta insumos al vender'] as const]).map(([val, lbl, desc]) => (
+                                                    <label key={val} style={{
+                                                        display: 'flex', flexDirection: 'column', gap: '0.2rem',
+                                                        padding: '0.75rem', borderRadius: '8px', cursor: 'pointer',
+                                                        border: `2px solid ${formData.tipoInventario === val ? 'var(--primary-color)' : 'var(--divider-color)'}`,
+                                                        background: formData.tipoInventario === val ? 'rgba(37, 99, 235, 0.04)' : 'transparent',
+                                                    }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                            <input type="radio" name="tipoInventario" checked={formData.tipoInventario === val}
+                                                                onChange={() => setFormData({ ...formData, tipoInventario: val })} />
+                                                            <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{lbl}</span>
+                                                        </div>
+                                                        <span style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', marginLeft: '1.5rem' }}>{desc}</span>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Simple Product Stock Fields */}
+                                        {formData.tipoInventario === 'product' && (
+                                            <>
+                                                <div>
+                                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 700 }}>Unidad de Medida</label>
+                                                    <select
+                                                        value={formData.unidadMedida}
+                                                        onChange={e => setFormData({ ...formData, unidadMedida: e.target.value as UnitOfMeasure })}
+                                                        style={{ width: '100%', padding: '0.56rem', borderRadius: '8px', border: '1px solid var(--divider-color)', background: 'var(--background-color)', color: 'var(--text-primary)', fontSize: '0.9rem' }}
+                                                    >
+                                                        {UNIT_OPTIONS.map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
+                                                    </select>
+                                                </div>
+                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+                                                    <Input label="Stock Actual" type="number" min="0" step="0.01" value={formData.stockActual}
+                                                        onChange={e => setFormData({ ...formData, stockActual: e.target.value })} required placeholder="50" />
+                                                    <Input label="Stock Mínimo" type="number" min="0" step="0.01" value={formData.stockMinimo}
+                                                        onChange={e => setFormData({ ...formData, stockMinimo: e.target.value })} required placeholder="10" />
+                                                    <Input label="Stock Máximo" type="number" min="0" step="0.01" value={formData.stockMaximo}
+                                                        onChange={e => setFormData({ ...formData, stockMaximo: e.target.value })} placeholder="Opcional" />
+                                                </div>
+                                            </>
+                                        )}
+
+                                        {/* Recipe Type Info */}
+                                        {formData.tipoInventario === 'recipe' && (
+                                            <div style={{ padding: '0.75rem 1rem', background: 'rgba(37, 99, 235, 0.05)', borderRadius: '8px', border: '1px dashed var(--primary-color)' }}>
+                                                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                                                    <ChefHat size={14} style={{ verticalAlign: 'middle', marginRight: '0.25rem' }} />
+                                                    Guarda el producto y luego usa el botón <strong>"Receta"</strong> en la lista para configurar sus ingredientes.
+                                                </p>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -401,6 +469,16 @@ export function ProductsTab() {
                         </form>
                     </Card>
                 </div>
+            )}
+
+            {/* Recipe Modal */}
+            {recipeProduct && (
+                <RecipeModal
+                    productId={recipeProduct.id}
+                    productName={recipeProduct.name}
+                    isOpen={recipeModalOpen}
+                    onClose={() => { setRecipeModalOpen(false); setRecipeProduct(null); }}
+                />
             )}
         </div>
     );

@@ -27,6 +27,8 @@ import { SuperAdminPage } from '@/pages/SuperAdmin/SuperAdminPage';
 import { SuperAdminAuthProvider } from '@/hooks/useSuperAdminAuth';
 import { TermsPage } from '@/pages/Public/TermsPage';
 import { PrivacyPage } from '@/pages/Public/PrivacyPage';
+import { OwnerDashboardPage } from '@/pages/Admin/OwnerDashboardPage';
+import { BranchProvider } from '@/app/providers/BranchProvider';
 
 export const router = createBrowserRouter([
     {
@@ -53,7 +55,9 @@ export const router = createBrowserRouter([
         path: '/:restaurantSlug',
         element: (
             <TenantProvider>
-                <Outlet />
+                <BranchProvider>
+                    <Outlet />
+                </BranchProvider>
             </TenantProvider>
         ),
         children: [
@@ -90,6 +94,11 @@ export const router = createBrowserRouter([
                         path: 'admin',
                         element: <ProtectedRoute allowedRoles={[UserRole.ADMIN]} />,
                         children: [{ index: true, element: <AdminPage /> }],
+                    },
+                    {
+                        path: 'owner-dashboard',
+                        element: <ProtectedRoute allowedRoles={[UserRole.ADMIN]} />,
+                        children: [{ index: true, element: <OwnerDashboardPage /> }],
                     },
                     {
                         path: 'reportes',

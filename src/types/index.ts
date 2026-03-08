@@ -39,9 +39,9 @@ export type TableStatus = (typeof TableStatus)[keyof typeof TableStatus];
 /** Feature flags controlled exclusively by SuperAdmin */
 export interface RestaurantFeatures {
     digitalMenu?: boolean;   // Menú digital nativo habilitado
+    multiLocation?: boolean; // Habilitar modo multi-sucursal
     // Future features:
     // advancedReports?: boolean;
-    // multiLocation?: boolean;
 }
 
 export interface Restaurant {
@@ -56,6 +56,10 @@ export interface Restaurant {
     subscriptionEndsAt?: Date;
     features?: RestaurantFeatures;
     config?: RestaurantConfig;
+    // Multi-Sucursal
+    parentId?: string;         // Si es sucursal, ID del restaurante padre
+    isParent?: boolean;        // true si es cuenta principal (dueño)
+    branches?: string[];       // Slugs/IDs de sucursales hijas
 }
 
 export interface RestaurantConfig {
@@ -84,6 +88,10 @@ export interface RestaurantConfig {
     deliveryCost?: number;
     paymentMethodsConfig?: { yape?: string; plin?: string; bankAccount?: string };
     usarPantallaCocina?: boolean; // Toggle for Kitchen Screen vs Printed Tickets
+    // Multi-Sucursal
+    multiSucursal?: boolean;     // Toggle activar gestión multi-sucursal
+    // Inventory behavior
+    outOfStockBehavior?: 'allow' | 'alert'; // Qué hacer cuando no hay stock (default: 'alert')
     // Petty Cash (Caja Chica) Configuration
     pettyCash?: {
         maxPerExpense: number;       // Límite por gasto sin aprobación (default: 20)
@@ -125,9 +133,10 @@ export interface Product {
     controlaStock?: boolean;
     stockActual?: number;
     stockMinimo?: number;
+    stockMaximo?: number;
     fechaActualizacionStock?: Date;
-    stockCount?: number;
-    trackStock?: boolean;
+    tipoInventario?: InventoryType;    // 'product' | 'recipe'
+    unidadMedida?: UnitOfMeasure;      // Unidad para inventario simple
     modifiers?: ProductModifier[];
     // English translations (for tourist menus)
     nameEn?: string;
@@ -332,4 +341,79 @@ export interface AuthUser {
 
 export interface LoginCredentials {
     pin: string;
+}
+
+// ========== INVENTORY PROFESSIONAL ==========
+
+// ── Unidades de Medida ──
+export const UnitOfMeasure = {
+    UNIT: 'unidad',
+    GRAM: 'gramos',
+    KILOGRAM: 'kilogramos',
+    LITER: 'litros',
+    MILLILITER: 'mililitros',
+    PIECE: 'piezas',
+    BOTTLE: 'botellas',
+} as const;
+export type UnitOfMeasure = (typeof UnitOfMeasure)[keyof typeof UnitOfMeasure];
+
+// ── Tipo de Inventario ──
+export type InventoryType = 'product' | 'recipe';
+
+// ── Movimientos de Inventario ──
+export const MovementType = {
+    PURCHASE: 'purchase',       // Entrada por compra
+    SALE: 'sale',               // Salida automática por venta
+    ADJUSTMENT: 'adjustment',   // Ajuste manual
+    WASTE: 'waste',             // Pérdida/desperdicio
+    TRANSFER: 'transfer',       // Transferencia entre sucursales
+} as const;
+export type MovementType = (typeof MovementType)[keyof typeof MovementType];
+
+export interface InventoryMovement {
+    id: string;
+    restaurantId: string;       // Sucursal específica
+    productId: string;          // Producto o insumo afectado
+    productName: string;
+    type: MovementType;
+    quantity: number;           // Positivo = entrada, Negativo = salida
+    unit: UnitOfMeasure;
+    referenceId?: string;       // ID de orden, compra o ajuste
+    referenceType?: string;     // 'order' | 'purchase' | 'manual'
+    reason?: string;            // Motivo (para ajustes y mermas)
+    userId: string;
+    userName: string;
+    createdAt: Date;
+}
+
+// ── Insumos (Ingredientes) ──
+export interface InventoryItem {
+    id: string;
+    restaurantId: string;
+    name: string;
+    unit: UnitOfMeasure;
+    stockActual: number;
+    stockMinimo: number;
+    stockMaximo?: number;
+    costPerUnit?: number;       // Costo unitario
+    category?: string;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+// ── Recetas ──
+export interface Recipe {
+    id: string;
+    productId: string;          // Producto que genera esta receta
+    restaurantId: string;
+    ingredients: RecipeIngredient[];
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface RecipeIngredient {
+    inventoryItemId: string;    // Referencia al insumo
+    itemName: string;           // Nombre desnormalizado para display
+    quantity: number;           // Cantidad por unidad de producto vendido
+    unit: UnitOfMeasure;
 }

@@ -1,19 +1,24 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChefHat, DollarSign, BarChart3, Settings, AlertTriangle, ArrowRight, Package, Wallet } from 'lucide-react';
+import { ChefHat, DollarSign, BarChart3, Settings, AlertTriangle, ArrowRight, Package, Wallet, Building2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button, Card } from '@/components/shared';
 import { SalesDashboard } from '@/components/features/SalesDashboard';
 import { usePendingClosures } from '@/hooks/usePendingClosures';
 import { useLowStock } from '@/hooks/useLowStock';
+import { BranchSelector } from '@/components/features/BranchSelector';
+import { useTenant } from '@/app/providers/TenantProvider';
 
 export function AdminPage() {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const { restaurantSlug } = useParams<{ restaurantSlug: string }>();
+    const { tenant } = useTenant();
     const { pendingClosures, isLoading: loadingPending } = usePendingClosures();
     const { lowStockProducts, isLoading: loadingStock } = useLowStock();
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+    const isMultiBranch = tenant?.config?.multiSucursal === true;
 
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -43,6 +48,9 @@ export function AdminPage() {
                     alignItems: 'center',
                     gap: isMobile ? '0.5rem' : '1rem'
                 }}>
+                    {/* Branch Selector (only visible in multi-branch mode) */}
+                    {!isMobile && <BranchSelector />}
+
                     <Button
                         variant="ghost"
                         size={isMobile ? "sm" : "md"}
@@ -61,6 +69,13 @@ export function AdminPage() {
                     </Button>
                 </div>
             </header>
+
+            {/* Mobile Branch Selector */}
+            {isMobile && isMultiBranch && (
+                <div style={{ marginBottom: '1.5rem' }}>
+                    <BranchSelector />
+                </div>
+            )}
 
             {/* Pending Closures Alert */}
             {!loadingPending && pendingClosures.length > 0 && (
@@ -166,6 +181,15 @@ export function AdminPage() {
                 gap: '1.5rem',
                 marginTop: '2rem'
             }}>
+                {/* Owner Dashboard Card (only visible in multi-branch mode) */}
+                {isMultiBranch && (
+                    <Card style={{ padding: '2rem', textAlign: 'center', cursor: 'pointer', borderTop: '3px solid var(--primary-color)' }} onClick={() => navigate(`/${restaurantSlug}/owner-dashboard`)}>
+                        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}><Building2 size={48} color="var(--primary-color)" /></div>
+                        <h3>Dashboard Consolidado</h3>
+                        <p style={{ color: '#666', fontSize: '0.9rem' }}>Ventas totales de todos los locales</p>
+                    </Card>
+                )}
+
                 <Card style={{ padding: '2rem', textAlign: 'center', cursor: 'pointer', borderTop: '3px solid #f59e0b' }} onClick={() => navigate(`/${restaurantSlug}/caja-chica`)}>
                     <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}><Wallet size={48} color="#f59e0b" /></div>
                     <h3>Caja Chica</h3>

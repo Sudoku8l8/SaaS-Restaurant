@@ -1,3 +1,4 @@
+/* ─── Header ─── */
 .config-header {
     display: flex;
     justify-content: space-between;
@@ -5,36 +6,276 @@
     margin-bottom: 2rem;
 }
 
-.tabs-nav {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 2rem;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 1rem;
-    overflow-x: auto;
-    scrollbar-width: none;
-    /* Hide scrollbar for cleaner look */
+.config-header h1 {
+    margin: 0;
+    font-size: 1.75rem;
 }
 
-.tabs-nav::-webkit-scrollbar {
-    display: none;
+.config-header p {
+    margin: 0.25rem 0 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
 }
 
-.tab-content {
-    background: var(--surface-color);
-    border-radius: var(--radius-md);
-    padding: 2rem;
-    min-height: 400px;
-    box-shadow: var(--shadow-sm);
-}
-
-.tab-btn {
+.config-back-btn {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     white-space: nowrap;
 }
 
+/* ─── Desktop Pill Tabs ─── */
+.config-tabs-desktop {
+    display: flex;
+    gap: 0.4rem;
+    margin-bottom: 2rem;
+    padding: 0.375rem;
+    background: var(--surface-color);
+    border-radius: 12px;
+    border: 1px solid var(--divider-color);
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.config-tabs-desktop::-webkit-scrollbar {
+    display: none;
+}
+
+.config-tab-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.6rem 1rem;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    position: relative;
+    font-family: inherit;
+}
+
+.config-tab-pill:hover {
+    background: rgba(0, 0, 0, 0.04);
+    color: var(--text-primary);
+}
+
+.config-tab-pill.active {
+    background: var(--primary-color);
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+}
+
+.config-premium-icon {
+    color: #d4a017;
+}
+
+.config-tab-pill.active .config-premium-icon {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* ─── Mobile Trigger ─── */
+.config-tabs-mobile {
+    display: none;
+}
+
+.config-mobile-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0.875rem 1.25rem;
+    background: var(--surface-color);
+    border: 1px solid var(--divider-color);
+    border-radius: 12px;
+    cursor: pointer;
+    margin-bottom: 1.5rem;
+    font-family: inherit;
+    transition: all 0.2s ease;
+}
+
+.config-mobile-trigger:active {
+    transform: scale(0.99);
+}
+
+.config-mobile-trigger-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.config-mobile-trigger-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+}
+
+.config-chevron {
+    transition: transform 0.2s ease;
+}
+
+.config-chevron.open {
+    transform: rotate(90deg);
+}
+
+/* ─── Mobile Slide Drawer ─── */
+.config-mobile-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.2s ease;
+}
+
+.config-mobile-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 300px;
+    max-width: 85vw;
+    background: var(--surface-color);
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.15);
+    animation: slideInRight 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.config-drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--divider-color);
+}
+
+.config-drawer-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.config-drawer-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: all 0.15s ease;
+}
+
+.config-drawer-close:hover {
+    background: rgba(0, 0, 0, 0.1);
+    color: var(--text-primary);
+}
+
+.config-drawer-nav {
+    display: flex;
+    flex-direction: column;
+    padding: 0.75rem;
+    gap: 0.25rem;
+}
+
+.config-drawer-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: all 0.15s ease;
+    font-family: inherit;
+    width: 100%;
+    text-align: left;
+}
+
+.config-drawer-item:hover {
+    background: rgba(0, 0, 0, 0.04);
+    color: var(--text-primary);
+}
+
+.config-drawer-item.active {
+    background: rgba(37, 99, 235, 0.08);
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.config-drawer-item-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.config-drawer-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.04);
+    color: var(--text-secondary);
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.config-drawer-icon.active {
+    background: rgba(37, 99, 235, 0.12);
+    color: var(--primary-color);
+}
+
+.config-drawer-active-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    flex-shrink: 0;
+}
+
+/* ─── Tab Content ─── */
+.config-tab-content {
+    background: var(--surface-color);
+    border-radius: 12px;
+    padding: 2rem;
+    min-height: 400px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    border: 1px solid var(--divider-color);
+}
+
+/* ─── Animations ─── */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideInRight {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+}
+
+/* ─── Responsive ─── */
 @media (max-width: 768px) {
     .config-header {
         flex-direction: column;
@@ -43,31 +284,50 @@
         position: relative;
     }
 
-    .config-header>div {
+    .config-header > div {
         padding-right: 100px;
-        /* Space for Volver button */
     }
 
-    .config-header .tab-btn {
+    .config-back-btn {
         position: absolute;
         top: 0;
         right: 0;
     }
 
-    .tabs-nav {
-        gap: 0.5rem;
-        padding-bottom: 0.5rem;
-        margin-bottom: 1.5rem;
+    .config-tabs-desktop {
+        display: none;
     }
 
-    .tab-content {
-        padding: 1rem;
+    .config-tabs-mobile {
+        display: block;
+    }
+
+    .config-tab-content {
+        padding: 1.25rem;
+        border-radius: 10px;
     }
 }
 
 @media (max-width: 480px) {
-    .tabs-nav {
-        margin: 0 -1rem 1.5rem -1rem;
-        padding: 0 1rem 0.5rem 1rem;
+    .config-header h1 {
+        font-size: 1.4rem;
+    }
+
+    .config-tab-content {
+        padding: 1rem;
+        margin: 0 -0.5rem;
+        border-radius: 8px;
+    }
+}
+
+/* ─── Desktop: ensure tabs wrap nicely on medium screens ─── */
+@media (min-width: 769px) and (max-width: 1100px) {
+    .config-tab-pill {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8rem;
+    }
+
+    .config-tab-pill span {
+        display: inline;
     }
 }

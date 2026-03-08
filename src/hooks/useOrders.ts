@@ -11,7 +11,8 @@ import {
     getDocs,
     getDoc,
     addDoc,
-    limit
+    limit,
+    increment
 } from 'firebase/firestore';
 import { useAuth } from './useAuth';
 import type { Order, OrderStatus, OrderPayment } from '@/types';
@@ -202,7 +203,7 @@ export function useOrders() {
             }
         }
 
-        // 3. Discount Inventory
+        // 3. Discount Inventory + Log Movements
         if (existingOrder && existingOrder.items?.length > 0) {
             for (const item of existingOrder.items) {
                 const productRef = doc(db, 'products', item.productId);
@@ -211,17 +212,77 @@ export function useOrders() {
                 if (productSnap.exists()) {
                     const productData = productSnap.data();
                     if (productData.controlaStock) {
-                        const currentStock = productData.stockActual || 0;
                         const qtyToDeduct = item.quantity || 1;
-                        let newStock = currentStock - qtyToDeduct;
 
-                        // El stock no puede ser negativo
-                        if (newStock < 0) newStock = 0;
+                        if (productData.tipoInventario === 'recipe') {
+                            // Recipe-based: deduct ingredients from inventory_items
+                            const recipesRef = collection(db, 'recipes');
+                            const recipeQuery = query(
+                                recipesRef,
+                                where('restaurantId', '==', restaurantId),
+                                where('productId', '==', item.productId),
+                                limit(1)
+                            );
+                            const recipeSnap = await getDocs(recipeQuery);
 
-                        batch.update(productRef, {
-                            stockActual: newStock,
-                            fechaActualizacionStock: getPeruNow()
-                        });
+                            if (!recipeSnap.empty) {
+                                const recipeData = recipeSnap.docs[0].data();
+                                const ingredients = recipeData.ingredients || [];
+
+                                for (const ing of ingredients) {
+                                    const ingRef = doc(db, 'inventory_items', ing.inventoryItemId);
+                                    const ingQty = (ing.quantity || 0) * qtyToDeduct;
+
+                                    batch.update(ingRef, {
+                                        stockActual: increment(-ingQty),
+                                        updatedAt: getPeruNow(),
+                                    });
+
+                                    // Log movement for each ingredient
+                                    const movRef = doc(collection(db, 'inventory_movements'));
+                                    batch.set(movRef, {
+                                        restaurantId,
+                                        productId: ing.inventoryItemId,
+                                        productName: ing.itemName || 'Insumo',
+                                        type: 'sale',
+                                        quantity: -ingQty,
+                                        unit: ing.unit || 'unidad',
+                                        referenceId: orderId,
+                                        referenceType: 'order',
+                                        reason: `Venta de ${productData.name} x${qtyToDeduct}`,
+                                        userId: user?.id || 'system',
+                                        userName: user?.name || 'Sistema',
+                                        createdAt: getPeruNow(),
+                                    });
+                                }
+                            }
+                        } else {
+                            // Simple product: deduct directly from product stock
+                            const currentStock = productData.stockActual || 0;
+                            let newStock = currentStock - qtyToDeduct;
+                            if (newStock < 0) newStock = 0;
+
+                            batch.update(productRef, {
+                                stockActual: newStock,
+                                fechaActualizacionStock: getPeruNow()
+                            });
+
+                            // Log movement for simple product
+                            const movRef = doc(collection(db, 'inventory_movements'));
+                            batch.set(movRef, {
+                                restaurantId,
+                                productId: item.productId,
+                                productName: productData.name || item.productId,
+                                type: 'sale',
+                                quantity: -qtyToDeduct,
+                                unit: productData.unidadMedida || 'unidad',
+                                referenceId: orderId,
+                                referenceType: 'order',
+                                userId: user?.id || 'system',
+                                userName: user?.name || 'Sistema',
+                                createdAt: getPeruNow(),
+                            });
+                        }
                     }
                 }
             }

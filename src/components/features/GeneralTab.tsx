@@ -1,48 +1,155 @@
 import { useState, useEffect } from 'react';
 import { db } from '@/services/firebase/config';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { useTenant } from '@/app/providers/TenantProvider';
-import { Card } from '@/components/shared';
-import { Settings, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Card, Button, Input } from '@/components/shared';
+import { Settings, ToggleLeft, ToggleRight, Building2, Plus, Package, MapPin, AlertTriangle } from 'lucide-react';
+import type { Restaurant, RestaurantConfig } from '@/types';
 
 export function GeneralTab() {
     const { tenant } = useTenant();
 
     const [usarPantallaCocina, setUsarPantallaCocina] = useState(false);
+    const [multiSucursal, setMultiSucursal] = useState(false);
+    const [outOfStockBehavior, setOutOfStockBehavior] = useState<'allow' | 'alert'>('alert');
     const [isSaving, setIsSaving] = useState(false);
+
+    // Branch creation state
+    const [showBranchForm, setShowBranchForm] = useState(false);
+    const [branchName, setBranchName] = useState('');
+    const [branchAddress, setBranchAddress] = useState('');
+    const [branchPhone, setBranchPhone] = useState('');
+    const [isCreatingBranch, setIsCreatingBranch] = useState(false);
 
     useEffect(() => {
         if (tenant?.config) {
             setUsarPantallaCocina(tenant.config.usarPantallaCocina ?? false);
+            setMultiSucursal(tenant.config.multiSucursal ?? false);
+            setOutOfStockBehavior(tenant.config.outOfStockBehavior ?? 'alert');
         }
     }, [tenant]);
 
-    const handleToggle = async () => {
+    const handleToggle = async (field: keyof RestaurantConfig, newValue: boolean, setter: (v: boolean) => void) => {
         if (!tenant) return;
-        const newValue = !usarPantallaCocina;
-
-        // Optimistic UI update
-        setUsarPantallaCocina(newValue);
+        setter(newValue);
 
         try {
             setIsSaving(true);
             const restaurantRef = doc(db, 'restaurants', tenant.id);
-            await updateDoc(restaurantRef, {
-                'config.usarPantallaCocina': newValue,
-            });
-            // We can optionally show a small toast, but optimistic update feels better
+            const updates: Record<string, unknown> = {
+                [`config.${field}`]: newValue,
+            };
+            // When enabling multi-sucursal, also mark this restaurant as parent
+            if (field === 'multiSucursal' && newValue) {
+                updates['isParent'] = true;
+            }
+            await updateDoc(restaurantRef, updates);
         } catch (error) {
             console.error('Error saving general config:', error);
             alert('Error al guardar la configuración general');
-            // Revert on error
-            setUsarPantallaCocina(!newValue);
+            setter(!newValue);
         } finally {
             setIsSaving(false);
         }
     };
 
+    const handleOutOfStockChange = async (value: 'allow' | 'alert') => {
+        if (!tenant) return;
+        setOutOfStockBehavior(value);
+        try {
+            setIsSaving(true);
+            await updateDoc(doc(db, 'restaurants', tenant.id), {
+                'config.outOfStockBehavior': value,
+            });
+        } catch (error) {
+            console.error('Error saving out-of-stock config:', error);
+            alert('Error al guardar la configuración');
+            setOutOfStockBehavior(outOfStockBehavior);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleCreateBranch = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!tenant || !branchName.trim()) return;
+
+        setIsCreatingBranch(true);
+        try {
+            // Generate a slug from the branch name
+            const branchSlug = `${tenant.id}-${branchName.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`;
+
+            const branchData: Partial<Restaurant> = {
+                id: branchSlug,
+                name: branchName.trim(),
+                address: branchAddress.trim() || '',
+                phone: branchPhone.trim() || '',
+                plan: tenant.plan,
+                active: true,
+                createdAt: new Date(),
+                parentId: tenant.id,
+                config: {
+                    tablesCount: 5,
+                    currency: tenant.config?.currency || 'PEN',
+                    timezone: tenant.config?.timezone || 'America/Lima',
+                },
+            };
+
+            // Create branch doc with slug as ID
+            const { doc: docRef, setDoc } = await import('firebase/firestore');
+            await setDoc(docRef(db, 'restaurants', branchSlug), branchData);
+
+            // Update parent's branches array
+            await updateDoc(doc(db, 'restaurants', tenant.id), {
+                branches: arrayUnion(branchSlug),
+            });
+
+            // Reset form
+            setBranchName('');
+            setBranchAddress('');
+            setBranchPhone('');
+            setShowBranchForm(false);
+        } catch (error) {
+            console.error('Error creating branch:', error);
+            alert('Error al crear la sucursal');
+        } finally {
+            setIsCreatingBranch(false);
+        }
+    };
+
+    const ToggleSwitch = ({ value, label, description, onToggle, disabled }: {
+        value: boolean; label: string; description: string;
+        onToggle: () => void; disabled?: boolean;
+    }) => (
+        <Card style={{ padding: '1.25rem 1.5rem', marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                <div>
+                    <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: '0.2rem' }}>{label}</div>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', maxWidth: '500px' }}>{description}</div>
+                </div>
+                <button
+                    onClick={onToggle}
+                    disabled={disabled || isSaving}
+                    style={{
+                        background: 'none', border: 'none',
+                        cursor: (disabled || isSaving) ? 'wait' : 'pointer',
+                        color: value ? 'var(--primary-color)' : '#aaa',
+                        transition: 'color 0.2s',
+                        opacity: isSaving ? 0.7 : 1,
+                    }}
+                    title={value ? 'Desactivar' : 'Activar'}
+                >
+                    {value
+                        ? <ToggleRight size={48} strokeWidth={1.5} />
+                        : <ToggleLeft size={48} strokeWidth={1.5} />}
+                </button>
+            </div>
+        </Card>
+    );
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            {/* Kitchen Screen Toggle */}
             <section>
                 <h3 style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <Settings size={20} /> Opciones Generales
@@ -51,35 +158,163 @@ export function GeneralTab() {
                     Configuraciones principales del funcionamiento del restaurante.
                 </p>
 
-                <Card style={{ padding: '1.25rem 1.5rem', marginBottom: '1.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
-                        <div>
-                            <div style={{ fontWeight: '700', fontSize: '1rem', marginBottom: '0.2rem' }}>
-                                Pantalla en Cocina
-                            </div>
-                            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                                {usarPantallaCocina
-                                    ? 'Modo Pantalla: El mozo pasa por 4 estados de pedido (Pendiente → Preparar → Marcar Listo → Entregar).'
-                                    : 'Modo Comanda: El mozo usa comandas físicas. Pasa por 2 estados (Pendiente → Entregar).'}
-                            </div>
+                <ToggleSwitch
+                    value={usarPantallaCocina}
+                    label="Pantalla en Cocina"
+                    description={usarPantallaCocina
+                        ? 'Modo Pantalla: El mozo pasa por 4 estados de pedido (Pendiente → Preparar → Marcar Listo → Entregar).'
+                        : 'Modo Comanda: El mozo usa comandas físicas. Pasa por 2 estados (Pendiente → Entregar).'}
+                    onToggle={() => handleToggle('usarPantallaCocina', !usarPantallaCocina, setUsarPantallaCocina)}
+                />
+            </section>
+
+            {/* Multi-Sucursal Toggle */}
+            <section>
+                <h3 style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Building2 size={20} /> Multi-Sucursal
+                </h3>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+                    Gestiona múltiples locales desde una sola cuenta.
+                </p>
+
+                <ToggleSwitch
+                    value={multiSucursal}
+                    label="Modo Multi-Sucursal"
+                    description={multiSucursal
+                        ? 'Activado: Puedes crear y gestionar múltiples locales. Cada local tiene su caja, mesas, inventario, productos y usuarios.'
+                        : 'Desactivado: El sistema opera como un solo local.'}
+                    onToggle={() => handleToggle('multiSucursal', !multiSucursal, setMultiSucursal)}
+                />
+
+                {/* Branch Management (only if multi-sucursal enabled) */}
+                {multiSucursal && (
+                    <div style={{ marginTop: '1rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                            <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 600 }}>Sucursales</h4>
+                            <Button size="sm" variant="primary" onClick={() => setShowBranchForm(!showBranchForm)}>
+                                <Plus size={16} /> Nueva Sucursal
+                            </Button>
                         </div>
-                        <button
-                            onClick={handleToggle}
-                            disabled={isSaving}
-                            style={{
-                                background: 'none',
-                                border: 'none',
-                                cursor: isSaving ? 'wait' : 'pointer',
-                                color: usarPantallaCocina ? 'var(--primary-color)' : '#aaa',
-                                transition: 'color 0.2s',
-                                opacity: isSaving ? 0.7 : 1
-                            }}
-                            title={usarPantallaCocina ? 'Desactivar Pantalla de Cocina' : 'Activar Pantalla de Cocina'}
-                        >
-                            {usarPantallaCocina
-                                ? <ToggleRight size={48} strokeWidth={1.5} />
-                                : <ToggleLeft size={48} strokeWidth={1.5} />}
-                        </button>
+
+                        {/* Existing Branches */}
+                        {(tenant?.branches ?? []).length > 0 ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
+                                {(tenant?.branches ?? []).map((branchId) => (
+                                    <Card key={branchId} style={{
+                                        padding: '1rem 1.25rem',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.75rem',
+                                    }}>
+                                        <div style={{
+                                            width: '36px', height: '36px', borderRadius: 'var(--radius-md)',
+                                            background: 'rgba(37, 99, 235, 0.1)', color: 'var(--primary-color)',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        }}>
+                                            <MapPin size={18} />
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>{branchId}</div>
+                                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                                /{branchId}/login
+                                            </div>
+                                        </div>
+                                    </Card>
+                                ))}
+                            </div>
+                        ) : (
+                            <Card style={{ padding: '2rem', textAlign: 'center', marginBottom: '1rem' }}>
+                                <Building2 size={32} style={{ margin: '0 auto 0.75rem', opacity: 0.3 }} />
+                                <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>
+                                    No tienes sucursales aún. Crea tu primera sucursal.
+                                </p>
+                            </Card>
+                        )}
+
+                        {/* Create Branch Form */}
+                        {showBranchForm && (
+                            <Card style={{ padding: '1.5rem', border: '2px solid var(--primary-color)', borderRadius: 'var(--radius-lg)' }}>
+                                <h4 style={{ marginTop: 0, marginBottom: '1rem' }}>Nueva Sucursal</h4>
+                                <form onSubmit={handleCreateBranch} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                    <Input
+                                        label="Nombre de la Sucursal"
+                                        value={branchName}
+                                        onChange={(e) => setBranchName(e.target.value)}
+                                        placeholder="Ej: Restaurante Centro"
+                                        required
+                                    />
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                        <Input
+                                            label="Dirección (opcional)"
+                                            value={branchAddress}
+                                            onChange={(e) => setBranchAddress(e.target.value)}
+                                            placeholder="Ej: Av. Primavera 123"
+                                        />
+                                        <Input
+                                            label="Teléfono (opcional)"
+                                            value={branchPhone}
+                                            onChange={(e) => setBranchPhone(e.target.value)}
+                                            placeholder="Ej: 01-1234567"
+                                        />
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '1rem' }}>
+                                        <Button type="button" variant="ghost" onClick={() => setShowBranchForm(false)} fullWidth>Cancelar</Button>
+                                        <Button type="submit" variant="primary" fullWidth disabled={isCreatingBranch}>
+                                            {isCreatingBranch ? 'Creando...' : 'Crear Sucursal'}
+                                        </Button>
+                                    </div>
+                                </form>
+                            </Card>
+                        )}
+                    </div>
+                )}
+            </section>
+
+            {/* Inventory Settings */}
+            <section>
+                <h3 style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Package size={20} /> Inventario
+                </h3>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+                    Configura el comportamiento del inventario al vender productos.
+                </p>
+
+                <Card style={{ padding: '1.25rem 1.5rem' }}>
+                    <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <AlertTriangle size={18} /> Comportamiento sin Stock
+                    </div>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+                        Qué hace el sistema cuando un producto no tiene stock suficiente.
+                    </p>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        {([
+                            { value: 'allow' as const, label: 'Permitir venta sin stock', desc: 'La venta se procesa normalmente aunque no haya stock. El stock puede quedar en negativo.' },
+                            { value: 'alert' as const, label: 'Mostrar alerta', desc: 'La venta se procesa pero se muestra una alerta al usuario indicando stock bajo o agotado.' },
+                        ]).map(opt => (
+                            <label
+                                key={opt.value}
+                                style={{
+                                    display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
+                                    padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)',
+                                    border: `1.5px solid ${outOfStockBehavior === opt.value ? 'var(--primary-color)' : 'var(--divider-color)'}`,
+                                    background: outOfStockBehavior === opt.value ? 'rgba(37, 99, 235, 0.04)' : 'transparent',
+                                    cursor: 'pointer', transition: 'all 0.15s',
+                                }}
+                            >
+                                <input
+                                    type="radio"
+                                    name="outOfStock"
+                                    checked={outOfStockBehavior === opt.value}
+                                    onChange={() => handleOutOfStockChange(opt.value)}
+                                    style={{ marginTop: '2px' }}
+                                />
+                                <div>
+                                    <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>{opt.label}</div>
+                                    <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>{opt.desc}</div>
+                                </div>
+                            </label>
+                        ))}
                     </div>
                 </Card>
             </section>
