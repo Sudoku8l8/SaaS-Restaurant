@@ -240,9 +240,23 @@ class PrinterService {
             const qtyText = `${item.quantity}x `.padEnd(4);
             const nameText = item.productName.substring(0, 28) + "\n";
             addText(qtyText + nameText);
+            
+            // Turn off bold for options and notes
+            add([ESC, 0x45, 0x00]);
+            
+            if (item.selectedOptions && item.selectedOptions.length > 0) {
+                item.selectedOptions.forEach(opt => {
+                    const priceText = opt.price ? ` (+${opt.price.toFixed(2)})` : '';
+                    addText(`  - ${opt.modifierName}: ${opt.optionName}${priceText}\n`);
+                });
+            }
+            
             if (item.notes) {
                 addText(`  Obs: ${item.notes}\n`);
             }
+            
+            // Turn bold back on for next item
+            add([ESC, 0x45, 0x01]);
         });
         add([ESC, 0x45, 0x00]); // Bold off
 
@@ -316,6 +330,16 @@ class PrinterService {
             const name = item.productName.substring(0, 18).padEnd(18);
             const subtotal = `${item.subtotal.toFixed(2)}`.padStart(8);
             addText(`${qty}   ${name} ${subtotal}\n`);
+
+            // Print options
+            if (item.selectedOptions && item.selectedOptions.length > 0) {
+                item.selectedOptions.forEach(opt => {
+                    const priceText = opt.price ? ` (+${opt.price.toFixed(2)})` : '';
+                    let optText = `   - ${opt.modifierName}: ${opt.optionName}${priceText}`;
+                    if (optText.length > 32) optText = optText.substring(0, 31);
+                    addText(`${optText}\n`);
+                });
+            }
 
             // Unit price when quantity > 1
             if (item.quantity > 1) {
