@@ -352,6 +352,18 @@ class PrinterService {
 
         // ── Total ──
         add([ESC, 0x61, 0x02]); // Right align
+
+        if (order.discount && order.discount.amount > 0) {
+            add([GS, 0x21, 0x00]); // Normal size for subtotal
+            addText(`SUBTOTAL: S/ ${order.subtotal?.toFixed(2) || (order.total + order.discount.amount).toFixed(2)}\n`);
+            
+            add([ESC, 0x45, 0x01]); // Bold
+            const descType = order.discount.type === 'percentage' ? `(${order.discount.value}%)` : '';
+            addText(`DSCTO ${descType}: -S/ ${order.discount.amount.toFixed(2)}\n`);
+            add([ESC, 0x45, 0x00]); // Bold off
+            addText("--------------------------------\n");
+        }
+
         add([GS, 0x21, 0x11]); // Double size
         addText(`TOTAL: S/ ${order.total.toFixed(2)}\n`);
         add([GS, 0x21, 0x00]); // Normal size

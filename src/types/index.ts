@@ -225,6 +225,12 @@ export interface OrderPayment {
     amount: number;
 }
 
+export interface OrderDiscount {
+    type: 'percentage' | 'fixed';
+    value: number;    // The input value (e.g. 10 for 10%, or 5.00 for S/5)
+    amount: number;   // The calculated discount amount in soles
+}
+
 export interface Order {
     id: string;
     restaurantId: string;
@@ -232,6 +238,8 @@ export interface Order {
     items: OrderItem[];
     status: OrderStatus;
     total: number;
+    subtotal?: number;  // Sum of items before discount
+    discount?: OrderDiscount;
     createdAt: Date;
     updatedAt: Date;
     closedAt?: Date;

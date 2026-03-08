@@ -120,7 +120,7 @@ export function useOrders() {
         });
     };
 
-    const payOrder = async (orderId: string, payments: OrderPayment[]) => {
+    const payOrder = async (orderId: string, payments: OrderPayment[], discount?: { type: 'percentage' | 'fixed'; value: number; amount: number }) => {
         // ── B5: Auto-create today's cash session if it doesn't exist ──────────
         const todayStr = getPeruDateString();
 
@@ -160,14 +160,25 @@ export function useOrders() {
         // Transaction to update order and free table
         const batch = writeBatch(db); // Using batch for simplicity, transaction if we need read-before-write safety on the exact same fields.
 
-        // 1. Update Order
-        batch.update(orderRef, {
+        // Build discount-aware update
+        const existingOrder = activeOrders.find(o => o.id === orderId);
+        const orderUpdate: Record<string, any> = {
             status: 'paid',
             payments,
             paymentMethod: payments[0]?.method || 'cash', // Legacy support
             closedAt: getPeruNow(),
             updatedAt: getPeruNow()
-        });
+        };
+
+        if (discount && discount.amount > 0 && existingOrder) {
+            const originalTotal = existingOrder.total;
+            orderUpdate.subtotal = originalTotal;
+            orderUpdate.discount = discount;
+            orderUpdate.total = parseFloat((originalTotal - discount.amount).toFixed(2));
+        }
+
+        // 1. Update Order
+        batch.update(orderRef, orderUpdate);
 
         // 2. Free Table
         // Need to get the order to know the table... we only have ID here.
@@ -176,7 +187,7 @@ export function useOrders() {
         // For efficiency, assume we need to fetch order to get tableNumber.
         // Or we can just fetch it.
         // Find order from activeOrders to get tableNumber
-        const existingOrder = activeOrders.find(o => o.id === orderId);
+        // (existingOrder is already defined above)
 
         // OPT: Use stored tableId to update table directly (avoids extra query)
         if (existingOrder?.tableId) {

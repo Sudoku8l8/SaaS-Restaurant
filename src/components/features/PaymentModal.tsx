@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { X, Smartphone, Banknote, CreditCard, Printer, Trash2, Plus } from 'lucide-react';
-import type { Order, PaymentMethod, OrderPayment } from '@/types';
+import { X, Smartphone, Banknote, CreditCard, Printer, Trash2, Plus, Percent, DollarSign, Tag } from 'lucide-react';
+import type { Order, PaymentMethod, OrderPayment, OrderDiscount } from '@/types';
 import { printerService } from '@/services/printer/PrinterService';
 
 interface PaymentModalProps {
     order: Order;
     onClose: () => void;
-    onConfirmPayment: (payments: OrderPayment[], printReceipt: boolean) => void;
+    onConfirmPayment: (payments: OrderPayment[], printReceipt: boolean, discount?: OrderDiscount) => void;
 }
 
 export function PaymentModal({ order, onClose, onConfirmPayment }: PaymentModalProps) {
@@ -17,8 +17,20 @@ export function PaymentModal({ order, onClose, onConfirmPayment }: PaymentModalP
     const printerConnected = printerService.isConnected;
     const [printReceipt, setPrintReceipt] = useState(printerConnected);
 
+    // Discount state
+    const [showDiscount, setShowDiscount] = useState(false);
+    const [discountType, setDiscountType] = useState<'percentage' | 'fixed'>('percentage');
+    const [discountValue, setDiscountValue] = useState<string>('');
+
+    // Calculate discount amount
+    const rawDiscountValue = parseFloat(discountValue) || 0;
+    const discountAmount = discountType === 'percentage'
+        ? Math.min(order.total * rawDiscountValue / 100, order.total)
+        : Math.min(rawDiscountValue, order.total);
+    const finalTotal = Math.max(0, order.total - discountAmount);
+
     const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
-    const remaining = Math.max(0, order.total - totalPaid);
+    const remaining = Math.max(0, finalTotal - totalPaid);
     const isFullyPaid = remaining <= 0.01; // Avoid float precision issues
 
     // Sync input amount with remaining when remaining changes, if not fully paid
@@ -30,6 +42,11 @@ export function PaymentModal({ order, onClose, onConfirmPayment }: PaymentModalP
             setCurrentMethod(null);
         }
     }, [remaining, isFullyPaid]);
+
+    // Reset payments when discount changes
+    useEffect(() => {
+        setPayments([]);
+    }, [discountAmount]);
 
     const handleAddPayment = () => {
         if (!currentMethod) return;
@@ -49,6 +66,14 @@ export function PaymentModal({ order, onClose, onConfirmPayment }: PaymentModalP
 
     const handleRemovePayment = (index: number) => {
         setPayments(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const handleConfirm = () => {
+        if (!isFullyPaid) return;
+        const discount: OrderDiscount | undefined = discountAmount > 0
+            ? { type: discountType, value: rawDiscountValue, amount: parseFloat(discountAmount.toFixed(2)) }
+            : undefined;
+        onConfirmPayment(payments, printReceipt, discount);
     };
 
     const methods = [
@@ -129,17 +154,52 @@ export function PaymentModal({ order, onClose, onConfirmPayment }: PaymentModalP
                         marginBottom: '0.5rem',
                         textTransform: 'uppercase'
                     }}>Total de la Cuenta</p>
+
+                    {/* Show subtotal crossed out if there's a discount */}
+                    {discountAmount > 0 && (
+                        <div style={{
+                            fontSize: '1.1rem',
+                            fontWeight: '600',
+                            color: 'var(--text-secondary)',
+                            textDecoration: 'line-through',
+                            marginBottom: '0.25rem',
+                            opacity: 0.6
+                        }}>
+                            S/ {order.total.toFixed(2)}
+                        </div>
+                    )}
+
                     <div style={{
                         fontSize: '2.5rem',
                         fontWeight: '900',
                         lineHeight: 1,
                         marginBottom: '0.5rem',
-                        color: 'var(--text-primary)',
-                        letterSpacing: '-0.02em'
+                        color: discountAmount > 0 ? 'var(--success-color)' : 'var(--text-primary)',
+                        letterSpacing: '-0.02em',
+                        transition: 'color 0.3s'
                     }}>
                         <span style={{ fontSize: '1.25rem', verticalAlign: 'super', marginRight: '4px' }}>S/</span>
-                        {order.total.toFixed(2)}
+                        {finalTotal.toFixed(2)}
                     </div>
+
+                    {discountAmount > 0 && (
+                        <div style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.35rem',
+                            background: 'rgba(76, 175, 80, 0.1)',
+                            color: 'var(--success-color)',
+                            padding: '3px 10px',
+                            borderRadius: 'var(--radius-full)',
+                            fontSize: '0.75rem',
+                            fontWeight: '700',
+                            marginBottom: '0.5rem'
+                        }}>
+                            <Tag size={12} />
+                            Descuento: −S/ {discountAmount.toFixed(2)}
+                            {discountType === 'percentage' && ` (${rawDiscountValue}%)`}
+                        </div>
+                    )}
 
                     <div style={{
                         display: 'flex',
@@ -167,6 +227,198 @@ export function PaymentModal({ order, onClose, onConfirmPayment }: PaymentModalP
 
                 {/* Body */}
                 <div style={{ padding: '1.5rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+
+                    {/* === Discount Section === */}
+                    <div>
+                        <button
+                            onClick={() => setShowDiscount(!showDiscount)}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                width: '100%',
+                                padding: '0.75rem 1rem',
+                                borderRadius: 'var(--radius-md)',
+                                border: `1.5px dashed ${showDiscount || discountAmount > 0 ? 'var(--success-color)' : 'var(--border-color)'}`,
+                                backgroundColor: discountAmount > 0 ? 'rgba(76, 175, 80, 0.06)' : 'var(--background-color)',
+                                color: discountAmount > 0 ? 'var(--success-color)' : 'var(--text-secondary)',
+                                fontWeight: '700',
+                                fontSize: '0.85rem',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            <Tag size={16} />
+                            {discountAmount > 0
+                                ? `Descuento aplicado: −S/ ${discountAmount.toFixed(2)}`
+                                : 'Aplicar Descuento'}
+                            <span style={{ marginLeft: 'auto', fontSize: '0.75rem', opacity: 0.7 }}>
+                                {showDiscount ? '▲' : '▼'}
+                            </span>
+                        </button>
+
+                        {showDiscount && (
+                            <div style={{
+                                marginTop: '0.75rem',
+                                padding: '1rem',
+                                borderRadius: 'var(--radius-md)',
+                                backgroundColor: 'var(--background-color)',
+                                border: '1px solid var(--border-color)',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '0.75rem',
+                                animation: 'fadeIn 0.2s ease'
+                            }}>
+                                {/* Type toggle */}
+                                <div style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: '1fr 1fr',
+                                    gap: '0.5rem',
+                                    padding: '4px',
+                                    backgroundColor: 'var(--surface-color)',
+                                    borderRadius: 'var(--radius-md)',
+                                    border: '1px solid var(--border-color)'
+                                }}>
+                                    {([
+                                        { type: 'percentage' as const, icon: <Percent size={14} />, label: 'Porcentaje (%)' },
+                                        { type: 'fixed' as const, icon: <DollarSign size={14} />, label: 'Monto Fijo (S/)' }
+                                    ]).map(opt => {
+                                        const isActive = discountType === opt.type;
+                                        return (
+                                            <button
+                                                key={opt.type}
+                                                onClick={() => { setDiscountType(opt.type); setDiscountValue(''); }}
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    gap: '0.4rem',
+                                                    padding: '0.5rem',
+                                                    borderRadius: '6px',
+                                                    border: 'none',
+                                                    backgroundColor: isActive ? 'var(--primary-color)' : 'transparent',
+                                                    color: isActive ? 'white' : 'var(--text-secondary)',
+                                                    fontWeight: '700',
+                                                    fontSize: '0.78rem',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.2s'
+                                                }}
+                                            >
+                                                {opt.icon}
+                                                {opt.label}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Value input */}
+                                <div style={{ position: 'relative' }}>
+                                    <span style={{
+                                        position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)',
+                                        color: 'var(--text-secondary)', fontWeight: 'bold', fontSize: '0.9rem'
+                                    }}>
+                                        {discountType === 'percentage' ? '%' : 'S/'}
+                                    </span>
+                                    <input
+                                        type="number"
+                                        placeholder={discountType === 'percentage' ? 'Ej: 10' : 'Ej: 5.00'}
+                                        value={discountValue}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            if (discountType === 'percentage') {
+                                                const num = parseFloat(val);
+                                                if (val === '' || (num >= 0 && num <= 100)) setDiscountValue(val);
+                                            } else {
+                                                const num = parseFloat(val);
+                                                if (val === '' || (num >= 0 && num <= order.total)) setDiscountValue(val);
+                                            }
+                                        }}
+                                        min="0"
+                                        max={discountType === 'percentage' ? '100' : String(order.total)}
+                                        step={discountType === 'percentage' ? '1' : '0.50'}
+                                        style={{
+                                            width: '100%',
+                                            padding: '0.85rem 1rem 0.85rem 2.5rem',
+                                            borderRadius: 'var(--radius-md)',
+                                            border: '1.5px solid var(--border-color)',
+                                            backgroundColor: 'var(--surface-color)',
+                                            color: 'var(--text-primary)',
+                                            fontSize: '1.1rem',
+                                            fontWeight: '700'
+                                        }}
+                                    />
+                                </div>
+
+                                {/* Quick percentage buttons */}
+                                {discountType === 'percentage' && (
+                                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                        {[5, 10, 15, 20, 50].map(pct => (
+                                            <button
+                                                key={pct}
+                                                onClick={() => setDiscountValue(String(pct))}
+                                                style={{
+                                                    flex: 1,
+                                                    minWidth: '50px',
+                                                    padding: '0.5rem',
+                                                    borderRadius: 'var(--radius-md)',
+                                                    border: `1.5px solid ${rawDiscountValue === pct ? 'var(--primary-color)' : 'var(--border-color)'}`,
+                                                    backgroundColor: rawDiscountValue === pct ? 'rgba(69, 123, 157, 0.08)' : 'var(--surface-color)',
+                                                    color: rawDiscountValue === pct ? 'var(--primary-color)' : 'var(--text-secondary)',
+                                                    fontWeight: '700',
+                                                    fontSize: '0.8rem',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.15s'
+                                                }}
+                                            >
+                                                {pct}%
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Discount result preview */}
+                                {discountAmount > 0 && (
+                                    <div style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        padding: '0.6rem 0.75rem',
+                                        borderRadius: 'var(--radius-md)',
+                                        backgroundColor: 'rgba(76, 175, 80, 0.08)',
+                                        border: '1px solid rgba(76, 175, 80, 0.2)'
+                                    }}>
+                                        <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: '600' }}>
+                                            Ahorro del cliente
+                                        </span>
+                                        <span style={{ fontSize: '1rem', fontWeight: '800', color: 'var(--success-color)' }}>
+                                            −S/ {discountAmount.toFixed(2)}
+                                        </span>
+                                    </div>
+                                )}
+
+                                {/* Remove discount */}
+                                {discountAmount > 0 && (
+                                    <button
+                                        onClick={() => { setDiscountValue(''); setShowDiscount(false); }}
+                                        style={{
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem',
+                                            padding: '0.5rem',
+                                            borderRadius: 'var(--radius-md)',
+                                            border: 'none',
+                                            backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                                            color: 'var(--danger-color)',
+                                            fontWeight: '600',
+                                            fontSize: '0.8rem',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        <Trash2 size={14} />
+                                        Quitar descuento
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </div>
 
                     {/* Resumen de pago */}
                     <div style={{
@@ -364,7 +616,7 @@ export function PaymentModal({ order, onClose, onConfirmPayment }: PaymentModalP
 
                     <button
                         disabled={!isFullyPaid}
-                        onClick={() => isFullyPaid && onConfirmPayment(payments, printReceipt)}
+                        onClick={handleConfirm}
                         style={{
                             width: '100%',
                             padding: '1.25rem',

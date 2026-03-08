@@ -56,14 +56,20 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
     }, [items, isQuickSale, isSaved]);
 
     // Quick Sale: handle payment
-    const handleQuickPayment = async (payments: OrderPayment[], shouldPrintReceipt: boolean) => {
+    const handleQuickPayment = async (payments: OrderPayment[], shouldPrintReceipt: boolean, discount?: { type: 'percentage' | 'fixed'; value: number; amount: number }) => {
         try {
             const orderToPay = lastSavedOrder;
             if (!orderToPay) return;
-            await payOrder(orderToPay.id, payments);
+            await payOrder(orderToPay.id, payments, discount);
             if (shouldPrintReceipt && printerService.isConnected) {
                 try {
-                    await printerService.printReceipt({ ...orderToPay, payments, status: 'paid' }, tenant?.name || 'Negocio');
+                    const printOrder = { ...orderToPay, payments, status: 'paid' as const };
+                    if (discount && discount.amount > 0) {
+                        printOrder.subtotal = orderToPay.total;
+                        printOrder.discount = discount;
+                        printOrder.total = parseFloat((orderToPay.total - discount.amount).toFixed(2));
+                    }
+                    await printerService.printReceipt(printOrder, tenant?.name || 'Negocio');
                 } catch (printError) {
                     console.error('Error printing receipt:', printError);
                 }

@@ -27,12 +27,19 @@ export function OrderCard({ order, onEdit, onDelete }: OrderCardProps) {
         updateOrderStatus(order.id, newStatus);
     };
 
-    const handlePayment = async (payments: OrderPayment[], shouldPrintReceipt: boolean) => {
+    const handlePayment = async (payments: OrderPayment[], shouldPrintReceipt: boolean, discount?: { type: 'percentage' | 'fixed'; value: number; amount: number }) => {
         try {
-            await payOrder(order.id, payments);
+            await payOrder(order.id, payments, discount);
             if (shouldPrintReceipt && printerService.isConnected) {
                 try {
-                    await printerService.printReceipt({ ...order, payments, status: 'paid' }, tenant?.name || 'Restaurante');
+                    // Update the order reference for printing if discount was applied
+                    const printOrder = { ...order, payments, status: 'paid' as OrderStatus };
+                    if (discount && discount.amount > 0) {
+                        printOrder.subtotal = order.total;
+                        printOrder.discount = discount;
+                        printOrder.total = parseFloat((order.total - discount.amount).toFixed(2));
+                    }
+                    await printerService.printReceipt(printOrder, tenant?.name || 'Restaurante');
                 } catch (printError) {
                     console.error('Error printing receipt:', printError);
                     // Don't block payment flow if printing fails

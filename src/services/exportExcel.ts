@@ -120,7 +120,7 @@ export const exportDailySalesToExcel = async (
     });
 
     // Headers
-    const headers = ['Fecha', 'Hora', 'Mesa', 'Mozo', 'Items', 'Método Pago', 'Total'];
+    const headers = ['Fecha', 'Hora', 'Mesa', 'Mozo', 'Items', 'Método Pago', 'Descuento', 'Total'];
     const headerRow = wsDetails.addRow(headers);
 
     headerRow.eachCell((cell) => {
@@ -145,6 +145,10 @@ export const exportDailySalesToExcel = async (
             });
         }
 
+        const discountStr = order.discount && order.discount.amount > 0 
+            ? `-S/ ${order.discount.amount.toFixed(2)}${order.discount.type === 'percentage' ? ` (${order.discount.value}%)` : ''}`
+            : '-';
+
         const row = wsDetails.addRow([
             currentDateLabel,
             format(orderDate, 'HH:mm'),
@@ -154,14 +158,15 @@ export const exportDailySalesToExcel = async (
             order.payments && order.payments.length > 0
                 ? order.payments.map((p: any) => `${paymentLabels[p.method] || p.method}: ${p.amount}`).join(', ')
                 : (order.paymentMethod ? (paymentLabels[order.paymentMethod] || order.paymentMethod) : '-'),
+            discountStr,
             order.total
         ]);
 
         // Currency Format for Total
-        row.getCell(7).numFmt = '"S/" #,##0.00';
+        row.getCell(8).numFmt = '"S/" #,##0.00';
 
         // Alignment for center columns
-        [1, 2, 3, 6].forEach(colIndex => {
+        [1, 2, 3, 6, 7].forEach(colIndex => {
             row.getCell(colIndex).alignment = { horizontal: 'center' };
         });
 
@@ -182,6 +187,7 @@ export const exportDailySalesToExcel = async (
         { width: 20 }, // Mozo
         { width: 50 }, // Items
         { width: 15 }, // Payment
+        { width: 15 }, // Descuento
         { width: 15 }, // Total
     ];
 
