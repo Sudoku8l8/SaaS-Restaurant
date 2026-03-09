@@ -436,7 +436,7 @@ export function CocinaPage() {
                 // Left side layout for the Plus FAB when there's a quick sale button, or regular if admin
                 <div style={{ position: 'fixed', bottom: '2rem', right: '2rem', display: 'flex', gap: '1rem', zIndex: 900 }}>
                     <div style={{ position: 'relative' }}>
-                        <OrderFAB onClick={orderCreation.handleFABClick} style={{ position: 'relative', bottom: 0, right: 0 }} />
+                        <OrderFAB onClick={orderCreation.handleFABClick} style={{ position: 'relative', bottom: 0, right: 0, width: '64px', height: '64px' }} />
                     </div>
                     {enableQuickSale && (
                         <button
@@ -478,7 +478,7 @@ export function CocinaPage() {
                     )}
                 </div>
             ) : (
-                <OrderFAB onClick={orderCreation.handleFABClick} />
+                <OrderFAB onClick={orderCreation.handleFABClick} style={{ width: '64px', height: '64px' }} />
             )}
 
             {orderCreation.showTableSelector && (
