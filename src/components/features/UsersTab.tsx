@@ -23,7 +23,7 @@ export function UsersTab() {
     const [formData, setFormData] = useState<{
         name: string;
         pin: string;
-        role: 'admin' | 'waiter' | 'chef' | 'shift_manager';
+        role: 'admin' | 'waiter' | 'chef' | 'shift_manager' | 'caja';
         restaurantId: string;
     }>({
         name: '',
@@ -164,6 +164,7 @@ export function UsersTab() {
     const getRoleBadge = (role: string) => {
         switch (role) {
             case 'admin': return <Badge variant="info">Administrador</Badge>;
+            case 'caja': return <Badge variant="info" style={{ backgroundColor: '#8b5cf6', color: 'white' }}>Cajero</Badge>;
             case 'chef': return <Badge variant="warning">Cocinero</Badge>;
             case 'shift_manager': return <Badge variant="success">Encargado de Turno</Badge>;
             default: return <Badge variant="neutral">Mozo</Badge>;
@@ -173,6 +174,7 @@ export function UsersTab() {
     const getRoleBorderColor = (role: string) => {
         switch (role) {
             case 'admin': return 'var(--primary-color)';
+            case 'caja': return '#8b5cf6';
             case 'chef': return 'var(--warning-color)';
             case 'shift_manager': return 'var(--success-color)';
             default: return '#ccc';
@@ -336,6 +338,7 @@ export function UsersTab() {
                                     <option value="waiter">🍽️ Mozo</option>
                                     <option value="chef">👨‍🍳 Cocinero</option>
                                     <option value="shift_manager">📋 Encargado de Turno</option>
+                                    <option value="caja">💵 Caja</option>
                                     <option value="admin">⚙️ Administrador</option>
                                 </select>
                             </div>
