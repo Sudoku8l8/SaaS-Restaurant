@@ -1,6 +1,6 @@
 import { Plus } from 'lucide-react';
 
-interface OrderFABProps {
+interface OrderFABProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     onClick: () => void;
 }
 
@@ -9,9 +9,10 @@ interface OrderFABProps {
  * Rendered in the bottom-right corner with a prominent + icon.
  * Reusable across CocinaPage and AdminPage.
  */
-export function OrderFAB({ onClick }: OrderFABProps) {
+export function OrderFAB({ onClick, style, ...props }: OrderFABProps) {
     return (
         <button
+            {...props}
             onClick={onClick}
             aria-label="Nuevo Pedido"
             title="Crear nuevo pedido"
@@ -32,6 +33,7 @@ export function OrderFAB({ onClick }: OrderFABProps) {
                 boxShadow: '0 6px 20px rgba(37, 99, 235, 0.4), 0 2px 8px rgba(0, 0, 0, 0.15)',
                 transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
                 zIndex: 900,
+                ...style,
             }}
             onMouseEnter={(e) => {
                 const btn = e.currentTarget;

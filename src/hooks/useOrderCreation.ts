@@ -140,7 +140,11 @@ export function useOrderCreation() {
         // Modal states
         showTableSelector,
         isOrderModalOpen,
+        setIsOrderModalOpen,
         isDetailModalOpen,
+
+        // Setters
+        setTakeoutOrderType,
 
         // Handlers
         handleFABClick,

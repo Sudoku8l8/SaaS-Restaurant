@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from 'react';
-import { Lock, ShieldCheck, ChefHat, LogOut, Menu, Wallet } from 'lucide-react';
+import { Lock, ShieldCheck, ChefHat, LogOut, Menu, Wallet, Zap, DollarSign } from 'lucide-react';
 import type { RestaurantTable, Order } from '@/types';
 import { OrderModal } from '@/components/features/OrderModal';
 import { TableDetailModal } from '@/components/features/TableDetailModal';
@@ -13,6 +13,7 @@ import { OrderFAB } from '@/components/shared/OrderFAB';
 import { OrderCard } from '@/components/features/OrderCard';
 import { OrderCardSkeleton } from '@/components/shared/Skeleton';
 import { NotificationBell } from '@/components/shared/NotificationBell';
+import { useTenant } from '@/app/providers/TenantProvider';
 import { OrderStatus } from '@/types';
 
 export function CocinaPage() {
@@ -24,6 +25,8 @@ export function CocinaPage() {
     const [filterStatus, setFilterStatus] = useState<OrderStatus | 'all'>('all');
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
+    const { tenant } = useTenant();
+    const enableQuickSale = tenant?.config?.enableQuickSale ?? false;
 
     // Close menu when clicking outside
     useEffect(() => {
@@ -226,7 +229,9 @@ export function CocinaPage() {
                                 <ChefHat size={24} />
                             </div>
                             <div style={{ minWidth: 0 }}>
-                                <h1 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.25rem', fontWeight: '800', letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Cocina</h1>
+                                <h1 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.25rem', fontWeight: '800', letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    {user?.role === 'caja' ? 'Caja' : 'Cocina'}
+                                </h1>
                                 <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: '500', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                     Hola, <span style={{ color: 'var(--primary-color)' }}>{user?.name}</span> &bull; {filteredOrders.length} pedidos
                                 </p>
@@ -253,13 +258,15 @@ export function CocinaPage() {
                                 </button>
 
                                 <div className={`cocina-dropdown-menu ${isMenuOpen ? 'open' : ''}`}>
-                                    <button
-                                        className="cocina-dropdown-item"
-                                        onClick={() => navigate(`/${restaurantSlug}/admin`)}
-                                    >
-                                        <ShieldCheck size={18} style={{ color: 'var(--primary-color)' }} />
-                                        <span>Administración</span>
-                                    </button>
+                                    {user?.role === 'admin' && (
+                                        <button
+                                            className="cocina-dropdown-item"
+                                            onClick={() => navigate(`/${restaurantSlug}/admin`)}
+                                        >
+                                            <ShieldCheck size={18} style={{ color: 'var(--primary-color)' }} />
+                                            <span>Administración</span>
+                                        </button>
+                                    )}
                                     <button
                                         className="cocina-dropdown-item"
                                         onClick={() => { navigate(`/${restaurantSlug}/caja-chica`); setIsMenuOpen(false); }}
@@ -267,6 +274,15 @@ export function CocinaPage() {
                                         <Wallet size={18} style={{ color: '#f59e0b' }} />
                                         <span>Caja Chica</span>
                                     </button>
+                                    {(user?.role === 'admin' || user?.role === 'caja') && (
+                                        <button
+                                            className="cocina-dropdown-item"
+                                            onClick={() => { navigate(`/${restaurantSlug}/cierre-caja`); setIsMenuOpen(false); }}
+                                        >
+                                            <DollarSign size={18} className="text-primary" />
+                                            <span>Cerrar Caja</span>
+                                        </button>
+                                    )}
                                     <button
                                         className="cocina-dropdown-item danger"
                                         onClick={logout}
@@ -368,7 +384,54 @@ export function CocinaPage() {
             )}
 
             {/* --- Order Creation Flow (FAB + Modals) --- */}
-            <OrderFAB onClick={orderCreation.handleFABClick} />
+            {user?.role === 'caja' ? (
+                // Left side layout for the Plus FAB when there's a quick sale button, or regular if admin
+                <div style={{ position: 'fixed', bottom: '2rem', right: '2rem', display: 'flex', gap: '1rem', zIndex: 900 }}>
+                    <div style={{ position: 'relative' }}>
+                        <OrderFAB onClick={orderCreation.handleFABClick} style={{ position: 'relative', bottom: 0, right: 0 }} />
+                    </div>
+                    {enableQuickSale && (
+                        <button
+                            onClick={() => {
+                                if (orderCreation.isClosed) {
+                                    alert('⚠️ Caja Cerrada\n\nNo se pueden crear nuevos pedidos hoy.');
+                                    return;
+                                }
+                                orderCreation.setTakeoutOrderType('quick-sale');
+                                orderCreation.setIsOrderModalOpen(true);
+                            }}
+                            style={{
+                                width: '64px',
+                                height: '64px',
+                                borderRadius: '50%',
+                                border: 'none',
+                                background: 'linear-gradient(135deg, var(--primary-color) 0%, #6d4c41 100%)',
+                                color: 'white',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                boxShadow: '0 6px 20px rgba(142, 115, 91, 0.4), 0 2px 6px rgba(0,0,0,0.15)',
+                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                animation: 'fab-pulse 2s ease-in-out infinite',
+                            }}
+                            onMouseEnter={e => {
+                                e.currentTarget.style.transform = 'scale(1.1)';
+                                e.currentTarget.style.boxShadow = '0 8px 28px rgba(142, 115, 91, 0.5), 0 4px 10px rgba(0,0,0,0.2)';
+                            }}
+                            onMouseLeave={e => {
+                                e.currentTarget.style.transform = 'scale(1)';
+                                e.currentTarget.style.boxShadow = '0 6px 20px rgba(142, 115, 91, 0.4), 0 2px 6px rgba(0,0,0,0.15)';
+                            }}
+                            title="Venta Rápida"
+                        >
+                            <Zap size={28} fill="white" />
+                        </button>
+                    )}
+                </div>
+            ) : (
+                <OrderFAB onClick={orderCreation.handleFABClick} />
+            )}
 
             {orderCreation.showTableSelector && (
                 <TableSelectorModal

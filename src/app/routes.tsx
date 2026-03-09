@@ -82,12 +82,12 @@ export const router = createBrowserRouter([
                     },
                     {
                         path: 'mozo',
-                        element: <ProtectedRoute allowedRoles={[UserRole.WAITER, UserRole.ADMIN, UserRole.SHIFT_MANAGER, UserRole.CASHIER]} />,
+                        element: <ProtectedRoute allowedRoles={[UserRole.WAITER, UserRole.ADMIN, UserRole.SHIFT_MANAGER]} />,
                         children: [{ index: true, element: <MozoPage /> }],
                     },
                     {
                         path: 'cocina',
-                        element: <ProtectedRoute allowedRoles={[UserRole.ADMIN, UserRole.CHEF]} />,
+                        element: <ProtectedRoute allowedRoles={[UserRole.ADMIN, UserRole.CHEF, UserRole.CASHIER]} />,
                         children: [{ index: true, element: <CocinaPage /> }],
                     },
                     {
