@@ -7,9 +7,6 @@ export function BranchSelector() {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    // If not multi-branch or only one branch, don't render
-    if (!isMultiBranch || allBranches.length <= 1) return null;
-
     // Close on click outside
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
@@ -20,6 +17,9 @@ export function BranchSelector() {
         if (isOpen) document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [isOpen]);
+
+    // If not multi-branch or only one branch, don't render
+    if (!isMultiBranch || allBranches.length <= 1) return null;
 
     return (
         <div ref={dropdownRef} style={{ position: 'relative' }}>

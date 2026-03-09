@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useMemo } from 'react';
 import { Lock, ShieldCheck, ChefHat, LogOut, Menu, Wallet, Zap, DollarSign } from 'lucide-react';
 import type { RestaurantTable, Order } from '@/types';
 import { OrderModal } from '@/components/features/OrderModal';
@@ -15,6 +15,55 @@ import { OrderCardSkeleton } from '@/components/shared/Skeleton';
 import { NotificationBell } from '@/components/shared/NotificationBell';
 import { useTenant } from '@/app/providers/TenantProvider';
 import { OrderStatus } from '@/types';
+
+interface FilterButtonProps {
+    status: OrderStatus | 'all';
+    label: string;
+    isActive: boolean;
+    count: number;
+    onClick: () => void;
+}
+
+const FilterButton = ({ label, isActive, count, onClick }: FilterButtonProps) => {
+    return (
+        <button
+            onClick={onClick}
+            style={{
+                backgroundColor: isActive ? 'var(--primary-color)' : 'var(--surface-color)',
+                color: isActive ? 'white' : 'var(--text-secondary)',
+                border: '1px solid',
+                borderColor: isActive ? 'var(--primary-color)' : 'var(--border-color)',
+                padding: '0.65rem 1.25rem',
+                borderRadius: 'var(--radius-full)',
+                cursor: 'pointer',
+                fontWeight: '700',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                transition: 'all 0.2s',
+                boxShadow: isActive ? 'var(--shadow-md)' : 'var(--shadow-sm)',
+                fontSize: '0.9rem',
+                flexShrink: 0
+            }}
+        >
+            {label}
+            {count > 0 && (
+                <span style={{
+                    backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : 'var(--divider-color)',
+                    color: isActive ? 'white' : 'var(--text-primary)',
+                    padding: '2px 8px',
+                    borderRadius: 'var(--radius-full)',
+                    fontSize: '0.75rem',
+                    minWidth: '22px',
+                    textAlign: 'center',
+                    fontWeight: '800'
+                }}>
+                    {count}
+                </span>
+            )}
+        </button>
+    );
+};
 
 export function CocinaPage() {
     const { user, logout } = useAuth();
@@ -60,11 +109,28 @@ export function CocinaPage() {
         );
     }
 
-    const filteredOrders = activeOrders.filter(order =>
-        filterStatus === 'all' ? true : order.status === filterStatus
-    );
+    // Memoize filtered orders and counts for performance
+    const { filteredOrders, orderCounts } = useMemo(() => {
+        const countsObj: Record<string, number> = {
+            all: activeOrders.length,
+            pending: 0,
+            in_preparation: 0,
+            ready: 0,
+            delivered: 0,
+            paid: 0,
+            cancelled: 0
+        };
 
-    const getCount = (status: OrderStatus) => activeOrders.filter(o => o.status === status).length;
+        activeOrders.forEach(order => {
+            countsObj[order.status] = (countsObj[order.status] || 0) + 1;
+        });
+
+        const filtered = activeOrders.filter(order => 
+            filterStatus === 'all' ? true : order.status === filterStatus
+        );
+
+        return { filteredOrders: filtered, orderCounts: countsObj };
+    }, [activeOrders, filterStatus]);
 
     const handleDelete = async (orderId: string) => {
         if (confirm('¿Estás seguro de eliminar este pedido? Esta acción liberará la mesa.')) {
@@ -81,49 +147,7 @@ export function CocinaPage() {
         capacity: 4 // Dummy
     });
 
-    const FilterButton = ({ status, label }: { status: OrderStatus | 'all', label: string }) => {
-        const isActive = filterStatus === status;
-        const count = status === 'all' ? activeOrders.length : getCount(status as OrderStatus);
 
-        return (
-            <button
-                onClick={() => setFilterStatus(status)}
-                style={{
-                    backgroundColor: isActive ? 'var(--primary-color)' : 'var(--surface-color)',
-                    color: isActive ? 'white' : 'var(--text-secondary)',
-                    border: '1px solid',
-                    borderColor: isActive ? 'var(--primary-color)' : 'var(--border-color)',
-                    padding: '0.65rem 1.25rem',
-                    borderRadius: 'var(--radius-full)',
-                    cursor: 'pointer',
-                    fontWeight: '700',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.75rem',
-                    transition: 'all 0.2s',
-                    boxShadow: isActive ? 'var(--shadow-md)' : 'var(--shadow-sm)',
-                    fontSize: '0.9rem',
-                    flexShrink: 0
-                }}
-            >
-                {label}
-                {count > 0 && (
-                    <span style={{
-                        backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : 'var(--divider-color)',
-                        color: isActive ? 'white' : 'var(--text-primary)',
-                        padding: '2px 8px',
-                        borderRadius: 'var(--radius-full)',
-                        fontSize: '0.75rem',
-                        minWidth: '22px',
-                        textAlign: 'center',
-                        fontWeight: '800'
-                    }}>
-                        {count}
-                    </span>
-                )}
-            </button>
-        );
-    };
 
     return (
         <div style={{ minHeight: '100vh', backgroundColor: 'var(--background-color)', paddingBottom: '3rem' }}>
@@ -343,10 +367,34 @@ export function CocinaPage() {
                                 display: none;
                             }
                         `}</style>
-                        <FilterButton status="all" label="Todos" />
-                        <FilterButton status="pending" label="Pendientes" />
-                        <FilterButton status="in_preparation" label="En Cocina" />
-                        <FilterButton status="ready" label="Listos" />
+                        <FilterButton 
+                            status="all" 
+                            label="Todos" 
+                            isActive={filterStatus === 'all'} 
+                            count={orderCounts.all} 
+                            onClick={() => setFilterStatus('all')} 
+                        />
+                        <FilterButton 
+                            status="pending" 
+                            label="Pendientes" 
+                            isActive={filterStatus === 'pending'} 
+                            count={orderCounts.pending} 
+                            onClick={() => setFilterStatus('pending')} 
+                        />
+                        <FilterButton 
+                            status="in_preparation" 
+                            label="En Cocina" 
+                            isActive={filterStatus === 'in_preparation'} 
+                            count={orderCounts.in_preparation} 
+                            onClick={() => setFilterStatus('in_preparation')} 
+                        />
+                        <FilterButton 
+                            status="ready" 
+                            label="Listos" 
+                            isActive={filterStatus === 'ready'} 
+                            count={orderCounts.ready} 
+                            onClick={() => setFilterStatus('ready')} 
+                        />
                     </div>
                 </div>
 

@@ -74,7 +74,7 @@ export function OrderCard({ order, onEdit, onDelete }: OrderCardProps) {
         }
     };
 
-    const MainActionButton = () => {
+    const renderMainAction = () => {
         const usarPantallaCocina = tenant?.config?.usarPantallaCocina ?? false;
 
         const btnEntregar = (
@@ -340,7 +340,7 @@ export function OrderCard({ order, onEdit, onDelete }: OrderCardProps) {
                     </div>
 
                     <div style={{ display: 'flex', gap: '0.75rem' }}>
-                        <MainActionButton />
+                        {renderMainAction()}
 
                         {onEdit && (
                             <button
