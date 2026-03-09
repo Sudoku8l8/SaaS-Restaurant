@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bluetooth, Usb, Printer, Unlink, CheckCircle2, AlertCircle, ToggleLeft, ToggleRight, Smartphone } from 'lucide-react';
+import { Bluetooth, Usb, Printer, Unlink, CheckCircle2, AlertCircle, ToggleLeft, ToggleRight, Smartphone, Wifi, Globe } from 'lucide-react';
 import { Button } from '@/components/shared';
 import { printerService } from '@/services/printer/PrinterService';
 
@@ -9,6 +9,7 @@ export function PrinterTab() {
     const [autoPrint, setAutoPrint] = useState(printerService.autoPrint);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [ipInput, setIpInput] = useState(localStorage.getItem('printer_ip') || '');
 
     // Sync connection state periodically (catches BLE disconnect, etc.)
     useEffect(() => {
@@ -57,6 +58,24 @@ export function PrinterTab() {
             setDeviceName(printerService.connectedDeviceName);
         } catch (err: any) {
             setError('Error al conectar app externa');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleConnectNetwork = async () => {
+        if (!ipInput) {
+            setError('Por favor ingresa la IP de la impresora');
+            return;
+        }
+        setIsLoading(true);
+        setError(null);
+        try {
+            await printerService.connectNetwork(ipInput);
+            setIsConnected(true);
+            setDeviceName(printerService.connectedDeviceName);
+        } catch (err: any) {
+            setError('Error: ' + (err.message || 'Desconocido'));
         } finally {
             setIsLoading(false);
         }
@@ -162,6 +181,55 @@ export function PrinterTab() {
                             >
                                 <Smartphone size={18} /> App RawBT (Bluetooth Clásico)
                             </Button>
+
+                            <div style={{ 
+                                gridColumn: '1 / -1', 
+                                marginTop: '0.5rem',
+                                padding: '1.25rem',
+                                border: '2px dashed var(--border-color)',
+                                borderRadius: 'var(--radius-md)',
+                                backgroundColor: 'rgba(59, 130, 246, 0.05)'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: 'var(--primary-color)' }}>
+                                    <Wifi size={20} />
+                                    <span style={{ fontWeight: '700' }}>Impresora por Red (LAN / WIFI)</span>
+                                </div>
+                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                    <div style={{ flex: 1, position: 'relative' }}>
+                                        <div style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }}>
+                                            <Globe size={16} />
+                                        </div>
+                                        <input
+                                            type="text"
+                                            placeholder="Ej: 192.168.1.100"
+                                            value={ipInput}
+                                            onChange={(e) => setIpInput(e.target.value)}
+                                            style={{
+                                                width: '100%',
+                                                padding: '0.75rem 0.75rem 0.75rem 2.5rem',
+                                                borderRadius: 'var(--radius-md)',
+                                                border: '1px solid var(--border-color)',
+                                                backgroundColor: 'var(--background-color)',
+                                                color: 'var(--text-primary)',
+                                                fontSize: '0.9rem',
+                                                outline: 'none',
+                                                boxSizing: 'border-box'
+                                            }}
+                                        />
+                                    </div>
+                                    <Button 
+                                        onClick={handleConnectNetwork} 
+                                        disabled={isLoading}
+                                        variant="primary"
+                                        style={{ backgroundColor: '#3b82f6' }}
+                                    >
+                                        Conectar IP
+                                    </Button>
+                                </div>
+                                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.75rem', lineHeight: '1.4' }}>
+                                    Ideal para evitar conflictos de cables. Requiere tener instalada la app <b>RawBT</b> en Android o un bridge en PC.
+                                </p>
+                            </div>
                         </div>
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>

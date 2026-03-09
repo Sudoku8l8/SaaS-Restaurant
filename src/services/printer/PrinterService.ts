@@ -9,16 +9,18 @@ class PrinterService {
     private device: any = null;
     private characteristic: any = null; // For Bluetooth
     private endpointOut: any = null; // For USB
-    private connectionType: 'bluetooth' | 'usb' | 'external' | null = null;
+    private ipAddress: string | null = null; // For Network
+    private connectionType: 'bluetooth' | 'usb' | 'network' | 'external' | null = null;
     private isAutoPrintEnabled: boolean = localStorage.getItem('printer_auto_print') === 'true';
 
     constructor() {
         // Restore external (RawBT) connection type from localStorage on app reload
+        // Restore network/external (RawBT) connection type from localStorage on app reload
         const savedType = localStorage.getItem('printer_type');
-        if (savedType === 'external') {
-            this.connectionType = 'external';
+        if (savedType === 'external' || savedType === 'network') {
+            this.connectionType = savedType as any;
+            this.ipAddress = localStorage.getItem('printer_ip');
         }
-        // For bluetooth/usb, we DON'T restore because the real device connection is lost on reload
     }
 
     // Bluetooth Connection
@@ -86,6 +88,18 @@ class PrinterService {
         }
     }
 
+    // Network Connection (TCP via RawBT bridge or future proxy)
+    async connectNetwork(ip: string) {
+        if (!ip || !ip.match(/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/)) {
+            throw new Error('Dirección IP no válida. Formato: 192.168.1.100');
+        }
+        this.ipAddress = ip;
+        this.connectionType = 'network';
+        this.saveDevicePreference('network', `Impresora Red (${ip})`);
+        localStorage.setItem('printer_ip', ip);
+        return true;
+    }
+
     // External Bridge (RawBT)
     async connectExternal() {
         this.connectionType = 'external';
@@ -99,8 +113,8 @@ class PrinterService {
     }
 
     get isConnected(): boolean {
-        if (this.connectionType === 'external') {
-            return true; // RawBT is fire-and-forget, always "connected"
+        if (this.connectionType === 'external' || this.connectionType === 'network') {
+            return true; // Bridges are fire-and-forget, always "connected"
         }
         if (this.connectionType === 'bluetooth') {
             return !!(this.device?.gatt?.connected && this.characteristic);
@@ -208,6 +222,9 @@ class PrinterService {
             localStorage.removeItem('printer_type');
             localStorage.removeItem('printer_name');
             throw new Error('La conexión USB se perdió. Reconecta la impresora desde Configuración.');
+        }
+        if (type === 'network' && !this.ipAddress) {
+            throw new Error('IP de impresora no configurada.');
         }
     }
 
@@ -422,6 +439,8 @@ class PrinterService {
         } else if (type === 'usb') {
             if (!this.device) await this.connectUSB();
             await this.device.transferOut(this.endpointOut.endpointNumber, data);
+        } else if (type === 'network') {
+            this.sendToRawBT(data, this.ipAddress);
         } else if (type === 'external') {
             this.sendToRawBT(data);
         } else {
@@ -439,7 +458,9 @@ class PrinterService {
             const base64 = btoa(binary);
 
             // Build the RawBT intent URL
-            const url = `intent:base64,${base64}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;`;
+            // If ip is provided, RawBT will try to connect to that network address
+            const networkParam = ip ? `&address=${ip}` : '';
+            const url = `intent:base64,${base64}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter${networkParam};end;`;
 
             // Use a temporary link element instead of window.location.href
             // This prevents navigating away from the app and losing state
