@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { db } from '@/services/firebase/config';
 import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
 import { Button, Input, Card, Badge } from '@/components/shared';
-import { Trash2, Edit2, ChefHat, Plus, X, Settings2 } from 'lucide-react';
+import { Trash2, Edit2, ChefHat, Plus, X, Settings2, Search } from 'lucide-react';
 import type { Product, Category, InventoryType, UnitOfMeasure, ProductModifier, ModifierOption } from '@/types';
 import { UnitOfMeasure as UC } from '@/types';
 import { RecipeModal } from './RecipeModal';
@@ -18,6 +18,31 @@ export function ProductsTab() {
     const [recipeModalOpen, setRecipeModalOpen] = useState(false);
     const [recipeProduct, setRecipeProduct] = useState<Product | null>(null);
     const [modifiers, setModifiers] = useState<ProductModifier[]>([]);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState<string>('Todas');
+
+    const filteredProducts = useMemo(() => {
+        return products.filter(p => {
+            const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                  p.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                  (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase()));
+            const matchesCategory = selectedCategory === 'Todas' || p.category === selectedCategory;
+            return matchesSearch && matchesCategory;
+        });
+    }, [products, searchQuery, selectedCategory]);
+
+    const groupedProducts = useMemo(() => {
+        return filteredProducts.reduce((acc, product) => {
+            const cat = product.category || 'Sin Categoría';
+            if (!acc[cat]) acc[cat] = [];
+            acc[cat].push(product);
+            return acc;
+        }, {} as Record<string, Product[]>);
+    }, [filteredProducts]);
+
+    const sortedCategoriesList = useMemo(() => {
+        return Object.keys(groupedProducts).sort((a, b) => a.localeCompare(b));
+    }, [groupedProducts]);
 
     const UNIT_OPTIONS: { value: UnitOfMeasure; label: string }[] = [
         { value: UC.UNIT, label: 'Unidad' },
@@ -225,46 +250,177 @@ export function ProductsTab() {
     };
 
     return (
-        <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                <h3>Inventario ({products.length})</h3>
-                <Button onClick={() => openModal()}>+ Nuevo Producto</Button>
+        <div style={{ paddingBottom: '2rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                    <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>Inventario ({products.length})</h3>
+                    <Button onClick={() => openModal()}>
+                        <Plus size={16} className="mr-2" />
+                        Nuevo Producto
+                    </Button>
+                </div>
+                
+                <div style={{ position: 'relative', width: '100%', maxWidth: '400px' }}>
+                    <input 
+                        type="text" 
+                        placeholder="Buscar productos por nombre, categoría o descripción..." 
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        style={{ 
+                            width: '100%', 
+                            padding: '0.6rem 1rem 0.6rem 2.5rem', 
+                            borderRadius: '8px', 
+                            border: '1px solid var(--divider-color)',
+                            backgroundColor: 'var(--surface-color)',
+                            color: 'var(--text-primary)',
+                            fontSize: '0.95rem'
+                        }}
+                    />
+                    <Search size={18} style={{ position: 'absolute', left: '0.8rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+                </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
-                {products.map(product => (
-                    <Card key={product.id} style={{ padding: '1rem', position: 'relative', opacity: product.available ? 1 : 0.6 }}>
-                        <div style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                            {product.name}
-                            {product.isPopular && <span title="Popular">⭐</span>}
-                            {product.tipoInventario === 'recipe' && <span title="Tiene receta"><ChefHat size={14} color="var(--primary-color)" /></span>}
-                            {(product.dietaryTags || []).map(tag => (
-                                <span key={tag} title={tag} style={{ fontSize: '0.85rem' }}>
-                                    {tag === 'vegan' ? '🌿' : tag === 'vegetarian' ? '🥦' : tag === 'spicy' ? '🌶️' : tag === 'gluten-free' ? '🌾' : tag === 'dairy-free' ? '🥛' : tag === 'nut-free' ? '🥜' : ''}
-                                </span>
-                            ))}
-                        </div>
-                        <div style={{ color: 'var(--color-primary)', fontSize: '1.2rem' }}>S/ {product.price.toFixed(2)}</div>
-                        <div style={{ fontSize: '0.8rem', color: '#666' }}>{product.category}</div>
-                        {product.description && (
-                            <div style={{ fontSize: '0.78rem', color: '#999', fontStyle: 'italic', marginTop: '0.3rem', lineHeight: 1.4 }}>
-                                {product.description}
-                            </div>
-                        )}
-                        <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
-                            <Button size="sm" variant="outline" onClick={() => openModal(product)}><Edit2 size={14} className="mr-1" /> Editar</Button>
-                            {product.tipoInventario === 'recipe' && (
-                                <Button size="sm" variant="outline" onClick={() => { setRecipeProduct(product); setRecipeModalOpen(true); }}
-                                    style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--primary-color)', borderColor: 'var(--primary-color)' }}>
-                                    <ChefHat size={14} />
-                                </Button>
-                            )}
-                            <Button size="sm" variant="danger" onClick={() => handleDelete(product.id)}><Trash2 size={14} /></Button>
-                        </div>
-                        {!product.available && <Badge variant="warning" style={{ position: 'absolute', top: 5, right: 5 }}>Agotado</Badge>}
-                    </Card>
+            {/* Category Filter Chips */}
+            <div className="category-chips" style={{
+                display: 'flex',
+                gap: '0.5rem',
+                overflowX: 'auto',
+                paddingBottom: '0.5rem',
+                marginBottom: '1.5rem',
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none'
+            }}>
+                <style>{`.category-chips::-webkit-scrollbar { display: none; }`}</style>
+                <button
+                    onClick={() => setSelectedCategory('Todas')}
+                    style={{
+                        padding: '0.4rem 1.25rem',
+                        borderRadius: '20px',
+                        border: '1px solid',
+                        borderColor: selectedCategory === 'Todas' ? 'var(--primary-color)' : 'var(--divider-color)',
+                        backgroundColor: selectedCategory === 'Todas' ? 'var(--primary-color)' : 'var(--surface-color)',
+                        color: selectedCategory === 'Todas' ? 'white' : 'var(--text-primary)',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        fontWeight: 600,
+                        fontSize: '0.9rem',
+                        transition: 'all 0.2s',
+                        boxShadow: selectedCategory === 'Todas' ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'
+                    }}
+                >
+                    Todas
+                </button>
+                {categories.map(category => (
+                    <button
+                        key={category.id}
+                        onClick={() => setSelectedCategory(category.name)}
+                        style={{
+                            padding: '0.4rem 1.25rem',
+                            borderRadius: '20px',
+                            border: '1px solid',
+                            borderColor: selectedCategory === category.name ? 'var(--primary-color)' : 'var(--divider-color)',
+                            backgroundColor: selectedCategory === category.name ? 'var(--primary-color)' : 'var(--surface-color)',
+                            color: selectedCategory === category.name ? 'white' : 'var(--text-primary)',
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap',
+                            fontWeight: 600,
+                            fontSize: '0.9rem',
+                            transition: 'all 0.2s',
+                            boxShadow: selectedCategory === category.name ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'
+                        }}
+                    >
+                        {category.name}
+                    </button>
                 ))}
             </div>
+
+            {sortedCategoriesList.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
+                    No se encontraron productos{searchQuery ? ' que coincidan con la búsqueda' : ''}.
+                </div>
+            ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
+                    {sortedCategoriesList.map(category => (
+                        <div key={category}>
+                            <h4 style={{ 
+                                marginBottom: '1.25rem', 
+                                paddingBottom: '0.5rem', 
+                                borderBottom: '2px solid var(--divider-color)',
+                                color: 'var(--text-primary)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                fontSize: '1.2rem',
+                                fontWeight: 600
+                            }}>
+                                {category}
+                                <span style={{ 
+                                    background: 'var(--primary-color)', 
+                                    color: 'white', 
+                                    padding: '0.15rem 0.5rem', 
+                                    borderRadius: '12px', 
+                                    fontSize: '0.75rem',
+                                    fontWeight: 'bold'
+                                }}>{groupedProducts[category].length}</span>
+                            </h4>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
+                                {groupedProducts[category].map(product => (
+                                    <Card key={product.id} style={{ 
+                                        padding: '1rem', 
+                                        position: 'relative', 
+                                        opacity: product.available ? 1 : 0.6,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        height: '100%',
+                                        boxShadow: '0 2px 4px -1px rgba(0, 0, 0, 0.05)',
+                                        transition: 'transform 0.1s ease, box-shadow 0.1s ease'
+                                    }}>
+                                        <div style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', fontSize: '1rem', marginBottom: '0.3rem' }}>
+                                            {product.name}
+                                            {product.isPopular && <span title="Popular">⭐</span>}
+                                            {product.tipoInventario === 'recipe' && <span title="Tiene receta"><ChefHat size={14} color="var(--primary-color)" /></span>}
+                                            {(product.dietaryTags || []).map(tag => (
+                                                <span key={tag} title={tag} style={{ fontSize: '0.85rem' }}>
+                                                    {tag === 'vegan' ? '🌿' : tag === 'vegetarian' ? '🥦' : tag === 'spicy' ? '🌶️' : tag === 'gluten-free' ? '🌾' : tag === 'dairy-free' ? '🥛' : tag === 'nut-free' ? '🥜' : ''}
+                                                </span>
+                                            ))}
+                                        </div>
+                                        <div style={{ color: 'var(--color-primary)', fontSize: '1.2rem', fontWeight: 700, marginBottom: '0.3rem' }}>S/ {product.price.toFixed(2)}</div>
+                                        {/* Omit the category label because we are already grouping by category */}
+                                        {product.description && (
+                                            <div style={{ 
+                                                fontSize: '0.78rem', 
+                                                color: '#777', 
+                                                fontStyle: 'italic', 
+                                                marginBottom: '0.75rem', 
+                                                lineHeight: 1.4,
+                                                flex: 1
+                                            }}>
+                                                {product.description}
+                                            </div>
+                                        )}
+                                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: product.description ? 'auto' : '0.5rem' }}>
+                                            <Button size="sm" variant="outline" onClick={() => openModal(product)} style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+                                                <Edit2 size={14} className="mr-1" /> Editar
+                                            </Button>
+                                            {product.tipoInventario === 'recipe' && (
+                                                <Button size="sm" variant="outline" onClick={() => { setRecipeProduct(product); setRecipeModalOpen(true); }}
+                                                    style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--primary-color)', borderColor: 'var(--primary-color)' }}>
+                                                    <ChefHat size={14} />
+                                                </Button>
+                                            )}
+                                            <Button size="sm" variant="danger" onClick={() => handleDelete(product.id)} style={{ padding: '0 0.5rem' }}>
+                                                <Trash2 size={14} />
+                                            </Button>
+                                        </div>
+                                        {!product.available && <Badge variant="warning" style={{ position: 'absolute', top: '5px', right: '5px' }}>Agotado</Badge>}
+                                    </Card>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
 
             {/* Modal Simple implementation inline for speed */}
             {isModalOpen && (
