@@ -107,7 +107,7 @@ class PrinterService {
         return true;
     }
 
-    private saveDevicePreference(type: 'bluetooth' | 'usb' | 'external', name: string) {
+    private saveDevicePreference(type: 'bluetooth' | 'usb' | 'network' | 'external', name: string) {
         localStorage.setItem('printer_type', type);
         localStorage.setItem('printer_name', name);
     }
@@ -122,10 +122,10 @@ class PrinterService {
         if (this.connectionType === 'usb') {
             return !!(this.device?.opened);
         }
-        // Check localStorage only for external/RawBT
+        // Check localStorage only for external/RawBT/Network
         const savedType = localStorage.getItem('printer_type');
-        if (savedType === 'external') {
-            this.connectionType = 'external';
+        if (savedType === 'external' || savedType === 'network') {
+            this.connectionType = savedType as any;
             return true;
         }
         return false;
@@ -136,13 +136,13 @@ class PrinterService {
         return localStorage.getItem('printer_name') || 'Ninguno';
     }
 
-    get activeConnectionType(): 'bluetooth' | 'usb' | 'external' | null {
+    get activeConnectionType(): 'bluetooth' | 'usb' | 'network' | 'external' | null {
         if (this.connectionType) return this.connectionType;
-        // Only restore external from localStorage
+        // Only restore external/network from localStorage
         const savedType = localStorage.getItem('printer_type');
-        if (savedType === 'external') {
-            this.connectionType = 'external';
-            return 'external';
+        if (savedType === 'external' || savedType === 'network') {
+            this.connectionType = savedType as any;
+            return savedType as any;
         }
         return null;
     }
@@ -257,21 +257,21 @@ class PrinterService {
             const qtyText = `${item.quantity}x `.padEnd(4);
             const nameText = item.productName.substring(0, 28) + "\n";
             addText(qtyText + nameText);
-            
+
             // Turn off bold for options and notes
             add([ESC, 0x45, 0x00]);
-            
+
             if (item.selectedOptions && item.selectedOptions.length > 0) {
                 item.selectedOptions.forEach(opt => {
                     const priceText = opt.price ? ` (+${opt.price.toFixed(2)})` : '';
                     addText(`  - ${opt.modifierName}: ${opt.optionName}${priceText}\n`);
                 });
             }
-            
+
             if (item.notes) {
                 addText(`  Obs: ${item.notes}\n`);
             }
-            
+
             // Turn bold back on for next item
             add([ESC, 0x45, 0x01]);
         });
@@ -321,7 +321,7 @@ class PrinterService {
 
         // ── Receipt Title ──
         add([ESC, 0x45, 0x01]); // Bold
-        addText("BOLETA DE VENTA\n");
+        addText("NOTA DE VENTA\n");
         add([ESC, 0x45, 0x00]); // Bold off
         addText(LINE);
 
@@ -373,7 +373,7 @@ class PrinterService {
         if (order.discount && order.discount.amount > 0) {
             add([GS, 0x21, 0x00]); // Normal size for subtotal
             addText(`SUBTOTAL: S/ ${order.subtotal?.toFixed(2) || (order.total + order.discount.amount).toFixed(2)}\n`);
-            
+
             add([ESC, 0x45, 0x01]); // Bold
             const descType = order.discount.type === 'percentage' ? `(${order.discount.value}%)` : '';
             addText(`DSCTO ${descType}: -S/ ${order.discount.amount.toFixed(2)}\n`);
@@ -448,7 +448,7 @@ class PrinterService {
         }
     }
 
-    private sendToRawBT(data: Uint8Array) {
+    private sendToRawBT(data: Uint8Array, ip?: string | null) {
         try {
             // Convert binary data to base64
             let binary = '';
