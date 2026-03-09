@@ -186,7 +186,7 @@ export function OrderCard({ order, onEdit, onDelete }: OrderCardProps) {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                             {/* Titulo Dinámico por Rol */}
-                            {user?.role === 'chef' || user?.role === 'admin' ? (
+                            {user?.role === 'chef' || user?.role === 'admin' || user?.role === 'caja' ? (
                                 <h3 style={{ margin: 0, color: 'var(--primary-color)', fontSize: '1.4rem', fontWeight: '900', letterSpacing: '-0.02em' }}>
                                     {order.orderType === 'takeout' ? 'PARA LLEVAR' : `MESA ${order.tableNumber}`}
                                 </h3>
@@ -196,8 +196,8 @@ export function OrderCard({ order, onEdit, onDelete }: OrderCardProps) {
                                 </h3>
                             )}
 
-                            {/* Información secundaria de ubicación (Solo para otros roles si existen, mozo/admin/chef no lo ven aquí) */}
-                            {user?.role !== 'waiter' && user?.role !== 'chef' && user?.role !== 'admin' && (
+                            {/* Información secundaria de ubicación (Solo para otros roles si existen, mozo/admin/chef/caja no lo ven aquí) */}
+                            {user?.role !== 'waiter' && user?.role !== 'chef' && user?.role !== 'admin' && user?.role !== 'caja' && (
                                 <>
                                     {order.orderType !== 'takeout' ? (
                                         <div style={{
@@ -221,8 +221,8 @@ export function OrderCard({ order, onEdit, onDelete }: OrderCardProps) {
                                 </>
                             )}
 
-                            {/* Detalle pequeño del ID para el Chef y Admin */}
-                            {(user?.role === 'chef' || user?.role === 'admin') && (
+                            {/* Detalle pequeño del ID para el Chef, Admin y Caja */}
+                            {(user?.role === 'chef' || user?.role === 'admin' || user?.role === 'caja') && (
                                 <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: '500' }}>
                                     #{order.id.slice(0, 6).toUpperCase()}
                                 </span>
