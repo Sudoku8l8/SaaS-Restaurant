@@ -15,7 +15,7 @@ export function PaymentModal({ order, onClose, onConfirmPayment }: PaymentModalP
     const [inputAmount, setInputAmount] = useState<string>('');
 
     const printerConnected = printerService.isConnected;
-    const [printReceipt, setPrintReceipt] = useState(printerConnected);
+    const [printReceipt, setPrintReceipt] = useState(printerService.printReceiptPref && printerConnected);
 
     // Discount state
     const [showDiscount, setShowDiscount] = useState(false);
@@ -598,7 +598,11 @@ export function PaymentModal({ order, onClose, onConfirmPayment }: PaymentModalP
                             type="checkbox"
                             checked={printReceipt}
                             disabled={!printerConnected}
-                            onChange={(e) => setPrintReceipt(e.target.checked)}
+                            onChange={(e) => {
+                                const checked = e.target.checked;
+                                setPrintReceipt(checked);
+                                printerService.setPrintReceiptPref(checked);
+                            }}
                             style={{ display: 'none' }}
                         />
                         <div style={{ flex: 1, minWidth: 0 }}>

@@ -12,6 +12,7 @@ class PrinterService {
     private ipAddress: string | null = null; // For Network
     private connectionType: 'bluetooth' | 'usb' | 'network' | 'external' | null = null;
     private isAutoPrintEnabled: boolean = localStorage.getItem('printer_auto_print') === 'true';
+    private isPrintReceiptEnabled: boolean = localStorage.getItem('printer_print_receipt_pref') !== 'false';
 
     constructor() {
         // Restore external (RawBT) connection type from localStorage on app reload
@@ -154,6 +155,15 @@ class PrinterService {
 
     get autoPrint() {
         return this.isAutoPrintEnabled;
+    }
+
+    get printReceiptPref() {
+        return this.isPrintReceiptEnabled;
+    }
+
+    setPrintReceiptPref(enabled: boolean) {
+        this.isPrintReceiptEnabled = enabled;
+        localStorage.setItem('printer_print_receipt_pref', String(enabled));
     }
 
     async disconnect() {
