@@ -490,7 +490,7 @@ export function CocinaPage() {
                 />
             )}
 
-            {orderCreation.isOrderModalOpen && (orderCreation.selectedTable || orderCreation.takeoutOrderType === 'takeout') && !orderCreation.isClosed && (
+            {orderCreation.isOrderModalOpen && (orderCreation.selectedTable || orderCreation.takeoutOrderType === 'takeout' || orderCreation.takeoutOrderType === 'quick-sale') && !orderCreation.isClosed && (
                 <OrderModal
                     table={orderCreation.selectedTable || undefined}
                     initialOrder={orderCreation.orderToEdit}
