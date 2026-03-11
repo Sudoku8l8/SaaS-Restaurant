@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, Smartphone, Banknote, CreditCard, Printer, Trash2, Plus, Percent, DollarSign, Tag } from 'lucide-react';
 import type { Order, PaymentMethod, OrderPayment, OrderDiscount } from '@/types';
 import { printerService } from '@/services/printer/PrinterService';
+import { useTenant } from '@/app/providers/TenantProvider';
 
 interface PaymentModalProps {
     order: Order;
@@ -10,6 +11,9 @@ interface PaymentModalProps {
 }
 
 export function PaymentModal({ order, onClose, onConfirmPayment }: PaymentModalProps) {
+    const { tenant } = useTenant();
+    const enablePartialPayment = tenant?.config?.enablePartialPayment ?? true;
+
     const [payments, setPayments] = useState<OrderPayment[]>([]);
     const [currentMethod, setCurrentMethod] = useState<PaymentMethod | null>(null);
     const [inputAmount, setInputAmount] = useState<string>('');
@@ -490,7 +494,13 @@ export function PaymentModal({ order, onClose, onConfirmPayment }: PaymentModalP
                                     return (
                                         <div
                                             key={m.id}
-                                            onClick={() => setCurrentMethod(m.id)}
+                                            onClick={() => {
+                                                if (enablePartialPayment) {
+                                                    setCurrentMethod(m.id);
+                                                } else {
+                                                    setPayments([...payments, { method: m.id, amount: parseFloat(remaining.toFixed(2)) }]);
+                                                }
+                                            }}
                                             style={{
                                                 border: `2px solid ${isSelected ? m.color : 'var(--border-color)'}`,
                                                 borderRadius: 'var(--radius-md)',
@@ -516,7 +526,7 @@ export function PaymentModal({ order, onClose, onConfirmPayment }: PaymentModalP
                                 })}
                             </div>
 
-                            {currentMethod && (
+                            {enablePartialPayment && currentMethod && (
                                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                                     <div style={{ flex: 1, position: 'relative' }}>
                                         <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', fontWeight: 'bold' }}>S/</span>

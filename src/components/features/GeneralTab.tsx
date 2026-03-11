@@ -20,6 +20,7 @@ export function GeneralTab() {
     const [enableTables, setEnableTables] = useState(true);
     const [enableKitchenOrders, setEnableKitchenOrders] = useState(true);
     const [enableQuickSale, setEnableQuickSale] = useState(false);
+    const [enablePartialPayment, setEnablePartialPayment] = useState(true);
 
     // Branch creation state
     const [showBranchForm, setShowBranchForm] = useState(false);
@@ -37,6 +38,7 @@ export function GeneralTab() {
             setEnableTables(tenant.config.enableTables ?? true);
             setEnableKitchenOrders(tenant.config.enableKitchenOrders ?? true);
             setEnableQuickSale(tenant.config.enableQuickSale ?? false);
+            setEnablePartialPayment(tenant.config.enablePartialPayment ?? true);
         }
     }, [tenant]);
 
@@ -301,6 +303,14 @@ export function GeneralTab() {
                         ? 'Modo Pantalla: El mozo pasa por 4 estados de pedido (Pendiente → Preparar → Marcar Listo → Entregar).'
                         : 'Modo Comanda: El mozo usa comandas físicas. Pasa por 2 estados (Pendiente → Entregar).'}
                     onToggle={() => handleToggle('usarPantallaCocina', !usarPantallaCocina, setUsarPantallaCocina)}
+                />
+                <ToggleSwitch
+                    value={enablePartialPayment}
+                    label="Pagos Parciales"
+                    description={enablePartialPayment
+                        ? 'Activado: Permite ingresar un monto específico al cobrar, dividiendo la cuenta en varios métodos de pago.'
+                        : 'Desactivado: Seleccionar un método de pago procesa instantáneamente el monto total restante (Cobro Rápido).'}
+                    onToggle={() => handleToggle('enablePartialPayment', !enablePartialPayment, setEnablePartialPayment)}
                 />
             </section>
 

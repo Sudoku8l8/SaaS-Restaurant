@@ -80,6 +80,7 @@ export interface RestaurantConfig {
     enableTables?: boolean;            // Activar módulo de mesas (default: true)
     enableKitchenOrders?: boolean;     // Activar comandas de cocina (default: true)
     enableQuickSale?: boolean;         // Activar ventas rápidas POS (default: false)
+    enablePartialPayment?: boolean;    // Activar pagos parciales / divididos (default: true)
     menuSpanishUrl?: string;
     menuEnglishUrl?: string;
     // Native Digital Menu
