@@ -1,18 +1,18 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { db } from '@/services/firebase/config';
-import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
+import { useProductCache } from '@/hooks/useProductCache';
 import { Button, Input, Card, Badge } from '@/components/shared';
 import { Trash2, Edit2, ChefHat, Plus, X, Settings2, Search } from 'lucide-react';
-import type { Product, Category, InventoryType, UnitOfMeasure, ProductModifier, ModifierOption } from '@/types';
+import type { Product, InventoryType, UnitOfMeasure, ProductModifier, ModifierOption } from '@/types';
 import { UnitOfMeasure as UC } from '@/types';
 import { RecipeModal } from './RecipeModal';
 import { generateUUID } from '@/utils/uuid';
 
 export function ProductsTab() {
     const { user } = useAuth();
-    const [products, setProducts] = useState<Product[]>([]);
-    const [categories, setCategories] = useState<Category[]>([]);
+    const { products, categories, refresh: refreshCache } = useProductCache(user?.restaurantId);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     const [recipeModalOpen, setRecipeModalOpen] = useState(false);
@@ -82,40 +82,14 @@ export function ProductsTab() {
         { tag: 'nut-free', label: '🥜 Sin Nueces' },
     ];
 
-    useEffect(() => {
-        if (!user?.restaurantId) return;
-
-        const pQuery = query(
-            collection(db, 'products'),
-            where('restaurantId', '==', user.restaurantId)
-        );
-
-        const unsubscribeProducts = onSnapshot(pQuery, (snapshot) => {
-            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
-            setProducts(data);
-        });
-
-        // Fetch Categories
-        const cQuery = query(
-            collection(db, 'categories'),
-            where('restaurantId', '==', user.restaurantId)
-        );
-
-        const unsubscribeCategories = onSnapshot(cQuery, (snapshot) => {
-            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category));
-            setCategories(data.sort((a, b) => a.name.localeCompare(b.name)));
-
-            // Set initial category if not set
-            if (data.length > 0 && !formData.category) {
-                setFormData(prev => ({ ...prev, category: data[0].name }));
-            }
-        });
-
-        return () => {
-            unsubscribeProducts();
-            unsubscribeCategories();
-        };
-    }, [user?.restaurantId]);
+    // Set initial category when categories load from cache
+    const categoriesKey = categories.map(c => c.id).join(',');
+    useMemo(() => {
+        if (categories.length > 0 && !formData.category) {
+            setFormData(prev => ({ ...prev, category: categories[0].name }));
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [categoriesKey]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -147,6 +121,7 @@ export function ProductsTab() {
                 await addDoc(collection(db, 'products'), productData);
             }
 
+            await refreshCache();
             closeModal();
         } catch (error) {
             console.error(error);
@@ -157,6 +132,7 @@ export function ProductsTab() {
     const handleDelete = async (id: string) => {
         if (confirm('¿Eliminar producto?')) {
             await deleteDoc(doc(db, 'products', id));
+            await refreshCache();
         }
     };
 

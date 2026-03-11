@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { db } from '@/services/firebase/config';
 import {
-    collection, query, where, getDocs, onSnapshot,
+    collection, query, where, getDocs,
     doc, setDoc, deleteDoc
 } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
@@ -41,12 +41,15 @@ export function RecipeModal({ productId, productName, isOpen, onClose }: Props) 
     useEffect(() => {
         if (!user?.restaurantId || !isOpen) return;
 
-        const q = query(
-            collection(db, 'inventory_items'),
-            where('restaurantId', '==', user.restaurantId)
-        );
+        let cancelled = false;
 
-        const unsubscribe = onSnapshot(q, (snap) => {
+        const fetchItems = async () => {
+            const q = query(
+                collection(db, 'inventory_items'),
+                where('restaurantId', '==', user.restaurantId)
+            );
+            const snap = await getDocs(q);
+            if (cancelled) return;
             const data = snap.docs.map(d => ({
                 id: d.id,
                 ...d.data(),
@@ -55,9 +58,11 @@ export function RecipeModal({ productId, productName, isOpen, onClose }: Props) 
             } as InventoryItem));
             data.sort((a, b) => a.name.localeCompare(b.name));
             setItems(data);
-        });
+        };
 
-        return () => unsubscribe();
+        fetchItems();
+
+        return () => { cancelled = true; };
     }, [user?.restaurantId, isOpen]);
 
     // Load existing recipe

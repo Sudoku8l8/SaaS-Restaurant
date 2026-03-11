@@ -1,17 +1,17 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { db } from '@/services/firebase/config';
 import {
-    collection, query, where, onSnapshot,
-    addDoc, doc, deleteDoc, updateDoc, serverTimestamp, writeBatch
+    collection, addDoc, doc, deleteDoc, updateDoc, serverTimestamp, writeBatch
 } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
+import { useProductCache } from '@/hooks/useProductCache';
 import { Button, Input } from '@/components/shared';
 import { Trash2, FolderPlus, GripVertical, Save, Info } from 'lucide-react';
 import type { Category } from '@/types';
 
 export function CategoriesTab() {
     const { user } = useAuth();
-    const [categories, setCategories] = useState<Category[]>([]);
+    const { categories, refresh: refreshCache } = useProductCache(user?.restaurantId);
     const [localOrder, setLocalOrder] = useState<Category[]>([]);
     const [newCategoryName, setNewCategoryName] = useState('');
     const [newCategoryNameEn, setNewCategoryNameEn] = useState('');
@@ -23,38 +23,18 @@ export function CategoriesTab() {
     const dragIndex = useRef<number | null>(null);
     const dragOverIndex = useRef<number | null>(null);
 
-    useEffect(() => {
-        if (!user?.restaurantId) return;
-
-        const q = query(
-            collection(db, 'categories'),
-            where('restaurantId', '==', user.restaurantId)
-        );
-
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const data = snapshot.docs.map(d => ({
-                id: d.id,
-                ...d.data(),
-                createdAt: d.data().createdAt?.toDate()
-            } as Category));
-
-            // Sort by sortOrder first, then alphabetically as fallback
-            const sorted = data.sort((a, b) => {
-                if (a.sortOrder !== undefined && b.sortOrder !== undefined) {
-                    return a.sortOrder - b.sortOrder;
-                }
-                if (a.sortOrder !== undefined) return -1;
-                if (b.sortOrder !== undefined) return 1;
-                return a.name.localeCompare(b.name);
-            });
-
-            setCategories(sorted);
-            setLocalOrder(sorted);
-            setOrderDirty(false);
-        });
-
-        return () => unsubscribe();
-    }, [user?.restaurantId]);
+    // Sync localOrder from cache whenever categories change
+    const categoriesKey = categories.map(c => c.id + c.sortOrder).join(',');
+    const prevCategoriesKeyRef = useRef(categoriesKey);
+    if (categoriesKey !== prevCategoriesKeyRef.current) {
+        prevCategoriesKeyRef.current = categoriesKey;
+        setLocalOrder(categories);
+        setOrderDirty(false);
+    }
+    // Initialize on first render
+    if (localOrder.length === 0 && categories.length > 0) {
+        setLocalOrder(categories);
+    }
 
     // ── Add category ──────────────────────────────────────────────────────────
     const handleAddCategory = async (e: React.FormEvent) => {
@@ -70,6 +50,7 @@ export function CategoriesTab() {
                 sortOrder: localOrder.length, // append at end
                 createdAt: serverTimestamp()
             });
+            await refreshCache();
             setNewCategoryName('');
             setNewCategoryNameEn('');
         } catch (error) {
@@ -85,6 +66,7 @@ export function CategoriesTab() {
         if (confirm(`¿Eliminar la categoría "${name}"? Los productos asociados quedarán huérfanos.`)) {
             try {
                 await deleteDoc(doc(db, 'categories', id));
+                await refreshCache();
             } catch (error) {
                 console.error(error);
                 alert('Error al eliminar categoría');
@@ -100,6 +82,7 @@ export function CategoriesTab() {
                 name: newName.trim(),
                 nameEn: newNameEn.trim() || null
             });
+            await refreshCache();
         } catch (error) {
             console.error(error);
         }
@@ -147,6 +130,7 @@ export function CategoriesTab() {
                 batch.update(doc(db, 'categories', cat.id), { sortOrder: index });
             });
             await batch.commit();
+            await refreshCache();
             setOrderDirty(false);
         } catch (error) {
             console.error(error);

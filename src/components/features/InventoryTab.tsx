@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { db } from '@/services/firebase/config';
 import { collection, query, where, onSnapshot, updateDoc, doc, addDoc, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
+import { useProductCache } from '@/hooks/useProductCache';
 import { Button, Card, Badge, Input } from '@/components/shared';
 import { Search, Package, Box, AlertTriangle, AlertCircle, ClipboardList, ArrowUpDown, Plus, Edit2, Trash2 } from 'lucide-react';
 import type { Product, InventoryItem, UnitOfMeasure } from '@/types';
@@ -13,10 +14,11 @@ type SubTab = 'products' | 'items' | 'movements';
 
 export function InventoryTab() {
     const { user } = useAuth();
+    const { products: allProducts, refresh: refreshCache } = useProductCache(user?.restaurantId);
     const [subTab, setSubTab] = useState<SubTab>('products');
 
-    // Products state
-    const [products, setProducts] = useState<Product[]>([]);
+    // Products with stock control (derived from cache)
+    const products = allProducts.filter(p => p.controlaStock);
     const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterState, setFilterState] = useState<'all' | 'low' | 'critical'>('all');
@@ -49,23 +51,15 @@ export function InventoryTab() {
         { value: UnitConst.BOTTLE, label: 'Botellas' },
     ];
 
+    // Only listen to inventory_items in realtime (changes frequently during stock operations)
     useEffect(() => {
         if (!user?.restaurantId) return;
-
-        const pQuery = query(
-            collection(db, 'products'),
-            where('restaurantId', '==', user.restaurantId),
-            where('controlaStock', '==', true)
-        );
-        const unsub1 = onSnapshot(pQuery, (snap) => {
-            setProducts(snap.docs.map(d => ({ id: d.id, ...d.data() } as Product)));
-        });
 
         const iQuery = query(
             collection(db, 'inventory_items'),
             where('restaurantId', '==', user.restaurantId)
         );
-        const unsub2 = onSnapshot(iQuery, (snap) => {
+        const unsub = onSnapshot(iQuery, (snap) => {
             const data = snap.docs.map(d => ({
                 id: d.id, ...d.data(),
                 createdAt: d.data().createdAt?.toDate?.() || new Date(),
@@ -75,7 +69,7 @@ export function InventoryTab() {
             setInventoryItems(data);
         });
 
-        return () => { unsub1(); unsub2(); };
+        return () => { unsub(); };
     }, [user?.restaurantId]);
 
     // Stats
@@ -112,6 +106,7 @@ export function InventoryTab() {
             stockActual: qty,
             fechaActualizacionStock: getPeruNow(),
         });
+        await refreshCache();
         setAdjustProduct(null);
         setAdjustQty('');
     };

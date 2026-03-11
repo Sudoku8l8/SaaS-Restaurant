@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { db } from '@/services/firebase/config';
-import { collection, query, where, onSnapshot, addDoc, doc, deleteDoc, updateDoc, getDocs } from 'firebase/firestore';
+import { collection, query, where, addDoc, doc, deleteDoc, updateDoc, getDocs } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
 import { useBranch } from '@/app/providers/BranchProvider';
 import { useTenant } from '@/app/providers/TenantProvider';
@@ -37,13 +37,10 @@ export function UsersTab() {
         ? [tenant.id, ...tenant.branches]
         : [currentUser?.restaurantId || ''];
 
-    useEffect(() => {
+    const loadUsers = useCallback(async () => {
         if (!currentUser?.restaurantId) return;
 
-        // For multi-branch: listen to users across all branches
-        // For single: just current restaurant
         const idsToWatch = allRestaurantIds.filter(Boolean);
-
         if (idsToWatch.length === 0) return;
 
         // Firestore 'in' supports up to 30 values
@@ -51,14 +48,14 @@ export function UsersTab() {
             collection(db, 'users'),
             where('restaurantId', 'in', idsToWatch.slice(0, 30))
         );
-
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-            setUsers(data);
-        });
-
-        return () => unsubscribe();
+        const snapshot = await getDocs(q);
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+        setUsers(data);
     }, [currentUser?.restaurantId, allRestaurantIds.length]);
+
+    useEffect(() => {
+        loadUsers();
+    }, [loadUsers]);
 
     // Filter by branch
     const filteredUsers = filterBranch === 'all'
@@ -118,6 +115,7 @@ export function UsersTab() {
             } else {
                 await addDoc(collection(db, 'users'), userData);
             }
+            await loadUsers();
             closeModal();
         } catch (error) {
             console.error(error);
@@ -132,6 +130,7 @@ export function UsersTab() {
         }
         if (confirm('¿Eliminar usuario? Esta acción no se puede deshacer.')) {
             await deleteDoc(doc(db, 'users', id));
+            await loadUsers();
         }
     };
 

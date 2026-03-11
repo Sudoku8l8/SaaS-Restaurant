@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { ShoppingCart, Utensils, Search, Trash2, Printer, MessageSquare, Banknote } from 'lucide-react';
-import { db } from '@/services/firebase/config';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { generateUUID } from '@/utils/uuid';
+import { db } from '@/services/firebase/config';
+import { doc, getDoc } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrders } from '@/hooks/useOrders';
 import { useTenant } from '@/app/providers/TenantProvider';
-import type { Product, Category, Order, OrderItem, OrderPayment, RestaurantTable } from '@/types';
+import { useProductCache } from '@/hooks/useProductCache';
+import type { Product, Order, OrderItem, OrderPayment, RestaurantTable } from '@/types';
 import { Card, Button, Input } from '@/components/shared';
 import { PaymentModal } from '@/components/features/PaymentModal';
 import { printerService } from '@/services/printer/PrinterService';
@@ -28,8 +29,7 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string>('popular'); // Default to popular
     const [customerName, setCustomerName] = useState(initialOrder?.customerName || '');
-    const [products, setProducts] = useState<Product[]>([]);
-    const [categories, setCategories] = useState<Category[]>([]);
+    const { products, categories } = useProductCache(user?.restaurantId);
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
     const [mobileView, setMobileView] = useState<'menu' | 'cart'>('menu');
     const [isSaving, setIsSaving] = useState(false);
@@ -97,25 +97,6 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    // Fetch products and categories
-    useEffect(() => {
-        if (!user?.restaurantId) return;
-
-        const pQuery = query(collection(db, 'products'), where('restaurantId', '==', user.restaurantId));
-        const unsubscribeProducts = onSnapshot(pQuery, (snapshot) => {
-            setProducts(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Product)));
-        });
-
-        const cQuery = query(collection(db, 'categories'), where('restaurantId', '==', user.restaurantId));
-        const unsubscribeCategories = onSnapshot(cQuery, (snapshot) => {
-            setCategories(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Category)));
-        });
-
-        return () => {
-            unsubscribeProducts();
-            unsubscribeCategories();
-        };
-    }, [user?.restaurantId]);
 
     // Filter products
     // Si hay texto en el buscador → buscar en TODOS los productos (ignorar categoría)
@@ -296,7 +277,6 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
             if (printerService.autoPrint) {
                 try {
                     // Fetch the updated order with dailyNumber
-                    const { getDoc, doc } = await import('firebase/firestore');
                     const updatedOrderSnap = await getDoc(doc(db, 'orders', currentOrderId));
                     const orderToPrint = updatedOrderSnap.exists()
                         ? { ...updatedOrderSnap.data(), id: currentOrderId, createdAt: ensurePeruDate(updatedOrderSnap.data().createdAt) } as Order
@@ -322,7 +302,6 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                 }
             } else {
                 // If not auto-printing, still fetch to have the full object for manual Print button
-                const { getDoc, doc } = await import('firebase/firestore');
                 const updatedOrderSnap = await getDoc(doc(db, 'orders', currentOrderId));
                 if (updatedOrderSnap.exists()) {
                     setLastSavedOrder({ ...updatedOrderSnap.data(), id: currentOrderId, createdAt: ensurePeruDate(updatedOrderSnap.data().createdAt) } as Order);
