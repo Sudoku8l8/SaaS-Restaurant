@@ -6,8 +6,36 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useProductCache } from '@/hooks/useProductCache';
 import { Button, Input } from '@/components/shared';
-import { Trash2, FolderPlus, GripVertical, Save, Info } from 'lucide-react';
+import { Trash2, FolderPlus, GripVertical, Save, Info, Palette } from 'lucide-react';
 import type { Category } from '@/types';
+
+const DEFAULT_CATEGORY_COLORS = [
+    '#2563EB', '#059669', '#D97706', '#DC2626', '#7C3AED', '#0891B2',
+    '#EA580C', '#4F46E5', '#BE185D', '#15803D', '#64748B', '#A855F7',
+    '#DB2777', '#0D9488', '#CA8A04', '#6366F1',
+];
+
+function ColorPicker({ value, onChange }: { value: string; onChange: (c: string) => void }) {
+    return (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', padding: '4px 0' }}>
+            {DEFAULT_CATEGORY_COLORS.map(c => (
+                <button
+                    key={c}
+                    type="button"
+                    onClick={() => onChange(c)}
+                    style={{
+                        width: '28px', height: '28px', borderRadius: '50%',
+                        background: c, border: value === c ? '3px solid var(--text-primary)' : '2px solid transparent',
+                        cursor: 'pointer', transition: 'all 0.15s',
+                        outline: value === c ? '2px solid var(--background-color)' : 'none',
+                        transform: value === c ? 'scale(1.15)' : 'scale(1)',
+                    }}
+                    title={c}
+                />
+            ))}
+        </div>
+    );
+}
 
 export function CategoriesTab() {
     const { user } = useAuth();
@@ -15,6 +43,7 @@ export function CategoriesTab() {
     const [localOrder, setLocalOrder] = useState<Category[]>([]);
     const [newCategoryName, setNewCategoryName] = useState('');
     const [newCategoryNameEn, setNewCategoryNameEn] = useState('');
+    const [newCategoryColor, setNewCategoryColor] = useState(DEFAULT_CATEGORY_COLORS[0]);
     const [loading, setLoading] = useState(false);
     const [orderDirty, setOrderDirty] = useState(false);
     const [savingOrder, setSavingOrder] = useState(false);
@@ -47,12 +76,14 @@ export function CategoriesTab() {
                 restaurantId: user.restaurantId,
                 name: newCategoryName.trim(),
                 nameEn: newCategoryNameEn.trim() || null,
+                color: newCategoryColor,
                 sortOrder: localOrder.length, // append at end
                 createdAt: serverTimestamp()
             });
             await refreshCache();
             setNewCategoryName('');
             setNewCategoryNameEn('');
+            setNewCategoryColor(DEFAULT_CATEGORY_COLORS[(localOrder.length + 1) % DEFAULT_CATEGORY_COLORS.length]);
         } catch (error) {
             console.error(error);
             alert('Error al guardar categoría');
@@ -75,13 +106,15 @@ export function CategoriesTab() {
     };
 
     // ── Rename category ───────────────────────────────────────────────────────
-    const handleRename = async (id: string, newName: string, newNameEn: string) => {
+    const handleRename = async (id: string, newName: string, newNameEn: string, newColor?: string) => {
         if (!newName.trim()) return;
         try {
-            await updateDoc(doc(db, 'categories', id), {
+            const updates: Record<string, unknown> = {
                 name: newName.trim(),
                 nameEn: newNameEn.trim() || null
-            });
+            };
+            if (newColor) updates.color = newColor;
+            await updateDoc(doc(db, 'categories', id), updates);
             await refreshCache();
         } catch (error) {
             console.error(error);
@@ -159,28 +192,36 @@ export function CategoriesTab() {
             {/* Add form */}
             <div style={{ background: 'var(--surface-color)', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', marginBottom: '2rem', border: '1px solid var(--divider-color)' }}>
                 <h4 style={{ marginBottom: '1rem', fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>Agregar Nueva Categoría</h4>
-                <form onSubmit={handleAddCategory} style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem', alignItems: 'stretch' }}>
-                    <div style={{ flex: '1 1 250px' }}>
-                        <Input
-                            placeholder="Nombre en Español *"
-                            value={newCategoryName}
-                            onChange={e => setNewCategoryName(e.target.value)}
-                            required
-                            fullWidth
-                        />
+                <form onSubmit={handleAddCategory} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem', alignItems: 'stretch' }}>
+                        <div style={{ flex: '1 1 250px' }}>
+                            <Input
+                                placeholder="Nombre en Español *"
+                                value={newCategoryName}
+                                onChange={e => setNewCategoryName(e.target.value)}
+                                required
+                                fullWidth
+                            />
+                        </div>
+                        <div style={{ flex: '1 1 250px' }}>
+                            <Input
+                                placeholder="Nombre en Inglés (Opcional)"
+                                value={newCategoryNameEn}
+                                onChange={e => setNewCategoryNameEn(e.target.value)}
+                                fullWidth
+                            />
+                        </div>
                     </div>
-                    <div style={{ flex: '1 1 250px' }}>
-                        <Input
-                            placeholder="Nombre en Inglés (Opcional)"
-                            value={newCategoryNameEn}
-                            onChange={e => setNewCategoryNameEn(e.target.value)}
-                            fullWidth
-                        />
+                    <div>
+                        <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.4rem' }}>
+                            <Palette size={14} /> Color de Categoría
+                        </label>
+                        <ColorPicker value={newCategoryColor} onChange={setNewCategoryColor} />
                     </div>
                     <Button
                         type="submit"
                         disabled={loading || !newCategoryName.trim()}
-                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0, padding: '0 1.5rem' }}
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem', alignSelf: 'flex-start' }}
                     >
                         <FolderPlus size={18} /> Agregar
                     </Button>
@@ -236,7 +277,8 @@ export function CategoriesTab() {
                             onMoveUp={() => moveItem(index, 'up')}
                             onMoveDown={() => moveItem(index, 'down')}
                             onDelete={() => handleDelete(category.id, category.name)}
-                            onRename={(name, nameEn) => handleRename(category.id, name, nameEn)}
+                            onRename={(name, nameEn, color) => handleRename(category.id, name, nameEn, color)}
+                            defaultColors={DEFAULT_CATEGORY_COLORS}
                         />
                     ))
                 )}
@@ -262,24 +304,29 @@ interface CategoryRowProps {
     onMoveUp: () => void;
     onMoveDown: () => void;
     onDelete: () => void;
-    onRename: (name: string, nameEn: string) => void;
+    onRename: (name: string, nameEn: string, color?: string) => void;
+    defaultColors: string[];
 }
 
 function CategoryRow({
     category, index, total,
     onDragStart, onDragEnter, onDragEnd,
-    onMoveUp, onMoveDown, onDelete, onRename
+    onMoveUp, onMoveDown, onDelete, onRename, defaultColors
 }: CategoryRowProps) {
     const [editing, setEditing] = useState(false);
     const [editName, setEditName] = useState(category.name);
     const [editNameEn, setEditNameEn] = useState(category.nameEn || '');
+    const [editColor, setEditColor] = useState(category.color || defaultColors[index % defaultColors.length]);
     const [isDragOver, setIsDragOver] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
     const handleEditSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (editName.trim() && (editName.trim() !== category.name || editNameEn.trim() !== (category.nameEn || ''))) {
-            onRename(editName.trim(), editNameEn.trim());
+        const nameChanged = editName.trim() !== category.name;
+        const nameEnChanged = editNameEn.trim() !== (category.nameEn || '');
+        const colorChanged = editColor !== (category.color || defaultColors[index % defaultColors.length]);
+        if (editName.trim() && (nameChanged || nameEnChanged || colorChanged)) {
+            onRename(editName.trim(), editNameEn.trim(), editColor);
         }
         setEditing(false);
     };
@@ -319,7 +366,7 @@ function CategoryRow({
                 transition: 'all 0.2s ease',
             }}
         >
-            {/* ── Left Controls (Drag & Order) ── */}
+            {/* ── Left Controls (Drag, Color Badge & Order) ── */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexShrink: 0 }}>
                 <span style={{ color: '#ccc', cursor: 'grab', display: 'flex' }}
                     onMouseDown={(e) => { e.currentTarget.style.cursor = 'grabbing'; }}
@@ -328,11 +375,11 @@ function CategoryRow({
                     <GripVertical size={20} />
                 </span>
                 <span style={{
-                    width: '26px', height: '26px', borderRadius: '50%',
-                    background: 'rgba(0,0,0,0.04)',
-                    border: '1px solid var(--divider-color)',
+                    width: '28px', height: '28px', borderRadius: '8px',
+                    background: category.color || defaultColors[index % defaultColors.length],
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-secondary)',
+                    fontSize: '0.75rem', fontWeight: '800', color: '#fff',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
                 }}>
                     {index + 1}
                 </span>
@@ -376,8 +423,14 @@ function CategoryRow({
                                 />
                             </div>
                         </div>
+                        <div>
+                            <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.3rem' }}>
+                                <Palette size={12} /> Color
+                            </label>
+                            <ColorPicker value={editColor} onChange={setEditColor} />
+                        </div>
                         <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                            <Button type="button" variant="ghost" size="sm" onClick={() => { setEditName(category.name); setEditNameEn(category.nameEn || ''); setEditing(false); }}>
+                            <Button type="button" variant="ghost" size="sm" onClick={() => { setEditName(category.name); setEditNameEn(category.nameEn || ''); setEditColor(category.color || defaultColors[index % defaultColors.length]); setEditing(false); }}>
                                 Cancelar
                             </Button>
                             <Button type="submit" variant="primary" size="sm" style={{ fontWeight: 600 }}>

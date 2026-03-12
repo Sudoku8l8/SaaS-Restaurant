@@ -81,6 +81,8 @@ export interface RestaurantConfig {
     enableKitchenOrders?: boolean;     // Activar comandas de cocina (default: true)
     enableQuickSale?: boolean;         // Activar ventas rápidas POS (default: false)
     enablePartialPayment?: boolean;    // Activar pagos parciales / divididos (default: true)
+    // Order View Mode
+    orderViewMode?: 'classic' | 'quick'; // 'classic' = tabs, 'quick' = category grid UX (default: 'classic')
     menuSpanishUrl?: string;
     menuEnglishUrl?: string;
     // Native Digital Menu
@@ -178,6 +180,7 @@ export interface Category {
     restaurantId: string;
     name: string;
     nameEn?: string; // Optional English translation
+    color?: string;  // Hex color for category card (e.g. '#2563EB')
     createdAt: Date;
     sortOrder?: number; // Custom display order in the digital menu
 }

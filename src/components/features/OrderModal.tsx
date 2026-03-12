@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { ShoppingCart, Utensils, Search, Trash2, Printer, MessageSquare, Banknote } from 'lucide-react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { ShoppingCart, Utensils, Search, Trash2, Printer, MessageSquare, Banknote, ArrowLeft } from 'lucide-react';
 import { generateUUID } from '@/utils/uuid';
 import { db } from '@/services/firebase/config';
 import { doc, getDoc } from 'firebase/firestore';
@@ -25,11 +25,14 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
     const { user } = useAuth();
     const { createOrder, updateOrder, payOrder } = useOrders();
     const { tenant } = useTenant();
+    const orderViewMode = tenant?.config?.orderViewMode ?? 'classic';
     const [items, setItems] = useState<OrderItem[]>(initialOrder?.items || []);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string>('popular'); // Default to popular
     const [customerName, setCustomerName] = useState(initialOrder?.customerName || '');
     const { products, categories } = useProductCache(user?.restaurantId);
+    // Vista Rápida navigation state
+    const [quickViewState, setQuickViewState] = useState<'categories' | 'products'>('categories');
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
     const [mobileView, setMobileView] = useState<'menu' | 'cart'>('menu');
     const [isSaving, setIsSaving] = useState(false);
@@ -100,10 +103,14 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
 
     // Filter products
     // Si hay texto en el buscador → buscar en TODOS los productos (ignorar categoría)
+    // Búsqueda mejorada: busca por nombre de producto Y por nombre de categoría
     // Si NO hay texto → filtrar por categoría seleccionada
     const filteredProducts = products?.filter(p => {
         if (searchTerm.trim()) {
-            return p.name.toLowerCase().includes(searchTerm.toLowerCase());
+            const term = searchTerm.toLowerCase();
+            const matchesName = p.name.toLowerCase().includes(term);
+            const matchesCategory = p.category.toLowerCase().includes(term);
+            return matchesName || matchesCategory;
         }
         if (selectedCategory === 'popular') {
             return p.isPopular === true;
@@ -113,6 +120,46 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
 
     // Get dynamic categories
     const categoryTabs = ['popular', ...categories.map(c => c.name)];
+
+    // Category product counts for Vista Rápida grid
+    const categoryProductCounts = useMemo(() => {
+        if (!products) return {};
+        const counts: Record<string, number> = {};
+        products.forEach(p => {
+            counts[p.category] = (counts[p.category] || 0) + 1;
+        });
+        return counts;
+    }, [products]);
+
+    // Default colors for categories without a color set
+    const DEFAULT_COLORS = [
+        '#2563EB', '#059669', '#D97706', '#DC2626', '#7C3AED', '#0891B2',
+        '#EA580C', '#4F46E5', '#BE185D', '#15803D', '#64748B', '#A855F7',
+        '#DB2777', '#0D9488', '#CA8A04', '#6366F1',
+    ];
+
+    // Auto-switch to products view when search term is entered (Vista Rápida)
+    useEffect(() => {
+        if (orderViewMode === 'quick') {
+            if (searchTerm.trim()) {
+                setQuickViewState('products');
+            } else if (quickViewState === 'products' && !selectedCategory) {
+                setQuickViewState('categories');
+            }
+        }
+    }, [searchTerm, orderViewMode, quickViewState, selectedCategory]);
+
+    const handleCategorySelect = (catName: string) => {
+        setSelectedCategory(catName);
+        setQuickViewState('products');
+        setSearchTerm('');
+    };
+
+    const handleBackToCategories = () => {
+        setQuickViewState('categories');
+        setSelectedCategory('popular');
+        setSearchTerm('');
+    };
 
     // Permission Helpers
     const isWaiter = user?.role === 'waiter';
@@ -443,7 +490,7 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                 {isMobile && <button onClick={onClose} style={{ background: 'var(--divider-color)', border: 'none', color: 'var(--text-secondary)', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>}
                             </div>
 
-                            <div style={{ position: 'relative', width: '350px' }}>
+                            <div style={{ position: 'relative', width: isMobile ? '100%' : '350px' }}>
                                 <Search
                                     size={20}
                                     style={{
@@ -472,112 +519,329 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                             </div>
                         </div>
 
-                        {/* Category Tabs */}
-                        <div style={{
-                            display: 'flex',
-                            gap: '0.75rem',
-                            paddingBottom: '1rem',
-                            overflowX: 'auto',
-                            marginBottom: '1rem',
-                            scrollbarWidth: 'none'
-                        }}>
-                            {categoryTabs.map(cat => (
-                                <button
-                                    key={cat}
-                                    onClick={() => setSelectedCategory(cat)}
-                                    style={{
-                                        padding: '0.6rem 1.25rem',
-                                        borderRadius: 'var(--radius-full)',
-                                        border: '1px solid',
-                                        borderColor: selectedCategory === cat ? 'var(--primary-color)' : 'var(--border-color)',
-                                        background: selectedCategory === cat ? 'var(--primary-color)' : 'transparent',
-                                        color: selectedCategory === cat ? 'white' : 'var(--text-secondary)',
-                                        fontWeight: '600',
-                                        cursor: 'pointer',
-                                        whiteSpace: 'nowrap',
-                                        transition: 'all 0.2s',
-                                        fontSize: '0.85rem'
-                                    }}
-                                >
-                                    {cat === 'popular' ? '🔥 Populares' : cat}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Product Grid */}
-                        <div style={{
-                            flex: 1,
-                            overflowY: 'auto',
-                            display: 'grid',
-                            gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(180px, 1fr))',
-                            gap: '1rem',
-                            alignContent: 'start',
-                            padding: '4px'
-                        }}>
-                            {filteredProducts?.map(product => (
-                                <div
-                                    key={product.id}
-                                    onClick={() => addToOrder(product)}
-                                    style={{
-                                        backgroundColor: 'var(--surface-color)',
-                                        border: '1px solid var(--border-color)',
-                                        borderRadius: 'var(--radius-lg)',
-                                        padding: '1rem',
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        gap: '0.5rem',
-                                        transition: 'all 0.2s',
-                                        boxShadow: 'var(--shadow-sm)',
-                                        height: '140px',
-                                        justifyContent: 'space-between'
-                                    }}
-                                    onMouseEnter={e => {
-                                        e.currentTarget.style.borderColor = 'var(--primary-color)';
-                                        e.currentTarget.style.transform = 'translateY(-4px)';
-                                        e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                                    }}
-                                    onMouseLeave={e => {
-                                        e.currentTarget.style.borderColor = 'var(--border-color)';
-                                        e.currentTarget.style.transform = 'translateY(0)';
-                                        e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
-                                    }}
-                                >
+                        {/* ═══ VISTA RÁPIDA MODE ═══ */}
+                        {orderViewMode === 'quick' ? (
+                            <>
+                                {/* Back button when viewing products */}
+                                {quickViewState === 'products' && (
                                     <div style={{
-                                        fontWeight: '700',
-                                        fontSize: '0.95rem',
-                                        color: 'var(--text-primary)',
-                                        lineHeight: '1.3',
-                                        display: '-webkit-box',
-                                        WebkitLineClamp: 2,
-                                        WebkitBoxOrient: 'vertical',
-                                        overflow: 'hidden'
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.75rem',
+                                        marginBottom: '1rem',
+                                        paddingBottom: '0.75rem',
+                                        borderBottom: '1px solid var(--border-color)',
                                     }}>
-                                        {product.name}
+                                        <button
+                                            onClick={handleBackToCategories}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.5rem',
+                                                background: 'var(--divider-color)',
+                                                border: 'none',
+                                                color: 'var(--text-primary)',
+                                                cursor: 'pointer',
+                                                padding: '0.5rem 1rem',
+                                                borderRadius: 'var(--radius-md)',
+                                                fontWeight: '600',
+                                                fontSize: '0.9rem',
+                                                transition: 'all 0.2s',
+                                            }}
+                                            onMouseEnter={e => { e.currentTarget.style.background = 'var(--border-color)'; }}
+                                            onMouseLeave={e => { e.currentTarget.style.background = 'var(--divider-color)'; }}
+                                        >
+                                            <ArrowLeft size={18} /> Categorías
+                                        </button>
+                                        {!searchTerm.trim() && (
+                                            <span style={{
+                                                fontWeight: '700',
+                                                fontSize: '1.05rem',
+                                                color: 'var(--text-primary)',
+                                            }}>
+                                                {selectedCategory === 'popular' ? '🔥 Populares' : selectedCategory}
+                                            </span>
+                                        )}
+                                        {searchTerm.trim() && (
+                                            <span style={{
+                                                fontWeight: '600',
+                                                fontSize: '0.9rem',
+                                                color: 'var(--text-secondary)',
+                                            }}>
+                                                Resultados para "{searchTerm}"
+                                            </span>
+                                        )}
                                     </div>
+                                )}
 
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <span style={{ color: 'var(--primary-color)', fontWeight: '800', fontSize: '1.1rem' }}>
-                                            S/ {product.price.toFixed(2)}
-                                        </span>
-                                        <div style={{
-                                            width: '32px',
-                                            height: '32px',
-                                            borderRadius: '50%',
-                                            background: 'var(--divider-color)',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            color: 'var(--primary-color)',
-                                            fontSize: '1.2rem',
-                                            fontWeight: 'bold'
-                                        }}>
-                                            +
-                                        </div>
+                                {/* Category Grid (only when in categories state and no search) */}
+                                {quickViewState === 'categories' && !searchTerm.trim() ? (
+                                    <div style={{
+                                        flex: 1,
+                                        overflowY: 'auto',
+                                        display: 'grid',
+                                        gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(140px, 1fr))',
+                                        gap: '0.75rem',
+                                        alignContent: 'start',
+                                        padding: '4px',
+                                    }}>
+                                        {/* Popular category card */}
+                                        <button
+                                            onClick={() => handleCategorySelect('popular')}
+                                            style={{
+                                                background: 'linear-gradient(135deg, #F59E0B, #D97706)',
+                                                border: 'none',
+                                                borderRadius: 'var(--radius-lg)',
+                                                padding: '1.25rem 1rem',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '0.5rem',
+                                                color: '#fff',
+                                                minHeight: '110px',
+                                                transition: 'all 0.2s',
+                                                boxShadow: '0 2px 8px rgba(217, 119, 6, 0.3)',
+                                            }}
+                                            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(217, 119, 6, 0.4)'; }}
+                                            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(217, 119, 6, 0.3)'; }}
+                                        >
+                                            <span style={{ fontSize: '1.5rem' }}>🔥</span>
+                                            <span style={{ fontWeight: '800', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' }}>POPULARES</span>
+                                        </button>
+
+                                        {/* Dynamic category cards */}
+                                        {categories.map((cat, idx) => {
+                                            const color = cat.color || DEFAULT_COLORS[idx % DEFAULT_COLORS.length];
+                                            const count = categoryProductCounts[cat.name] || 0;
+                                            return (
+                                                <button
+                                                    key={cat.id}
+                                                    onClick={() => handleCategorySelect(cat.name)}
+                                                    style={{
+                                                        background: color,
+                                                        border: 'none',
+                                                        borderRadius: 'var(--radius-lg)',
+                                                        padding: '1.25rem 0.75rem',
+                                                        cursor: 'pointer',
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        gap: '0.4rem',
+                                                        color: '#fff',
+                                                        minHeight: '110px',
+                                                        transition: 'all 0.2s',
+                                                        boxShadow: `0 2px 8px ${color}40`,
+                                                    }}
+                                                    onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = `0 6px 16px ${color}50`; }}
+                                                    onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = `0 2px 8px ${color}40`; }}
+                                                >
+                                                    <span style={{ fontWeight: '800', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center', lineHeight: 1.2, wordBreak: 'break-word' }}>
+                                                        {cat.name}
+                                                    </span>
+                                                    <span style={{ fontSize: '0.75rem', opacity: 0.85, fontWeight: '600' }}>
+                                                        {count} {count === 1 ? 'producto' : 'productos'}
+                                                    </span>
+                                                </button>
+                                            );
+                                        })}
                                     </div>
+                                ) : (
+                                    /* Product Grid (Vista Rápida — when category selected or searching) */
+                                    <div style={{
+                                        flex: 1,
+                                        overflowY: 'auto',
+                                        display: 'grid',
+                                        gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(180px, 1fr))',
+                                        gap: '1rem',
+                                        alignContent: 'start',
+                                        padding: '4px'
+                                    }}>
+                                        {filteredProducts?.length === 0 && (
+                                            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-secondary)' }}>
+                                                <Search size={40} strokeWidth={1} style={{ marginBottom: '0.75rem', opacity: 0.3 }} />
+                                                <p style={{ fontWeight: '600', margin: 0 }}>No se encontraron productos</p>
+                                            </div>
+                                        )}
+                                        {filteredProducts?.map(product => (
+                                            <div
+                                                key={product.id}
+                                                onClick={() => addToOrder(product)}
+                                                style={{
+                                                    backgroundColor: 'var(--surface-color)',
+                                                    border: '1px solid var(--border-color)',
+                                                    borderRadius: 'var(--radius-lg)',
+                                                    padding: '1rem',
+                                                    cursor: 'pointer',
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    gap: '0.5rem',
+                                                    transition: 'all 0.2s',
+                                                    boxShadow: 'var(--shadow-sm)',
+                                                    height: '140px',
+                                                    justifyContent: 'space-between'
+                                                }}
+                                                onMouseEnter={e => {
+                                                    e.currentTarget.style.borderColor = 'var(--primary-color)';
+                                                    e.currentTarget.style.transform = 'translateY(-4px)';
+                                                    e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                                                }}
+                                                onMouseLeave={e => {
+                                                    e.currentTarget.style.borderColor = 'var(--border-color)';
+                                                    e.currentTarget.style.transform = 'translateY(0)';
+                                                    e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                                                }}
+                                            >
+                                                <div style={{
+                                                    fontWeight: '700',
+                                                    fontSize: '0.95rem',
+                                                    color: 'var(--text-primary)',
+                                                    lineHeight: '1.3',
+                                                    display: '-webkit-box',
+                                                    WebkitLineClamp: 2,
+                                                    WebkitBoxOrient: 'vertical',
+                                                    overflow: 'hidden'
+                                                }}>
+                                                    {product.name}
+                                                </div>
+
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                    <span style={{ color: 'var(--primary-color)', fontWeight: '800', fontSize: '1.1rem' }}>
+                                                        S/ {product.price.toFixed(2)}
+                                                    </span>
+                                                    <div style={{
+                                                        width: '32px',
+                                                        height: '32px',
+                                                        borderRadius: '50%',
+                                                        background: 'var(--divider-color)',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        color: 'var(--primary-color)',
+                                                        fontSize: '1.2rem',
+                                                        fontWeight: 'bold'
+                                                    }}>
+                                                        +
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            /* ═══ VISTA CLÁSICA MODE (original) ═══ */
+                            <>
+                                {/* Category Tabs */}
+                                <div style={{
+                                    display: 'flex',
+                                    gap: '0.75rem',
+                                    paddingBottom: '1rem',
+                                    overflowX: 'auto',
+                                    marginBottom: '1rem',
+                                    scrollbarWidth: 'none'
+                                }}>
+                                    {categoryTabs.map(cat => (
+                                        <button
+                                            key={cat}
+                                            onClick={() => setSelectedCategory(cat)}
+                                            style={{
+                                                padding: '0.6rem 1.25rem',
+                                                borderRadius: 'var(--radius-full)',
+                                                border: '1px solid',
+                                                borderColor: selectedCategory === cat ? 'var(--primary-color)' : 'var(--border-color)',
+                                                background: selectedCategory === cat ? 'var(--primary-color)' : 'transparent',
+                                                color: selectedCategory === cat ? 'white' : 'var(--text-secondary)',
+                                                fontWeight: '600',
+                                                cursor: 'pointer',
+                                                whiteSpace: 'nowrap',
+                                                transition: 'all 0.2s',
+                                                fontSize: '0.85rem'
+                                            }}
+                                        >
+                                            {cat === 'popular' ? '🔥 Populares' : cat}
+                                        </button>
+                                    ))}
                                 </div>
-                            ))}
-                        </div>
+
+                                {/* Product Grid */}
+                                <div style={{
+                                    flex: 1,
+                                    overflowY: 'auto',
+                                    display: 'grid',
+                                    gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(180px, 1fr))',
+                                    gap: '1rem',
+                                    alignContent: 'start',
+                                    padding: '4px'
+                                }}>
+                                    {filteredProducts?.map(product => (
+                                        <div
+                                            key={product.id}
+                                            onClick={() => addToOrder(product)}
+                                            style={{
+                                                backgroundColor: 'var(--surface-color)',
+                                                border: '1px solid var(--border-color)',
+                                                borderRadius: 'var(--radius-lg)',
+                                                padding: '1rem',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                gap: '0.5rem',
+                                                transition: 'all 0.2s',
+                                                boxShadow: 'var(--shadow-sm)',
+                                                height: '140px',
+                                                justifyContent: 'space-between'
+                                            }}
+                                            onMouseEnter={e => {
+                                                e.currentTarget.style.borderColor = 'var(--primary-color)';
+                                                e.currentTarget.style.transform = 'translateY(-4px)';
+                                                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                                            }}
+                                            onMouseLeave={e => {
+                                                e.currentTarget.style.borderColor = 'var(--border-color)';
+                                                e.currentTarget.style.transform = 'translateY(0)';
+                                                e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                                            }}
+                                        >
+                                            <div style={{
+                                                fontWeight: '700',
+                                                fontSize: '0.95rem',
+                                                color: 'var(--text-primary)',
+                                                lineHeight: '1.3',
+                                                display: '-webkit-box',
+                                                WebkitLineClamp: 2,
+                                                WebkitBoxOrient: 'vertical',
+                                                overflow: 'hidden'
+                                            }}>
+                                                {product.name}
+                                            </div>
+
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <span style={{ color: 'var(--primary-color)', fontWeight: '800', fontSize: '1.1rem' }}>
+                                                    S/ {product.price.toFixed(2)}
+                                                </span>
+                                                <div style={{
+                                                    width: '32px',
+                                                    height: '32px',
+                                                    borderRadius: '50%',
+                                                    background: 'var(--divider-color)',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    color: 'var(--primary-color)',
+                                                    fontSize: '1.2rem',
+                                                    fontWeight: 'bold'
+                                                }}>
+                                                    +
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </>
+                        )}
                     </div>
 
                     {/* RIGHT PANEL: Summary Sidebar */}

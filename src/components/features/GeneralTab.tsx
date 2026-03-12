@@ -3,7 +3,7 @@ import { db } from '@/services/firebase/config';
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { useTenant } from '@/app/providers/TenantProvider';
 import { Card, Button, Input } from '@/components/shared';
-import { Settings, ToggleLeft, ToggleRight, Building2, Plus, Package, MapPin, AlertTriangle, Store } from 'lucide-react';
+import { Settings, ToggleLeft, ToggleRight, Building2, Plus, Package, MapPin, AlertTriangle, Store, LayoutGrid, List } from 'lucide-react';
 import type { Restaurant, RestaurantConfig, BusinessType } from '@/types';
 import { BusinessType as BT } from '@/types';
 
@@ -13,6 +13,7 @@ export function GeneralTab() {
     const [usarPantallaCocina, setUsarPantallaCocina] = useState(false);
     const [multiSucursal, setMultiSucursal] = useState(false);
     const [outOfStockBehavior, setOutOfStockBehavior] = useState<'allow' | 'alert'>('alert');
+    const [orderViewMode, setOrderViewMode] = useState<'classic' | 'quick'>('classic');
     const [isSaving, setIsSaving] = useState(false);
 
     // Sector / Business Type state
@@ -34,6 +35,7 @@ export function GeneralTab() {
             setUsarPantallaCocina(tenant.config.usarPantallaCocina ?? false);
             setMultiSucursal(tenant.config.multiSucursal ?? false);
             setOutOfStockBehavior(tenant.config.outOfStockBehavior ?? 'alert');
+            setOrderViewMode(tenant.config.orderViewMode ?? 'classic');
             setBusinessType((tenant.config.businessType as BusinessType) ?? BT.RESTAURANT);
             setEnableTables(tenant.config.enableTables ?? true);
             setEnableKitchenOrders(tenant.config.enableKitchenOrders ?? true);
@@ -312,6 +314,77 @@ export function GeneralTab() {
                         : 'Desactivado: Seleccionar un método de pago procesa instantáneamente el monto total restante (Cobro Rápido).'}
                     onToggle={() => handleToggle('enablePartialPayment', !enablePartialPayment, setEnablePartialPayment)}
                 />
+
+                {/* Order View Mode Selector */}
+                <Card style={{ padding: '1.25rem 1.5rem', marginBottom: '1rem' }}>
+                    <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <LayoutGrid size={18} /> Vista de Pedidos
+                    </div>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+                        Elige cómo se muestra el menú al tomar pedidos.
+                    </p>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        {([
+                            {
+                                value: 'quick' as const,
+                                label: 'Vista Rápida',
+                                icon: LayoutGrid,
+                                desc: 'Grid de categorías con colores. Al seleccionar una categoría se muestran sus productos. Ideal para mozos profesionales.'
+                            },
+                            {
+                                value: 'classic' as const,
+                                label: 'Vista Clásica',
+                                icon: List,
+                                desc: 'Tabs horizontales con lista de productos visible. Vista tradicional de punto de venta.'
+                            },
+                        ]).map(opt => {
+                            const Icon = opt.icon;
+                            return (
+                                <label
+                                    key={opt.value}
+                                    style={{
+                                        display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
+                                        padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)',
+                                        border: `1.5px solid ${orderViewMode === opt.value ? 'var(--primary-color)' : 'var(--divider-color)'}`,
+                                        background: orderViewMode === opt.value ? 'rgba(37, 99, 235, 0.04)' : 'transparent',
+                                        cursor: isSaving ? 'wait' : 'pointer', transition: 'all 0.15s',
+                                    }}
+                                >
+                                    <input
+                                        type="radio"
+                                        name="orderViewMode"
+                                        checked={orderViewMode === opt.value}
+                                        onChange={async () => {
+                                            if (!tenant || isSaving) return;
+                                            setOrderViewMode(opt.value);
+                                            try {
+                                                setIsSaving(true);
+                                                await updateDoc(doc(db, 'restaurants', tenant.id), {
+                                                    'config.orderViewMode': opt.value,
+                                                });
+                                            } catch (error) {
+                                                console.error('Error saving order view mode:', error);
+                                                alert('Error al guardar la vista de pedidos');
+                                                setOrderViewMode(orderViewMode);
+                                            } finally {
+                                                setIsSaving(false);
+                                            }
+                                        }}
+                                        style={{ marginTop: '2px' }}
+                                    />
+                                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', flex: 1 }}>
+                                        <Icon size={18} style={{ marginTop: '1px', color: orderViewMode === opt.value ? 'var(--primary-color)' : 'var(--text-secondary)', flexShrink: 0 }} />
+                                        <div>
+                                            <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>{opt.label}</div>
+                                            <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>{opt.desc}</div>
+                                        </div>
+                                    </div>
+                                </label>
+                            );
+                        })}
+                    </div>
+                </Card>
             </section>
 
             {/* Multi-Sucursal Toggle */}
