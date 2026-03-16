@@ -55,30 +55,30 @@ export function LoginPage() {
             padding: '1rem'
         }}>
             <div className="glass-card" style={{
-                width: '100%', maxWidth: '380px', padding: '2.5rem 2rem',
-                borderRadius: 'var(--radius-2xl)', display: 'flex', flexDirection: 'column', gap: '2rem'
+                width: '100%', maxWidth: '380px', padding: '1.5rem',
+                borderRadius: 'var(--radius-2xl)', display: 'flex', flexDirection: 'column', gap: '1.25rem'
             }}>
                 <div style={{ textAlign: 'center' }}>
                     <div style={{
-                        width: '56px', height: '56px', borderRadius: '50%',
+                        width: '48px', height: '48px', borderRadius: '50%',
                         background: 'linear-gradient(135deg, var(--accent-blue), var(--accent-violet))',
                         color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        margin: '0 auto 1.25rem', boxShadow: '0 8px 16px rgba(37, 99, 235, 0.25)'
+                        margin: '0 auto 1rem', boxShadow: '0 8px 16px rgba(37, 99, 235, 0.25)'
                     }}>
-                        <Lock size={28} />
+                        <Lock size={24} />
                     </div>
                     <h1 style={{
-                        margin: 0, fontFamily: 'var(--font-heading)', fontSize: '1.75rem',
+                        margin: 0, fontFamily: 'var(--font-heading)', fontSize: '1.5rem',
                         fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em'
                     }}>
                         Ingreso al Sistema
                     </h1>
-                    <p style={{ margin: '0.5rem 0 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                        Ingresa tu PIN de 4 dígitos
+                    <p style={{ margin: '0.25rem 0 0', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                        Ingresa tu PIN
                     </p>
                 </div>
 
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <div style={{
                         background: 'var(--surface-color)', borderRadius: 'var(--radius-lg)',
                         border: '1px solid var(--glass-border)', padding: '0.5rem'
@@ -98,14 +98,14 @@ export function LoginPage() {
                         />
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
                         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
                             <button
                                 key={num}
                                 type="button"
                                 onClick={() => handleNumPadClick(num.toString())}
                                 style={{
-                                    height: '64px', fontSize: '1.5rem', fontWeight: 600,
+                                    height: '56px', fontSize: '1.25rem', fontWeight: 600,
                                     background: 'var(--surface-color)', border: '1px solid var(--border-color)',
                                     color: 'var(--text-primary)', borderRadius: 'var(--radius-md)',
                                     cursor: 'pointer', transition: 'all 0.15s'
@@ -128,7 +128,7 @@ export function LoginPage() {
                             type="button"
                             onClick={handleClear}
                             style={{
-                                height: '64px', fontSize: '1.25rem', fontWeight: 700,
+                                height: '56px', fontSize: '1.1rem', fontWeight: 700,
                                 background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)',
                                 color: 'var(--danger-color)', borderRadius: 'var(--radius-md)',
                                 cursor: 'pointer', transition: 'all 0.15s'
@@ -142,7 +142,7 @@ export function LoginPage() {
                             type="button"
                             onClick={() => handleNumPadClick('0')}
                             style={{
-                                height: '64px', fontSize: '1.5rem', fontWeight: 600,
+                                height: '56px', fontSize: '1.25rem', fontWeight: 600,
                                 background: 'var(--surface-color)', border: '1px solid var(--border-color)',
                                 color: 'var(--text-primary)', borderRadius: 'var(--radius-md)', cursor: 'pointer',
                                 transition: 'all 0.15s'
@@ -164,7 +164,7 @@ export function LoginPage() {
                             type="button"
                             onClick={handleBackspace}
                             style={{
-                                height: '64px', fontSize: '1.25rem', fontWeight: 700,
+                                height: '56px', fontSize: '1.1rem', fontWeight: 700,
                                 background: 'var(--surface-color)', border: '1px solid var(--border-color)',
                                 color: 'var(--text-secondary)', borderRadius: 'var(--radius-md)', cursor: 'pointer',
                                 transition: 'all 0.15s'
@@ -185,16 +185,16 @@ export function LoginPage() {
                     <Button
                         type="submit"
                         fullWidth
-                        size="lg"
+                        size="md"
                         variant="secondary" // Usando el gradiente
                         isLoading={isLoading}
                         disabled={pin.length < 4}
-                        style={{ marginTop: '0.5rem', height: '56px', fontSize: '1.1rem' }}
+                        style={{ marginTop: '0.25rem', height: '48px', fontSize: '1rem' }}
                     >
                         Ingresar
                     </Button>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.5rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.25rem' }}>
                         <button
                             type="button"
                             onClick={() => {
