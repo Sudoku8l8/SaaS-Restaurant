@@ -49,7 +49,7 @@ export function MozoPage() {
         };
     }, [isMenuOpen]);
 
-    const takeoutOrders = activeOrders?.filter(o => o.orderType === 'takeout') || [];
+    const takeoutOrders = activeOrders?.filter(o => o.orderType === 'takeout' || o.orderType === 'quick-sale') || [];
 
     // Synthesize the "New Takeout" Card
     const newTakeoutCard: RestaurantTable = {

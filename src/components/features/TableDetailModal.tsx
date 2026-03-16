@@ -71,11 +71,11 @@ export function TableDetailModal({ table, onClose, onEdit }: TableDetailModalPro
                             lineHeight: 1
                         }}>
                             <Table2 size={16} />
-                            <span>{isTakeout ? 'LL' : table.number}</span>
+                            <span>{isTakeout ? (activeOrder?.orderType === 'quick-sale' ? 'VR' : 'LL') : table.number}</span>
                         </div>
                         <div>
                             <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-primary)' }}>
-                                {isTakeout ? 'Para Llevar' : `Mesa ${table.number}`}
+                                {isTakeout ? (activeOrder?.orderType === 'quick-sale' ? 'Venta Rápida' : 'Para Llevar') : `Mesa ${table.number}`}
                             </h3>
                             <span style={{ fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', color: statusColor, letterSpacing: '0.05em' }}>
                                 {isFree ? (isTakeout ? 'Completado' : 'Disponible') : 'En Servicio'}
