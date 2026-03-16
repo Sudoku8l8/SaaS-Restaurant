@@ -1,10 +1,12 @@
 .card {
-    background-color: var(--surface-color);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--border-color);
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border-radius: var(--radius-xl);
+    box-shadow: var(--glass-shadow);
+    border: 1px solid var(--glass-border);
     overflow: hidden;
-    transition: box-shadow var(--transition-speed);
+    transition: box-shadow var(--transition-speed), transform var(--transition-speed);
 }
 
 .clickable {
@@ -12,24 +14,14 @@
 }
 
 .clickable:hover {
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
 }
 
-.padding-none {
-    padding: 0;
-}
-
-.padding-sm {
-    padding: var(--spacing-sm);
-}
-
-.padding-md {
-    padding: var(--spacing-md);
-}
-
-.padding-lg {
-    padding: var(--spacing-lg);
-}
+.padding-none { padding: 0; }
+.padding-sm { padding: var(--spacing-sm); }
+.padding-md { padding: var(--spacing-md); }
+.padding-lg { padding: var(--spacing-lg); }
 
 .header {
     padding: var(--spacing-md);
@@ -48,3 +40,5 @@
     border-top: 1px solid var(--border-color);
     background-color: rgba(0, 0, 0, 0.02);
 }
+
+.content {}
