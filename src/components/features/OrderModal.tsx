@@ -873,13 +873,15 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                         )}
                     </div>
 
-                    {/* RIGHT PANEL: Summary Sidebar */}
+                    {/* RIGHT PANEL: Cart / Summary */}
                     <div style={{
-                        flex: isMobile ? 1 : 3,
+                        flex: isMobile ? 1 : 4, // Cambiado de 3 a 4 para darle ligeramente más peso relativo si es necesario, pero minWidth es la clave
+                        minWidth: isMobile ? '100%' : '340px', // Evita que se escurra en tablets (770px)
                         display: (!isMobile || mobileView === 'cart') ? 'flex' : 'none',
-                        backgroundColor: 'var(--background-color)',
                         flexDirection: 'column',
+                        background: 'var(--background-color)',
                         borderLeft: isMobile ? 'none' : '1px solid var(--border-color)',
+                        zIndex: 10,
                         overflow: 'hidden'
                     }}>
 
@@ -918,7 +920,7 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                         boxShadow: 'var(--shadow-sm)'
                                     }}>
                                         {/* Top Row: Name && Actions */}
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', flexWrap: 'wrap' }}>
                                             <div style={{ flex: 1, minWidth: 0 }}>
                                                 <div style={{ fontWeight: '700', color: 'var(--text-primary)', lineHeight: 1.2, wordBreak: 'break-word' }}>
                                                     {item.productName}
@@ -966,7 +968,7 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                             </div>
                                         </div>
 
-                                        {/* Middle Row: Options Toggle, Options List, Notes */}
+                                        {/* Middle Row: Options Toggle, Notes */}
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                             {item.selectedOptions && item.selectedOptions.length > 0 && (
                                                 <div>
@@ -1043,8 +1045,8 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                             )}
                                         </div>
 
-                                        {/* Bottom Row: Quantity Controls */}
-                                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 'auto' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 'auto', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                            {/* Quantity Controls */}
                                             <div style={{
                                                 display: 'flex',
                                                 alignItems: 'center',
@@ -1140,6 +1142,7 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                             justifyContent: 'center',
                                             gap: '0.5rem',
                                             animation: 'btn-glow 1.5s ease-in-out infinite alternate',
+                                            gridColumn: isMobile ? '1' : 'auto'
                                         }}
                                     >
                                         <Banknote size={22} /> Pagar
@@ -1159,7 +1162,8 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                             fontSize: '1.1rem',
                                             fontWeight: '700',
                                             boxShadow: (isSaved && !itemsChangedAfterSave) ? 'none' : '0 4px 12px rgba(142, 115, 91, 0.2)',
-                                            opacity: isSaving ? 0.7 : 1
+                                            opacity: isSaving ? 0.7 : 1,
+                                            gridColumn: isMobile ? '1' : 'auto'
                                         }}
                                     >
                                         {isSaving
