@@ -167,26 +167,23 @@ export function MozoPage() {
     ];
 
     return (
-        <div className="container mt-md">
+        <div className="container mt-md bg-mesh" style={{ minHeight: '100vh', paddingBottom: '2rem' }}>
             {/* Closure Banner */}
             {isClosed && (
-                <div style={{
-                    background: 'var(--danger-color)',
-                    color: 'white',
+                <div className="glass-card" style={{
+                    color: 'var(--danger-color)',
                     padding: 'var(--spacing-md) var(--spacing-lg)',
-                    borderRadius: 'var(--radius-md)',
                     marginBottom: 'var(--spacing-lg)',
+                    borderLeft: '5px solid var(--danger-color)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    boxShadow: 'var(--shadow-md)',
-                    border: '1px solid rgba(255,255,255,0.1)'
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
                         <Lock size={20} />
                         <div>
                             <strong style={{ display: 'block', fontSize: '1rem', letterSpacing: '0.05em' }}>SISTEMA CERRADO</strong>
-                            <p style={{ margin: 0, fontSize: '0.85rem', opacity: 0.9 }}>
+                            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                                 Las operaciones han finalizado por hoy.
                             </p>
                         </div>
@@ -210,7 +207,7 @@ export function MozoPage() {
                         fontSize: '1.4rem',
                         fontWeight: '800',
                         color: 'var(--text-primary)',
-                        fontFamily: 'var(--font-family)',
+                        fontFamily: 'var(--font-heading)',
                         lineHeight: 1.2,
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
@@ -224,11 +221,12 @@ export function MozoPage() {
                     display: 'flex',
                     alignItems: 'center',
                     gap: 'var(--spacing-sm)',
-                    background: 'var(--surface-color)',
+                    background: 'var(--glass-bg)',
+                    backdropFilter: 'blur(var(--glass-blur))',
+                    WebkitBackdropFilter: 'blur(var(--glass-blur))',
                     padding: '6px 10px',
                     borderRadius: 'var(--radius-md)',
-                    boxShadow: 'var(--shadow-sm)',
-                    border: '1px solid var(--border-color)',
+                    border: '1px solid var(--glass-border)',
                     flexShrink: 0
                 }}>
                     <NotificationBell />
@@ -253,10 +251,12 @@ export function MozoPage() {
                                 position: 'absolute',
                                 top: 'calc(100% + 8px)',
                                 right: 0,
-                                background: 'var(--surface-color)',
-                                border: '1px solid var(--border-color)',
-                                borderRadius: 'var(--radius-md)',
-                                boxShadow: 'var(--shadow-lg)',
+                                background: 'var(--glass-bg)',
+                                backdropFilter: 'blur(20px)',
+                                WebkitBackdropFilter: 'blur(20px)',
+                                border: '1px solid var(--glass-border)',
+                                borderRadius: '16px',
+                                boxShadow: '0 10px 40px rgba(0,0,0,0.12)',
                                 minWidth: '180px',
                                 zIndex: 1000,
                                 overflow: 'hidden',

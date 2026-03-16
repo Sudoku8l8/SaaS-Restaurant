@@ -29,10 +29,14 @@ const FilterButton = ({ label, isActive, count, onClick }: FilterButtonProps) =>
         <button
             onClick={onClick}
             style={{
-                backgroundColor: isActive ? 'var(--primary-color)' : 'var(--surface-color)',
+                background: isActive
+                    ? 'linear-gradient(135deg, var(--accent-blue), var(--accent-violet))'
+                    : 'var(--glass-bg)',
                 color: isActive ? 'white' : 'var(--text-secondary)',
                 border: '1px solid',
-                borderColor: isActive ? 'var(--primary-color)' : 'var(--border-color)',
+                borderColor: isActive ? 'transparent' : 'var(--glass-border)',
+                backdropFilter: isActive ? 'none' : 'blur(var(--glass-blur))',
+                WebkitBackdropFilter: isActive ? 'none' : 'blur(var(--glass-blur))',
                 padding: '0.65rem 1.25rem',
                 borderRadius: 'var(--radius-full)',
                 cursor: 'pointer',
@@ -40,8 +44,8 @@ const FilterButton = ({ label, isActive, count, onClick }: FilterButtonProps) =>
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.75rem',
-                transition: 'all 0.2s',
-                boxShadow: isActive ? 'var(--shadow-md)' : 'var(--shadow-sm)',
+                transition: 'all 0.25s ease',
+                boxShadow: isActive ? 'var(--shadow-md)' : 'none',
                 fontSize: '0.9rem',
                 flexShrink: 0
             }}
@@ -49,7 +53,7 @@ const FilterButton = ({ label, isActive, count, onClick }: FilterButtonProps) =>
             {label}
             {count > 0 && (
                 <span style={{
-                    backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : 'var(--divider-color)',
+                    backgroundColor: isActive ? 'rgba(255,255,255,0.25)' : 'var(--divider-color)',
                     color: isActive ? 'white' : 'var(--text-primary)',
                     padding: '2px 8px',
                     borderRadius: 'var(--radius-full)',
@@ -150,7 +154,7 @@ export function CocinaPage() {
 
 
     return (
-        <div style={{ minHeight: '100vh', backgroundColor: 'var(--background-color)', paddingBottom: '3rem' }}>
+        <div className="bg-mesh" style={{ minHeight: '100vh', paddingBottom: '3rem' }}>
             {/* Header */}
             <style>{`
                 .cocina-layout-header {
@@ -182,10 +186,12 @@ export function CocinaPage() {
                     top: 100%;
                     right: 0;
                     margin-top: 0.5rem;
-                    background: var(--surface-color);
-                    border: 1px solid var(--border-color);
-                    border-radius: 12px;
-                    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+                    background: var(--glass-bg);
+                    backdrop-filter: blur(20px);
+                    -webkit-backdrop-filter: blur(20px);
+                    border: 1px solid var(--glass-border);
+                    border-radius: 16px;
+                    box-shadow: 0 10px 40px rgba(0,0,0,0.12);
                     min-width: 200px;
                     z-index: 50;
                     opacity: 0;
@@ -211,14 +217,14 @@ export function CocinaPage() {
                     background: transparent;
                     width: 100%;
                     text-align: left;
-                    border-radius: 8px;
+                    border-radius: 10px;
                     cursor: pointer;
                     font-size: 0.95rem;
                     font-weight: 600;
                     transition: background 0.15s;
                 }
                 .cocina-dropdown-item:hover {
-                    background: var(--background-color);
+                    background: var(--glass-bg);
                 }
                 .cocina-dropdown-item.danger {
                     color: var(--danger-color);
@@ -238,7 +244,7 @@ export function CocinaPage() {
                     }
                 }
             `}</style>
-            <div style={{ backgroundColor: 'var(--surface-color)', borderBottom: '1px solid var(--border-color)', padding: '1.25rem 0', marginBottom: '2.5rem', boxShadow: 'var(--shadow-sm)', position: 'relative', zIndex: 100 }}>
+            <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid var(--glass-border)', padding: '1.25rem 0', marginBottom: '2.5rem', position: 'relative', zIndex: 100 }}>
                 <div className="container cocina-layout-header">
                     <div className="cocina-layout-top">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flex: 1, minWidth: 0 }}>
@@ -253,7 +259,7 @@ export function CocinaPage() {
                                 <ChefHat size={24} />
                             </div>
                             <div style={{ minWidth: 0 }}>
-                                <h1 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.25rem', fontWeight: '800', letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                <h1 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.25rem', fontWeight: '800', letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: 'var(--font-heading)' }}>
                                     {user?.role === 'caja' ? 'Caja' : 'Cocina'}
                                 </h1>
                                 <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: '500', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -324,16 +330,12 @@ export function CocinaPage() {
             <div className="container">
                 {/* Closure Banner */}
                 {isClosed && (
-                    <div style={{
-                        background: 'var(--surface-color)',
+                    <div className="glass-card" style={{
                         color: 'var(--danger-color)',
                         padding: '1.25rem 2rem',
-                        borderRadius: 'var(--radius-lg)',
                         marginBottom: '2.5rem',
-                        border: '1px solid var(--border-color)',
                         borderLeft: '5px solid var(--danger-color)',
                         display: 'flex', alignItems: 'center', gap: '1.25rem',
-                        boxShadow: 'var(--shadow-md)'
                     }}>
                         <Lock size={22} />
                         <div>
@@ -414,7 +416,7 @@ export function CocinaPage() {
                     ))}
 
                     {activeOrders.length === 0 && (
-                        <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '6rem 2rem', color: 'var(--text-secondary)', background: 'var(--surface-color)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)', borderStyle: 'dashed' }}>
+                        <div className="glass-card" style={{ gridColumn: '1/-1', textAlign: 'center', padding: '6rem 2rem', color: 'var(--text-secondary)', borderStyle: 'dashed', border: '2px dashed var(--glass-border)' }}>
                             <div style={{ fontSize: '4.5rem', marginBottom: '1.5rem', opacity: 0.15 }}>⚡</div>
                             <h3 style={{ color: 'var(--text-primary)', marginBottom: '0.5rem', fontWeight: '800', fontSize: '1.25rem' }}>No hay pedidos en curso</h3>
                             <p style={{ fontWeight: '500' }}>Los pedidos que generen los mozos aparecerán aquí al instante.</p>

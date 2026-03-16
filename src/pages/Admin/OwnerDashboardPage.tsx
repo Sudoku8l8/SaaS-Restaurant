@@ -103,10 +103,10 @@ export function OwnerDashboardPage() {
     const totalAlerts = branchMetrics.reduce((sum, m) => sum + m.lowStockCount, 0);
 
     return (
-        <div className="container mt-md">
+        <div className="container mt-md bg-mesh" style={{ minHeight: '100vh', paddingBottom: '2rem' }}>
             <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <div>
-                    <h1 style={{ margin: 0, fontSize: '2rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <h1 style={{ margin: 0, fontSize: '2rem', display: 'flex', alignItems: 'center', gap: '0.75rem', fontFamily: 'var(--font-heading)', fontWeight: 800 }}>
                         <Building2 size={28} color="var(--primary-color)" />
                         Dashboard Consolidado
                     </h1>
@@ -127,7 +127,7 @@ export function OwnerDashboardPage() {
                 <>
                     {/* Summary KPIs */}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '2.5rem' }}>
-                        <Card style={{ padding: '1.5rem', textAlign: 'center', borderTop: '3px solid var(--primary-color)' }}>
+                        <Card className="glass-card" style={{ padding: '1.5rem', textAlign: 'center', borderTop: '3px solid var(--primary-color)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                                 <DollarSign size={18} /> Ventas Totales del Día
                             </div>
@@ -136,29 +136,29 @@ export function OwnerDashboardPage() {
                             </div>
                         </Card>
 
-                        <Card style={{ padding: '1.5rem', textAlign: 'center', borderTop: '3px solid #10b981' }}>
+                        <Card className="glass-card" style={{ padding: '1.5rem', textAlign: 'center', borderTop: '3px solid var(--success-color)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                                 <TrendingUp size={18} /> Pedidos del Día
                             </div>
-                            <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#10b981' }}>
+                            <div style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--success-color)' }}>
                                 {totalOrdersAll}
                             </div>
                         </Card>
 
-                        <Card style={{ padding: '1.5rem', textAlign: 'center', borderTop: '3px solid #f59e0b' }}>
+                        <Card className="glass-card" style={{ padding: '1.5rem', textAlign: 'center', borderTop: '3px solid var(--accent-amber)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                                 <AlertTriangle size={18} /> Alertas Inventario
                             </div>
-                            <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#f59e0b' }}>
+                            <div style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--accent-amber)' }}>
                                 {totalAlerts}
                             </div>
                         </Card>
 
-                        <Card style={{ padding: '1.5rem', textAlign: 'center', borderTop: '3px solid #8b5cf6' }}>
+                        <Card className="glass-card" style={{ padding: '1.5rem', textAlign: 'center', borderTop: '3px solid var(--accent-violet)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                                 <Building2 size={18} /> Total Sucursales
                             </div>
-                            <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#8b5cf6' }}>
+                            <div style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--accent-violet)' }}>
                                 {branchMetrics.length}
                             </div>
                         </Card>
@@ -171,10 +171,10 @@ export function OwnerDashboardPage() {
 
                     {/* Desktop Table */}
                     <div className="hidden-mobile">
-                        <Card style={{ overflowX: 'auto', padding: 0, border: '1px solid var(--divider-color)' }}>
+                        <Card className="glass-card" style={{ overflowX: 'auto', padding: 0 }}>
                             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                 <thead>
-                                    <tr style={{ borderBottom: '1px solid var(--divider-color)', background: '#f8fafc' }}>
+                                    <tr style={{ borderBottom: '1px solid var(--divider-color)', background: 'var(--glass-bg)' }}>
                                         <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>Local</th>
                                         <th style={{ padding: '1rem 1.5rem', textAlign: 'center', fontWeight: 600, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>Ventas del Día</th>
                                         <th style={{ padding: '1rem 1.5rem', textAlign: 'center', fontWeight: 600, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>Pedidos</th>
@@ -223,7 +223,7 @@ export function OwnerDashboardPage() {
                     <div className="hidden-desktop block">
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                             {branchMetrics.map((m) => (
-                                <Card key={m.branch.id} style={{ padding: '1.25rem' }}>
+                                <Card key={m.branch.id} className="glass-card" style={{ padding: '1.25rem' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
                                         <div style={{ width: '40px', height: '40px', borderRadius: 'var(--radius-md)', background: 'rgba(37, 99, 235, 0.1)', color: 'var(--primary-color)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                             <Building2 size={20} />
@@ -234,22 +234,22 @@ export function OwnerDashboardPage() {
                                         </div>
                                     </div>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                                        <div style={{ textAlign: 'center', padding: '0.75rem', background: 'var(--background-color)', borderRadius: 'var(--radius-md)' }}>
+                                        <div style={{ textAlign: 'center', padding: '0.75rem', background: 'var(--glass-bg)', borderRadius: 'var(--radius-md)' }}>
                                             <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>Ventas</div>
                                             <div style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--primary-color)' }}>S/ {m.totalSales.toFixed(2)}</div>
                                         </div>
-                                        <div style={{ textAlign: 'center', padding: '0.75rem', background: 'var(--background-color)', borderRadius: 'var(--radius-md)' }}>
+                                        <div style={{ textAlign: 'center', padding: '0.75rem', background: 'var(--glass-bg)', borderRadius: 'var(--radius-md)' }}>
                                             <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>Pedidos</div>
                                             <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{m.orderCount}</div>
                                         </div>
-                                        <div style={{ textAlign: 'center', padding: '0.75rem', background: 'var(--background-color)', borderRadius: 'var(--radius-md)' }}>
+                                        <div style={{ textAlign: 'center', padding: '0.75rem', background: 'var(--glass-bg)', borderRadius: 'var(--radius-md)' }}>
                                             <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>Inventario</div>
                                             {m.lowStockCount > 0
                                                 ? <Badge variant="warning">{m.lowStockCount} alertas</Badge>
                                                 : <Badge variant="success">OK</Badge>
                                             }
                                         </div>
-                                        <div style={{ textAlign: 'center', padding: '0.75rem', background: 'var(--background-color)', borderRadius: 'var(--radius-md)' }}>
+                                        <div style={{ textAlign: 'center', padding: '0.75rem', background: 'var(--glass-bg)', borderRadius: 'var(--radius-md)' }}>
                                             <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>Usuarios</div>
                                             <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{m.userCount}</div>
                                         </div>

@@ -8,7 +8,7 @@ export function InventoryPage() {
     const { restaurantSlug } = useParams();
 
     return (
-        <div className="container mt-md">
+        <div className="container mt-md bg-mesh" style={{ minHeight: '100vh', paddingBottom: '2rem' }}>
             <header style={{
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -16,7 +16,7 @@ export function InventoryPage() {
                 marginBottom: '2rem'
             }}>
                 <div>
-                    <h1 style={{ margin: 0, fontSize: '2rem' }}>Control de Stock</h1>
+                    <h1 style={{ margin: 0, fontSize: '2rem', fontFamily: 'var(--font-heading)', fontWeight: 800 }}>Control de Stock</h1>
                     <p style={{ margin: '0.25rem 0 0 0', color: 'var(--text-secondary)' }}>Módulo de inventariado de productos</p>
                 </div>
                 <Button variant="ghost" onClick={() => navigate(`/${restaurantSlug}/admin`)}>
@@ -24,7 +24,7 @@ export function InventoryPage() {
                 </Button>
             </header>
 
-            <div style={{ background: 'var(--surface-color)', borderRadius: 'var(--radius-lg)', padding: '1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+            <div className="glass-card" style={{ padding: '1.5rem' }}>
                 <InventoryTab />
             </div>
         </div>
