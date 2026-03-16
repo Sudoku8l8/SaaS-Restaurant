@@ -169,7 +169,7 @@ export function AdminPage() {
                             }}
                         >
                             <ChefHat size={isMobile ? 16 : 18} />
-                            {isMobile ? 'Cocina' : 'Volver a Cocina'}
+                            {isMobile ? 'Cocina' : ' Cocina'}
                         </Button>
 
                         <button
@@ -321,7 +321,7 @@ export function AdminPage() {
                     }} />
                     <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', fontWeight: 500, letterSpacing: '0.05em' }}>
                         © 2026 Sistema de Gestión de Restaurante <span style={{ margin: '0 0.5rem' }}>•</span>
-                        <span style={{ color: 'var(--text-secondary)' }}>Elite Edition v2.4</span>
+                        <span style={{ color: 'var(--text-secondary)' }}>Ordaygo v0.1.0</span>
                     </p>
                 </footer>
             </div>

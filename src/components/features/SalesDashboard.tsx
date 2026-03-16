@@ -29,22 +29,12 @@ export function SalesDashboard() {
                         {new Date().toLocaleDateString('es-PE', { year: 'numeric', month: 'short', day: 'numeric' }).toUpperCase()}
                     </Badge>
                 </div>
-                <span style={{
-                    fontSize: '0.75rem', color: 'var(--text-muted, var(--text-secondary))',
-                    fontWeight: 500
-                }}>
-                    Actualizado hace un momento
-                </span>
             </div>
 
             {/* KPI Cards Grid */}
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-                gap: '2rem'
-            }}>
+            <div className="sales-kpi-grid">
                 {/* Venta Total */}
-                <div className="glass-card" style={{ padding: '2.5rem', position: 'relative', overflow: 'hidden' }}>
+                <div className="glass-card kpi-card">
                     <span style={{
                         color: 'var(--accent-blue)', fontSize: '0.7rem', fontWeight: 700,
                         textTransform: 'uppercase', letterSpacing: '0.1em',
@@ -54,7 +44,7 @@ export function SalesDashboard() {
                     </span>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem' }}>
                         <span style={{ color: 'var(--text-secondary)', fontSize: '1.25rem', fontWeight: 500 }}>S/</span>
-                        <span style={{ fontSize: '3rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.04em' }}>
+                        <span className="kpi-value">
                             {metrics.totalSales.toFixed(2)}
                         </span>
                     </div>
@@ -71,7 +61,7 @@ export function SalesDashboard() {
                 </div>
 
                 {/* Pedidos Atendidos */}
-                <div className="glass-card" style={{ padding: '2.5rem' }}>
+                <div className="glass-card kpi-card">
                     <span style={{
                         color: 'var(--accent-violet)', fontSize: '0.7rem', fontWeight: 700,
                         textTransform: 'uppercase', letterSpacing: '0.1em',
@@ -80,7 +70,7 @@ export function SalesDashboard() {
                         Pedidos Atendidos
                     </span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <span style={{ fontSize: '3rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.04em' }}>
+                        <span className="kpi-value">
                             {metrics.orderCount}
                         </span>
                     </div>
@@ -90,8 +80,8 @@ export function SalesDashboard() {
                 </div>
 
                 {/* Líder del Turno */}
-                <div className="glass-card" style={{
-                    padding: '2.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'center',
+                <div className="glass-card kpi-card" style={{
+                    justifyContent: 'center',
                     borderStyle: Object.keys(metrics.salesByWaiter).length === 0 ? 'dashed' : 'solid'
                 }}>
                     <span style={{
