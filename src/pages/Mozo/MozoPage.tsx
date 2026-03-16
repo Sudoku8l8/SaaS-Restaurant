@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
-import { Lock, Wallet, Zap, Menu, DollarSign } from 'lucide-react';
+import { useState } from 'react';
+import { Lock, Wallet, Zap } from 'lucide-react';
 import { OrderModal } from '@/components/features/OrderModal';
 import { TableDetailModal } from '@/components/features/TableDetailModal';
 import { TableMap } from '@/components/features/TableMap';
@@ -32,22 +32,7 @@ export function MozoPage() {
     const [orderToEdit, setOrderToEdit] = useState<Order | undefined>(undefined);
     const [takeoutOrderType, setTakeoutOrderType] = useState<'dine-in' | 'takeout' | 'quick-sale'>('dine-in');
 
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const menuRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-                setIsMenuOpen(false);
-            }
-        };
-        if (isMenuOpen) {
-            document.addEventListener('mousedown', handleClickOutside);
-        }
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, [isMenuOpen]);
 
     const takeoutOrders = activeOrders?.filter(o => o.orderType === 'takeout' || o.orderType === 'quick-sale') || [];
 
@@ -231,68 +216,19 @@ export function MozoPage() {
                 }}>
                     <NotificationBell />
                     
-                    {/* Hamburger Menu */}
-                    <div style={{ position: 'relative' }} ref={menuRef}>
-                        <button
-                            onClick={() => setIsMenuOpen(!isMenuOpen)}
-                            title="Menú de Operaciones"
-                            style={{
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                width: '36px', height: '36px', borderRadius: '50%',
-                                border: '1px solid var(--divider-color)', background: 'var(--background-color)',
-                                color: 'var(--text-primary)', cursor: 'pointer', transition: 'all 0.2s',
-                            }}
-                        >
-                            <Menu size={18} />
-                        </button>
-
-                        {isMenuOpen && (
-                            <div style={{
-                                position: 'absolute',
-                                top: 'calc(100% + 8px)',
-                                right: 0,
-                                background: 'var(--glass-bg)',
-                                backdropFilter: 'blur(20px)',
-                                WebkitBackdropFilter: 'blur(20px)',
-                                border: '1px solid var(--glass-border)',
-                                borderRadius: '16px',
-                                boxShadow: '0 10px 40px rgba(0,0,0,0.12)',
-                                minWidth: '180px',
-                                zIndex: 1000,
-                                overflow: 'hidden',
-                                display: 'flex',
-                                flexDirection: 'column'
-                            }}>
-                                <button
-                                    onClick={() => { setIsMenuOpen(false); navigate(`/${restaurantSlug}/caja-chica`); }}
-                                    style={{
-                                        display: 'flex', alignItems: 'center', gap: '0.75rem',
-                                        padding: '0.75rem 1rem', border: 'none', background: 'none',
-                                        width: '100%', textAlign: 'left', cursor: 'pointer',
-                                        color: 'var(--text-primary)', fontSize: '0.9rem',
-                                        borderBottom: '1px solid var(--divider-color)'
-                                    }}
-                                >
-                                    <Wallet size={16} color="#f59e0b" />
-                                    Caja chica
-                                </button>
-                                {(user?.role === 'admin' || user?.role === 'caja') && (
-                                    <button
-                                        onClick={() => { setIsMenuOpen(false); navigate(`/${restaurantSlug}/cierre-caja`); }}
-                                        style={{
-                                            display: 'flex', alignItems: 'center', gap: '0.75rem',
-                                            padding: '0.75rem 1rem', border: 'none', background: 'none',
-                                            width: '100%', textAlign: 'left', cursor: 'pointer',
-                                            color: 'var(--text-primary)', fontSize: '0.9rem'
-                                        }}
-                                    >
-                                        <DollarSign size={16} className="text-primary" />
-                                        Cerrar caja
-                                    </button>
-                                )}
-                            </div>
-                        )}
-                    </div>
+                    {/* Caja Chica Button */}
+                    <button
+                        onClick={() => navigate(`/${restaurantSlug}/caja-chica`)}
+                        title="Caja Chica"
+                        style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            width: '36px', height: '36px', borderRadius: '50%',
+                            border: '1px solid var(--divider-color)', background: 'var(--background-color)',
+                            color: '#f59e0b', cursor: 'pointer', transition: 'all 0.2s',
+                        }}
+                    >
+                        <Wallet size={18} />
+                    </button>
 
                     <div style={{ textAlign: 'right', minWidth: 'fit-content' }}>
                         <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: '800', letterSpacing: '0.05em', lineHeight: 1 }}>{user?.name}</p>
