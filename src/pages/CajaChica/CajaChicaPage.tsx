@@ -66,14 +66,13 @@ export function CajaChicaPage() {
         );
     }
 
-    // ── No session open ──────────────────────────────────────────────────────
     if (!currentSession) {
         return (
-            <div className="container mt-md" style={{ maxWidth: '480px' }}>
+            <div className="container mt-md bg-mesh" style={{ maxWidth: '480px', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
                 <Button variant="ghost" onClick={() => navigate(-1)} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
                     <ArrowLeft size={16} /> Volver
                 </Button>
-                <Card style={{ padding: '2.5rem 2rem', textAlign: 'center' }}>
+                <Card className="glass-card" style={{ padding: '2.5rem 2rem', textAlign: 'center' }}>
                     <div style={{
                         background: 'linear-gradient(135deg, rgba(245,158,11,0.12), rgba(245,158,11,0.06))',
                         width: '80px', height: '80px', borderRadius: '50%',
@@ -195,7 +194,7 @@ export function CajaChicaPage() {
 
     // ── MAIN RENDER ──────────────────────────────────────────────────────────
     return (
-        <div className="container mt-md">
+        <div className="container mt-md bg-mesh" style={{ minHeight: '100vh', paddingBottom: '2rem' }}>
             {/* ── HEADER ── */}
             <header style={{
                 marginBottom: '1.5rem', paddingBottom: '1.25rem',
@@ -227,7 +226,7 @@ export function CajaChicaPage() {
                     )}
                 </div>
                 <div>
-                    <h1 style={{ margin: 0, fontSize: 'clamp(1.3rem, 4vw, 1.8rem)', fontWeight: '900', lineHeight: 1.2, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <h1 style={{ margin: 0, fontSize: 'clamp(1.3rem, 4vw, 1.8rem)', fontWeight: '900', lineHeight: 1.2, display: 'flex', alignItems: 'center', gap: '0.5rem', fontFamily: 'var(--font-heading)' }}>
                         <Wallet size={28} style={{ color: 'var(--primary-color)' }} />
                         Caja Chica
                     </h1>
@@ -242,13 +241,12 @@ export function CajaChicaPage() {
 
             {/* ── SESSION CLOSED BANNER ── */}
             {isClosed && (
-                <div style={{
-                    background: 'var(--surface-color)', color: 'var(--success-color)',
-                    padding: '1rem 1.25rem', borderRadius: 'var(--radius-lg)',
-                    marginBottom: '1.25rem', border: '1px solid var(--border-color)',
+                <div className="glass-card" style={{
+                    color: 'var(--success-color)',
+                    padding: '1rem 1.25rem',
+                    marginBottom: '1.25rem',
                     borderLeft: '5px solid var(--success-color)',
                     display: 'flex', alignItems: 'center', gap: '0.75rem',
-                    boxShadow: 'var(--shadow-sm)'
                 }}>
                     <CheckCircle size={20} style={{ flexShrink: 0 }} />
                     <span style={{ fontWeight: '600', fontSize: '0.9rem' }}>
@@ -259,15 +257,14 @@ export function CajaChicaPage() {
 
             {/* ── PENDING ALERT ── */}
             {canApproveExpenses && hasPendingExpenses && (
-                <div style={{
-                    background: 'rgba(245,158,11,0.08)', color: '#b45309',
-                    padding: '1rem 1.25rem', borderRadius: 'var(--radius-lg)',
-                    marginBottom: '1.25rem', border: '1px solid rgba(245,158,11,0.2)',
-                    borderLeft: '5px solid #f59e0b',
+                <div className="glass-card" style={{
+                    color: 'var(--accent-amber)',
+                    padding: '1rem 1.25rem',
+                    marginBottom: '1.25rem',
+                    borderLeft: '5px solid var(--accent-amber)',
                     display: 'flex', alignItems: 'center', gap: '0.75rem',
-                    boxShadow: 'var(--shadow-sm)'
                 }}>
-                    <AlertTriangle size={20} style={{ flexShrink: 0 }} />
+                    <AlertTriangle size={20} style={{ flexShrink: 0, color: 'var(--accent-amber)' }} />
                     <span style={{ fontWeight: '600', fontSize: '0.9rem' }}>
                         Tienes <strong>{summary.countPending}</strong> solicitud{summary.countPending !== 1 ? 'es' : ''} pendiente{summary.countPending !== 1 ? 's' : ''} de aprobación (S/ {summary.totalPending.toFixed(2)}).
                     </span>
@@ -281,12 +278,9 @@ export function CajaChicaPage() {
                 gap: '1rem', marginBottom: '2rem'
             }}>
                 {/* Saldo Card */}
-                <Card style={{
+                <Card className="glass-card" style={{
                     padding: '1.5rem',
-                    borderTop: `4px solid ${balanceColors.color}`,
-                    borderRadius: 'var(--radius-xl)',
-                    boxShadow: 'var(--shadow-md)',
-                    background: balanceColors.bg,
+                    borderTop: `4px solid ${balanceColors.color}`
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem' }}>
                         <div style={{
@@ -322,10 +316,7 @@ export function CajaChicaPage() {
                 </Card>
 
                 {/* Gastos del Día */}
-                <Card style={{
-                    padding: '1.5rem', borderRadius: 'var(--radius-xl)',
-                    boxShadow: 'var(--shadow-md)',
-                }}>
+                <Card className="glass-card" style={{ padding: '1.5rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
                         <div style={{
                             width: '36px', height: '36px', borderRadius: 'var(--radius-md)',
@@ -365,7 +356,7 @@ export function CajaChicaPage() {
                 </Card>
 
                 {/* Reglas Card */}
-                <Card style={{ padding: '1.5rem', borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-md)' }}>
+                <Card className="glass-card" style={{ padding: '1.5rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
                         <div style={{
                             width: '36px', height: '36px', borderRadius: 'var(--radius-md)',
@@ -402,7 +393,7 @@ export function CajaChicaPage() {
             </div>
 
             {/* ── EXPENSE LIST ── */}
-            <Card style={{ padding: 'clamp(1rem, 4vw, 2rem)', borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-lg)' }}>
+            <Card className="glass-card" style={{ padding: 'clamp(1rem, 4vw, 2rem)' }}>
                 <h3 style={{
                     display: 'flex', alignItems: 'center', gap: '0.5rem',
                     marginBottom: '1.25rem', fontSize: '1rem', fontWeight: '800',
@@ -455,7 +446,7 @@ export function CajaChicaPage() {
             {/* ── EXPENSE MODAL ── */}
             {showExpenseModal && (
                 <ModalOverlay onClose={() => setShowExpenseModal(false)}>
-                    <Card style={{ width: '100%', maxWidth: '420px', padding: '2rem' }}>
+                    <Card className="glass-card" style={{ width: '100%', maxWidth: '420px', padding: '2rem' }}>
                         <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.1rem' }}>
                             <Plus size={22} color="var(--primary-color)" />
                             {canRegisterDirectExpense ? 'Registrar Gasto' : 'Solicitar Gasto'}
@@ -588,7 +579,7 @@ export function CajaChicaPage() {
             {/* ── REJECT MODAL ── */}
             {showRejectModal && (
                 <ModalOverlay onClose={() => { setShowRejectModal(null); setRejectReason(''); }}>
-                    <Card style={{ width: '100%', maxWidth: '380px', padding: '2rem' }}>
+                    <Card className="glass-card" style={{ width: '100%', maxWidth: '380px', padding: '2rem' }}>
                         <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.05rem' }}>
                             <XCircle size={22} color="var(--danger-color)" /> Rechazar Gasto
                         </h3>
@@ -610,7 +601,7 @@ export function CajaChicaPage() {
             {/* ── OBSERVATION MODAL ── */}
             {showObsModal && (
                 <ModalOverlay onClose={() => { setShowObsModal(null); setObsNote(''); }}>
-                    <Card style={{ width: '100%', maxWidth: '380px', padding: '2rem' }}>
+                    <Card className="glass-card" style={{ width: '100%', maxWidth: '380px', padding: '2rem' }}>
                         <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.05rem' }}>
                             <Eye size={22} color="#8b5cf6" /> Agregar Observación
                         </h3>
@@ -718,7 +709,7 @@ function ExpenseItem({ expense, isExpanded, onToggle, canApprove, onApprove, onR
                 style={{
                     display: 'flex', alignItems: 'center', gap: '0.75rem',
                     padding: '0.85rem 1rem', cursor: 'pointer',
-                    background: isExpanded ? 'var(--background-color)' : 'transparent',
+                    background: isExpanded ? 'var(--glass-bg)' : 'transparent',
                     transition: 'background 0.15s',
                 }}
             >
@@ -756,7 +747,7 @@ function ExpenseItem({ expense, isExpanded, onToggle, canApprove, onApprove, onR
                 <div style={{
                     padding: '0.75rem 1rem 1rem',
                     borderTop: '1px solid var(--divider-color)',
-                    background: 'var(--background-color)',
+                    background: 'var(--glass-bg)',
                     display: 'flex', flexDirection: 'column', gap: '0.6rem',
                     fontSize: '0.83rem',
                 }}>

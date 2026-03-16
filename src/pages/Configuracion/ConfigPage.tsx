@@ -57,12 +57,15 @@ export function ConfigPage() {
     };
 
     return (
-        <div className="container mt-md">
-            <header className="config-header">
-                <div>
-                    <h1>Configuración</h1>
-                    <p>Administración del Restaurante</p>
-                </div>
+        <div className="bg-mesh" style={{ minHeight: '100vh', padding: 'var(--spacing-md) 0' }}>
+            <div className="container">
+                <header className="config-header">
+                    <div>
+                        <h1 style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, color: 'var(--text-primary)'}}>
+                            Configuración
+                        </h1>
+                        <p style={{ color: 'var(--text-secondary)' }}>Administración del Restaurante</p>
+                    </div>
                 <Button variant="ghost" onClick={() => navigate(`/${restaurantSlug}/admin`)} className="config-back-btn">
                     <ArrowLeft size={18} /> Volver
                 </Button>
@@ -157,6 +160,7 @@ export function ConfigPage() {
                 {activeTab === 'security' && <SecurityTab />}
                 {activeTab === 'pettycash' && <PettyCashConfigTab />}
             </div>
+        </div>
         </div>
     );
 }

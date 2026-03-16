@@ -340,10 +340,10 @@ export function ReportesPage() {
 
     // ─── RENDER ────────────────────────────────────────────────────────────────
     return (
-        <div className="container mt-md">
+        <div className="container mt-md bg-mesh" style={{ minHeight: '100vh', paddingBottom: '2rem' }}>
             <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <div>
-                    <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontFamily: 'var(--font-heading)', fontWeight: 800 }}>
                         <BarChart3 size={32} className="text-primary" /> Reportes Históricos
                     </h1>
                     <p>Ventas por rango de fechas — incluyendo días sin cierre de caja</p>
@@ -354,7 +354,7 @@ export function ReportesPage() {
             </header>
 
             {/* Filter Section */}
-            <Card style={{ padding: '1.5rem', marginBottom: '2rem' }}>
+            <Card className="glass-card" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
                 <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
                     <div>
                         <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Desde</label>
@@ -372,7 +372,7 @@ export function ReportesPage() {
 
             {/* Summary Cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
-                <Card style={{ padding: '1.75rem', textAlign: 'center', borderTop: '4px solid var(--primary-color)', boxShadow: 'var(--shadow-md)', borderRadius: 'var(--radius-lg)' }}>
+                <Card className="glass-card" style={{ padding: '1.75rem', textAlign: 'center', borderTop: '4px solid var(--primary-color)' }}>
                     <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.75rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                         <DollarSign size={16} /> Total Ventas
                     </div>
@@ -380,7 +380,7 @@ export function ReportesPage() {
                         S/ {totalSales.toFixed(2)}
                     </div>
                 </Card>
-                <Card style={{ padding: '1.75rem', textAlign: 'center', borderTop: '4px solid var(--success-color)', boxShadow: 'var(--shadow-md)', borderRadius: 'var(--radius-lg)' }}>
+                <Card className="glass-card" style={{ padding: '1.75rem', textAlign: 'center', borderTop: '4px solid var(--success-color)' }}>
                     <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.75rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                         <ShoppingBag size={16} /> Total Pedidos
                     </div>
@@ -388,7 +388,7 @@ export function ReportesPage() {
                         {totalOrders}
                     </div>
                 </Card>
-                <Card style={{ padding: '1.75rem', textAlign: 'center', borderTop: '4px solid var(--secondary-hover)', boxShadow: 'var(--shadow-md)', borderRadius: 'var(--radius-lg)' }}>
+                <Card className="glass-card" style={{ padding: '1.75rem', textAlign: 'center', borderTop: '4px solid var(--accent-violet)' }}>
                     <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.75rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                         <CalendarCheck size={16} /> Días con Cierre
                     </div>
@@ -400,11 +400,8 @@ export function ReportesPage() {
 
             {/* Info Banner for unclosed days */}
             {dayRecords.some(r => r.closureStatus !== 'closed') && (
-                <div style={{
-                    background: 'rgba(245,158,11,0.08)',
-                    border: '1px solid rgba(245,158,11,0.2)',
-                    borderLeft: '5px solid #f59e0b',
-                    borderRadius: 'var(--radius-md)',
+                <div className="glass-card" style={{
+                    borderLeft: '5px solid var(--accent-amber)',
                     padding: '1rem 1.25rem',
                     marginBottom: '1.5rem',
                     display: 'flex',
@@ -413,7 +410,7 @@ export function ReportesPage() {
                     color: 'var(--text-primary)',
                     fontSize: '0.9rem'
                 }}>
-                    <AlertTriangle size={20} style={{ flexShrink: 0, color: '#f59e0b' }} />
+                    <AlertTriangle size={20} style={{ flexShrink: 0, color: 'var(--accent-amber)' }} />
                     <span>
                         <strong>Días sin cierre detectados.</strong> Las ventas están guardadas correctamente en el sistema.
                         Usa el botón <strong>"Cerrar Retroactivo"</strong> para regularizar los cierres pendientes.
@@ -422,7 +419,7 @@ export function ReportesPage() {
             )}
 
             {/* Records Table */}
-            <Card style={{ padding: '1.5rem' }}>
+            <Card className="glass-card" style={{ padding: '1.5rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
                     <h3 style={{ margin: 0 }}>Historial de Ventas</h3>
                     {dayRecords.length > 0 && (
@@ -460,7 +457,7 @@ export function ReportesPage() {
                                     <tr
                                         key={record.date}
                                         style={{ borderBottom: '1px solid var(--divider-color)', transition: 'background-color 0.2s' }}
-                                        onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--background-color)'}
+                                        onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--glass-bg)'}
                                         onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
                                     >
                                         <td style={{ padding: '1rem', color: 'var(--text-primary)', fontWeight: '600' }}>

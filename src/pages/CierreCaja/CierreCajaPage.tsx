@@ -135,11 +135,11 @@ export function CierreCajaPage() {
     // ── APERTURA DE CAJA ─────────────────────────────────────────────────────
     if (isToday && !sessionExists) {
         return (
-            <div className="container mt-md" style={{ maxWidth: '480px' }}>
+            <div className="container mt-md bg-mesh" style={{ maxWidth: '480px', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
                 <Button variant="ghost" onClick={() => navigate(-1)} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
                     <ArrowLeft size={16} /> Volver
                 </Button>
-                <Card style={{ padding: '2.5rem 2rem', textAlign: 'center' }}>
+                <Card className="glass-card" style={{ padding: '2.5rem 2rem', textAlign: 'center' }}>
                     <div style={{
                         background: 'linear-gradient(135deg, rgba(37,99,235,0.12), rgba(37,99,235,0.06))',
                         width: '80px', height: '80px', borderRadius: '50%',
@@ -177,7 +177,7 @@ export function CierreCajaPage() {
 
     // ── MAIN LAYOUT ──────────────────────────────────────────────────────────
     return (
-        <div className="container mt-md">
+        <div className="container mt-md bg-mesh" style={{ minHeight: '100vh', paddingBottom: '2rem' }}>
 
             {/* ── RESPONSIVE HEADER ── */}
             <header style={{
@@ -226,13 +226,12 @@ export function CierreCajaPage() {
 
             {/* ── ALERTS ── */}
             {isClosed && (
-                <div style={{
-                    background: 'var(--surface-color)', color: 'var(--success-color)',
-                    padding: '1rem 1.25rem', borderRadius: 'var(--radius-lg)',
-                    marginBottom: '1.25rem', border: '1px solid var(--border-color)',
+                <div className="glass-card" style={{
+                    color: 'var(--success-color)',
+                    padding: '1rem 1.25rem',
+                    marginBottom: '1.25rem',
                     borderLeft: '5px solid var(--success-color)',
                     display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
-                    boxShadow: 'var(--shadow-sm)'
                 }}>
                     <CheckCircle size={20} style={{ flexShrink: 0, marginTop: '2px' }} />
                     <span style={{ fontWeight: '600', fontSize: '0.9rem', lineHeight: '1.4' }}>
@@ -243,13 +242,12 @@ export function CierreCajaPage() {
             )}
 
             {hasPendingOrders && (
-                <div style={{
-                    background: 'var(--surface-color)', color: 'var(--danger-color)',
-                    padding: '1rem 1.25rem', borderRadius: 'var(--radius-lg)',
-                    marginBottom: '1.25rem', border: '1px solid var(--border-color)',
+                <div className="glass-card" style={{
+                    color: 'var(--danger-color)',
+                    padding: '1rem 1.25rem',
+                    marginBottom: '1.25rem',
                     borderLeft: '5px solid var(--danger-color)',
                     display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
-                    boxShadow: 'var(--shadow-sm)'
                 }}>
                     <AlertTriangle size={20} style={{ flexShrink: 0, marginTop: '2px' }} />
                     <span style={{ fontWeight: '600', fontSize: '0.9rem', lineHeight: '1.4' }}>
@@ -262,17 +260,16 @@ export function CierreCajaPage() {
 
             {/* Petty Cash Pending Warning */}
             {pettyCashPendingCount > 0 && !isClosed && (
-                <div style={{
-                    background: 'rgba(245,158,11,0.08)', color: '#b45309',
-                    padding: '1rem 1.25rem', borderRadius: 'var(--radius-lg)',
-                    marginBottom: '1.25rem', border: '1px solid rgba(245,158,11,0.2)',
-                    borderLeft: '5px solid #f59e0b',
+                <div className="glass-card" style={{
+                    color: 'var(--accent-amber)',
+                    padding: '1rem 1.25rem',
+                    marginBottom: '1.25rem',
+                    borderLeft: '5px solid var(--accent-amber)',
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     gap: '0.75rem', flexWrap: 'wrap',
-                    boxShadow: 'var(--shadow-sm)'
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                        <Wallet size={20} color="#f59e0b" />
+                        <Wallet size={20} color="var(--accent-amber)" />
                         <span style={{ fontWeight: '600', fontSize: '0.88rem' }}>
                             <strong>{pettyCashPendingCount}</strong> gasto{pettyCashPendingCount !== 1 ? 's' : ''} de caja chica pendiente{pettyCashPendingCount !== 1 ? 's' : ''} de aprobación.
                         </span>
@@ -282,7 +279,7 @@ export function CierreCajaPage() {
                         style={{
                             display: 'flex', alignItems: 'center', gap: '0.3rem',
                             padding: '0.4rem 0.85rem', borderRadius: 'var(--radius-md)',
-                            background: '#f59e0b', color: 'white', border: 'none',
+                            background: 'var(--accent-amber)', color: 'white', border: 'none',
                             cursor: 'pointer', fontWeight: '700', fontSize: '0.8rem',
                         }}
                     >
@@ -293,10 +290,10 @@ export function CierreCajaPage() {
 
             {/* Caja Chica Quick Access */}
             {isToday && sessionExists && !isClosed && (
-                <div style={{
-                    background: 'rgba(37,99,235,0.05)',
-                    padding: '0.85rem 1.25rem', borderRadius: 'var(--radius-lg)',
-                    marginBottom: '1.25rem', border: '1px solid rgba(37,99,235,0.12)',
+                <div className="glass-card" style={{
+                    padding: '0.85rem 1.25rem',
+                    marginBottom: '1.25rem',
+                    borderLeft: '5px solid var(--accent-blue)',
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     gap: '0.75rem', flexWrap: 'wrap',
                 }}>
@@ -311,7 +308,7 @@ export function CierreCajaPage() {
                         style={{
                             display: 'flex', alignItems: 'center', gap: '0.3rem',
                             padding: '0.4rem 0.85rem', borderRadius: 'var(--radius-md)',
-                            background: 'var(--primary-color)', color: 'white', border: 'none',
+                            background: 'linear-gradient(135deg, var(--accent-blue), var(--accent-violet))', color: 'white', border: 'none',
                             cursor: 'pointer', fontWeight: '700', fontSize: '0.8rem',
                         }}
                     >
@@ -328,7 +325,7 @@ export function CierreCajaPage() {
                 marginBottom: '2rem'
             }}>
                 {/* Total Recaudado */}
-                <Card style={{ padding: '1.5rem', borderTop: '4px solid var(--primary-color)', boxShadow: 'var(--shadow-md)', borderRadius: 'var(--radius-xl)' }}>
+                <Card className="glass-card" style={{ padding: '1.5rem', borderTop: '4px solid var(--primary-color)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem' }}>
                         <div style={{ width: '36px', height: '36px', borderRadius: 'var(--radius-md)', background: 'rgba(37,99,235,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                             <DollarSign size={20} style={{ color: 'var(--primary-color)' }} />
@@ -359,7 +356,7 @@ export function CierreCajaPage() {
                 </Card>
 
                 {/* Medios de Pago */}
-                <Card style={{ padding: '1.5rem', borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-md)' }}>
+                <Card className="glass-card" style={{ padding: '1.5rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem', borderBottom: '1px solid var(--divider-color)', paddingBottom: '0.75rem' }}>
                         <div style={{ width: '36px', height: '36px', borderRadius: 'var(--radius-md)', background: 'rgba(37,99,235,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                             <CreditCard size={18} style={{ color: 'var(--primary-color)' }} />
@@ -380,7 +377,7 @@ export function CierreCajaPage() {
                 </Card>
 
                 {/* Rendimiento Mozos */}
-                <Card style={{ padding: '1.5rem', borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-md)' }}>
+                <Card className="glass-card" style={{ padding: '1.5rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem', borderBottom: '1px solid var(--divider-color)', paddingBottom: '0.75rem' }}>
                         <div style={{ width: '36px', height: '36px', borderRadius: 'var(--radius-md)', background: 'rgba(37,99,235,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                             <User size={18} style={{ color: 'var(--primary-color)' }} />
@@ -402,7 +399,7 @@ export function CierreCajaPage() {
             </div>
 
             {/* ── CIERRE SECTION ── */}
-            <Card style={{ padding: 'clamp(1.5rem, 5vw, 2.5rem)', borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-lg)' }}>
+            <Card className="glass-card" style={{ padding: 'clamp(1.5rem, 5vw, 2.5rem)' }}>
                 {!isClosed ? (
                     <div style={{ maxWidth: '520px', margin: '0 auto' }}>
                         <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', fontSize: '1rem', fontWeight: '800' }}>
@@ -437,11 +434,11 @@ export function CierreCajaPage() {
                                 padding: '1rem',
                                 opacity: !canClose ? 0.4 : 1,
                                 cursor: !canClose ? 'not-allowed' : 'pointer',
-                                backgroundColor: 'var(--danger-color)',
+                                background: 'linear-gradient(135deg, #ef4444, #b91c1c)',
                                 border: 'none',
                                 borderRadius: 'var(--radius-md)',
                                 fontWeight: '800',
-                                boxShadow: canClose ? '0 6px 16px rgba(230, 57, 70, 0.25)' : 'none',
+                                boxShadow: canClose ? '0 6px 16px rgba(239, 68, 68, 0.3)' : 'none',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'
                             }}
                         >

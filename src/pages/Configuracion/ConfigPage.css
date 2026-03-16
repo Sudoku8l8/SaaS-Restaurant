@@ -30,9 +30,10 @@
     gap: 0.4rem;
     margin-bottom: 2rem;
     padding: 0.375rem;
-    background: var(--surface-color);
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
     border-radius: 12px;
-    border: 1px solid var(--divider-color);
+    border: 1px solid var(--glass-border);
     overflow-x: auto;
     scrollbar-width: none;
 }
@@ -60,12 +61,12 @@
 }
 
 .config-tab-pill:hover {
-    background: rgba(0, 0, 0, 0.04);
+    background: var(--glass-bg);
     color: var(--text-primary);
 }
 
 .config-tab-pill.active {
-    background: var(--primary-color);
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-violet));
     color: white;
     font-weight: 600;
     box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
@@ -90,8 +91,9 @@
     justify-content: space-between;
     width: 100%;
     padding: 0.875rem 1.25rem;
-    background: var(--surface-color);
-    border: 1px solid var(--divider-color);
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
     border-radius: 12px;
     cursor: pointer;
     margin-bottom: 1.5rem;
@@ -173,7 +175,7 @@
     width: 36px;
     height: 36px;
     border: none;
-    background: rgba(0, 0, 0, 0.05);
+    background: var(--glass-bg);
     border-radius: 8px;
     cursor: pointer;
     color: var(--text-secondary);
@@ -212,12 +214,12 @@
 }
 
 .config-drawer-item:hover {
-    background: rgba(0, 0, 0, 0.04);
+    background: var(--glass-bg);
     color: var(--text-primary);
 }
 
 .config-drawer-item.active {
-    background: rgba(37, 99, 235, 0.08);
+    background: var(--glass-bg);
     color: var(--primary-color);
     font-weight: 600;
 }
@@ -235,14 +237,14 @@
     width: 36px;
     height: 36px;
     border-radius: 8px;
-    background: rgba(0, 0, 0, 0.04);
+    background: var(--glass-bg);
     color: var(--text-secondary);
     transition: all 0.15s ease;
     flex-shrink: 0;
 }
 
 .config-drawer-icon.active {
-    background: rgba(37, 99, 235, 0.12);
+    background: var(--glass-bg);
     color: var(--primary-color);
 }
 
@@ -260,7 +262,7 @@
     border-radius: 12px;
     padding: 2rem;
     min-height: 400px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    box-shadow: var(--glass-shadow);
     border: 1px solid var(--divider-color);
 }
 
