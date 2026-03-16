@@ -141,6 +141,11 @@ button {
     radial-gradient(at 100% 0%, hsla(230,100%,92%,1) 0, transparent 50%),
     radial-gradient(at 0% 100%, hsla(200,100%,90%,0.2) 0, transparent 50%),
     radial-gradient(at 100% 100%, hsla(190,100%,88%,0.2) 0, transparent 50%);
+  background-attachment: fixed;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  min-height: 100vh;
 }
 
 .dark .bg-mesh {
@@ -151,6 +156,10 @@ button {
     radial-gradient(at 100% 0%, hsla(234,39%,17%,1) 0, transparent 50%),
     radial-gradient(at 0% 100%, hsla(243,75%,59%,0.15) 0, transparent 50%),
     radial-gradient(at 100% 100%, hsla(202,100%,70%,0.1) 0, transparent 50%);
+  background-attachment: fixed;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
