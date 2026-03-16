@@ -101,6 +101,35 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
     }, []);
 
 
+    // Auto-switch to products view when search term is entered (Vista Rápida)
+    useEffect(() => {
+        if (orderViewMode === 'quick') {
+            if (searchTerm.trim()) {
+                setQuickViewState('products');
+            } else if (quickViewState === 'products' && !selectedCategory) {
+                setQuickViewState('categories');
+            }
+        }
+    }, [searchTerm, orderViewMode, quickViewState, selectedCategory]);
+
+    // Prevent accidental reload/navigation if there are unsaved items
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (items.length > 0 && !isSaved) {
+                e.preventDefault();
+                e.returnValue = ''; // Standard way to trigger the browser's warning dialog
+                return '';
+            }
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, [items.length, isSaved]);
+
+
     // Filter products
     // Si hay texto en el buscador → buscar en TODOS los productos (ignorar categoría)
     // Búsqueda mejorada: busca por nombre de producto Y por nombre de categoría
