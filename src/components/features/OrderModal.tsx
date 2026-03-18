@@ -903,11 +903,35 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                         <div style={{
                             flex: 1,
                             overflowY: 'auto',
-                            padding: '1rem',
+                            padding: isMobile ? '0.75rem' : '1rem',
                             display: 'flex',
                             flexDirection: 'column',
                             gap: '0.75rem'
                         }}>
+                            {/* Identificación moved here to save fixed footer space */}
+                            <div style={{ 
+                                backgroundColor: 'var(--surface-color)', 
+                                padding: isMobile ? '0.75rem' : '1rem', 
+                                borderRadius: 'var(--radius-md)', 
+                                border: '1px solid var(--border-color)',
+                                flexShrink: 0
+                            }}>
+                                <label style={{ display: 'block', color: 'var(--text-secondary)', marginBottom: '0.5rem', fontSize: '0.8rem', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Identificación</label>
+                                <Input
+                                    placeholder="Nombre del cliente..."
+                                    value={customerName}
+                                    onChange={(e) => setCustomerName(e.target.value)}
+                                    style={{
+                                        background: 'var(--background-color)',
+                                        border: '1px solid var(--border-color)',
+                                        color: 'var(--text-primary)',
+                                        borderRadius: 'var(--radius-md)',
+                                        padding: '0.6rem 0.75rem',
+                                        fontSize: '0.9rem'
+                                    }}
+                                    fullWidth
+                                />
+                            </div>
                             {items.length === 0 ? (
                                 <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', gap: '1rem', opacity: 0.5 }}>
                                     <ShoppingCart size={48} strokeWidth={1} />
@@ -1051,7 +1075,7 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                             )}
                                         </div>
 
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 'auto', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-end', marginTop: 'auto', gap: '0.5rem', flexWrap: 'wrap' }}>
                                             {/* Quantity Controls */}
                                             <div style={{
                                                 display: 'flex',
@@ -1091,7 +1115,7 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
 
                         {/* Footer Actions */}
                         <div style={{
-                            padding: isMobile ? '1rem' : '1.5rem',
+                            padding: isMobile ? '0.75rem 1rem' : '1.5rem',
                             borderTop: '1px solid var(--border-color)',
                             backgroundColor: 'var(--surface-color)',
                             marginTop: 'auto',
@@ -1100,30 +1124,12 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                             bottom: 0,
                             zIndex: 20
                         }}>
-                            <div style={{ marginBottom: '1.25rem' }}>
-                                <label style={{ display: 'block', color: 'var(--text-secondary)', marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Identificación</label>
-                                <Input
-                                    placeholder="Nombre del cliente..."
-                                    value={customerName}
-                                    onChange={(e) => setCustomerName(e.target.value)}
-                                    style={{
-                                        background: 'var(--background-color)',
-                                        border: '1px solid var(--border-color)',
-                                        color: 'var(--text-primary)',
-                                        borderRadius: 'var(--radius-md)',
-                                        padding: '0.75rem 1rem',
-                                        fontSize: '0.95rem'
-                                    }}
-                                    fullWidth
-                                />
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isMobile ? '0.5rem' : '1.5rem' }}>
+                                <span style={{ color: 'var(--text-secondary)', fontWeight: '600', fontSize: isMobile ? '0.9rem' : '1rem' }}>TOTAL</span>
+                                <span style={{ fontSize: isMobile ? '1.5rem' : '2rem', fontWeight: '900', color: 'var(--text-primary)', letterSpacing: '-0.02em', lineHeight: 1 }}>S/ {total.toFixed(2)}</span>
                             </div>
 
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                                <span style={{ color: 'var(--text-secondary)', fontWeight: '600' }}>TOTAL</span>
-                                <span style={{ fontSize: '2rem', fontWeight: '900', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>S/ {total.toFixed(2)}</span>
-                            </div>
-
-                            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 2fr', gap: '1rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 2fr', gap: isMobile ? '0.5rem' : '1rem' }}>
                                 {!isMobile && (
                                     <Button
                                         variant="outline"
@@ -1141,7 +1147,7 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                         onClick={() => setShowQuickPayment(true)}
                                         style={{
                                             background: 'linear-gradient(135deg, #43a047 0%, #2e7d32 100%)',
-                                            height: '54px',
+                                            height: isMobile ? '44px' : '54px',
                                             borderRadius: 'var(--radius-md)',
                                             fontSize: '1.1rem',
                                             fontWeight: '700',
@@ -1166,7 +1172,7 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                         disabled={items.length === 0 || isSaving || (isSaved && !itemsChangedAfterSave)}
                                         style={{
                                             background: (isSaved && !itemsChangedAfterSave) ? 'var(--success-color)' : 'var(--primary-color)',
-                                            height: '54px',
+                                            height: isMobile ? '44px' : '54px',
                                             borderRadius: 'var(--radius-md)',
                                             fontSize: '1.1rem',
                                             fontWeight: '700',
@@ -1216,7 +1222,9 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                         }
                                     }}
                                     style={{
-                                        height: '54px',
+                                        height: isMobile ? '44px' : '54px',
+                                        display: (isMobile && !isSaved && !initialOrder) ? 'none' : 'flex',
+                                        alignItems: 'center', justifyContent: 'center',
                                         gridColumn: isMobile ? '1' : 'span 2',
                                         borderColor: (isSaved || initialOrder) ? 'var(--primary-color)' : 'var(--border-color)',
                                         color: (isSaved || initialOrder) ? 'var(--primary-color)' : 'var(--text-secondary)',
@@ -1229,7 +1237,7 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                 {isMobile && (
                                     <button
                                         onClick={onClose}
-                                        style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: '600', padding: '0.5rem' }}
+                                        style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: '600', padding: '0.25rem' }}
                                     >
                                         {(isSaved || initialOrder) ? 'Cerrar / Finalizar' : 'Volver sin guardar'}
                                     </button>
