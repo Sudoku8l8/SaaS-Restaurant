@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Bell, X, CheckCircle2, MessageCircle, Utensils } from 'lucide-react';
 import { useDigitalOrders } from '@/hooks/useDigitalOrders';
 import type { DigitalOrder } from '@/types';
+import { createPortal } from 'react-dom';
 
 // ── Styles (inline for a self-contained shared component) ─────────────────
 const css = `
@@ -354,7 +355,7 @@ export function NotificationBell() {
                 )}
             </button>
 
-            {open && (
+            {open && createPortal(
                 <>
                     <div className="nb-overlay" onClick={() => setOpen(false)} />
                     <div className="nb-drawer" ref={drawerRef}>
@@ -397,7 +398,7 @@ export function NotificationBell() {
                         </div>
                     </div>
                 </>
-            )}
+                , document.body)}
         </>
     );
 }
