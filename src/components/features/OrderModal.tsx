@@ -886,12 +886,18 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                     }}>
 
                         {/* Summary Header */}
-                        {!isMobile && (
-                            <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface-color)' }}>
-                                <h3 style={{ margin: 0, fontWeight: '700', fontSize: '1.2rem', color: 'var(--text-primary)' }}>Resumen del Pedido</h3>
-                                <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '1.5rem' }}>×</button>
-                            </div>
-                        )}
+                        <div style={{ 
+                            padding: isMobile ? '1rem' : '1.5rem', 
+                            borderBottom: '1px solid var(--border-color)', 
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            alignItems: 'center', 
+                            background: 'var(--surface-color)',
+                            zIndex: 10
+                        }}>
+                            <h3 style={{ margin: 0, fontWeight: '700', fontSize: '1.2rem', color: 'var(--text-primary)' }}>Resumen del Pedido</h3>
+                            <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', borderRadius: '50%', padding: 0 }}>×</button>
+                        </div>
 
                         {/* Order Items List */}
                         <div style={{
@@ -1085,11 +1091,14 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
 
                         {/* Footer Actions */}
                         <div style={{
-                            padding: isMobile ? '1.25rem' : '1.5rem',
+                            padding: isMobile ? '1rem' : '1.5rem',
                             borderTop: '1px solid var(--border-color)',
                             backgroundColor: 'var(--surface-color)',
                             marginTop: 'auto',
-                            boxShadow: '0 -4px 6px -1px rgb(0 0 0 / 0.05)'
+                            boxShadow: '0 -4px 12px rgba(0,0,0,0.1)',
+                            position: isMobile ? 'sticky' : 'static',
+                            bottom: 0,
+                            zIndex: 20
                         }}>
                             <div style={{ marginBottom: '1.25rem' }}>
                                 <label style={{ display: 'block', color: 'var(--text-secondary)', marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Identificación</label>
@@ -1222,7 +1231,7 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                         onClick={onClose}
                                         style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: '600', padding: '0.5rem' }}
                                     >
-                                        Volver sin guardar
+                                        {(isSaved || initialOrder) ? 'Cerrar / Finalizar' : 'Volver sin guardar'}
                                     </button>
                                 )}
                             </div>
