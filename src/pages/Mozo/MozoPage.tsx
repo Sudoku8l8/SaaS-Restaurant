@@ -231,7 +231,7 @@ export function MozoPage() {
                     </button>
 
                     <div style={{ textAlign: 'right', minWidth: 'fit-content' }}>
-                        <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: '800', letterSpacing: '0.05em', lineHeight: 1 }}>{user?.name}</p>
+                        <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: '800', letterSpacing: '0.05em', lineHeight: 1 }}>{window.innerWidth < 640 ? user?.name?.split(' ')[0] : user?.name}</p>
                         <p style={{ margin: 0, color: 'var(--text-primary)', fontWeight: '700', fontSize: '0.85rem' }}>
                             {user?.role === 'caja' ? 'Cajero/a' : 
                              user?.role === 'admin' ? 'Admin' : 

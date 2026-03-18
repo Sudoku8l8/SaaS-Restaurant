@@ -221,7 +221,8 @@ export function CocinaPage() {
                     cursor: pointer;
                     font-size: 0.95rem;
                     font-weight: 600;
-                    transition: background 0.15s;
+                    color: var(--text-primary);
+                    transition: all 0.15s;
                 }
                 .cocina-dropdown-item:hover {
                     background: var(--glass-bg);
@@ -263,7 +264,7 @@ export function CocinaPage() {
                                     {user?.role === 'caja' ? 'Caja' : 'Cocina'}
                                 </h1>
                                 <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: '500', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                    Hola, <span style={{ color: 'var(--primary-color)' }}>{user?.name}</span> &bull; {filteredOrders.length} pedidos
+                                    {window.innerWidth < 640 ? `${user?.name?.split(' ')[0]}` : <>{'Hola, '}<span style={{ color: 'var(--primary-color)' }}>{user?.name}</span></>} &bull; {filteredOrders.length} ped.
                                 </p>
                             </div>
                         </div>
@@ -309,7 +310,7 @@ export function CocinaPage() {
                                             className="cocina-dropdown-item"
                                             onClick={() => { navigate(`/${restaurantSlug}/cierre-caja`); setIsMenuOpen(false); }}
                                         >
-                                            <DollarSign size={18} className="text-primary" />
+                                            <DollarSign size={18} style={{ color: 'var(--success-color)' }} />
                                             <span>Cerrar Caja</span>
                                         </button>
                                     )}
