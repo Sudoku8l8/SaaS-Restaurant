@@ -83,7 +83,7 @@ export function OrderCard({ order, onEdit, onDelete }: OrderCardProps) {
                 style={{
                     flex: 1,
                     backgroundColor: 'var(--text-primary)',
-                    color: 'white',
+                    color: 'var(--surface-color)',
                     border: 'none',
                     borderRadius: 'var(--radius-md)',
                     padding: '0.85rem',
