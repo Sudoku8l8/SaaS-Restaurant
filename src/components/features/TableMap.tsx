@@ -130,6 +130,7 @@ export function TableMap({
                                         table={table}
                                         onClick={onTableClick}
                                         orderStatus={order?.status}
+                                        customerName={order?.customerName}
                                     />
                                 );
                             })}

@@ -8,6 +8,7 @@ interface TableCardProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onClick'>
     onClick: (table: RestaurantTable) => void;
     onDelete?: (id: string) => void;
     orderStatus?: OrderStatus;
+    customerName?: string;
 }
 
 const statusColors = {
@@ -40,7 +41,7 @@ const statusLabels = {
     closed: 'Cerrada',
 };
 
-export function TableCard({ table, onClick, onDelete, orderStatus, style, ...props }: TableCardProps) {
+export function TableCard({ table, onClick, onDelete, orderStatus, customerName, style, ...props }: TableCardProps) {
     const isNewTakeout = table.id === 'takeout-new-wildcard';
     const isActiveTakeout = table.id.startsWith('takeout-order-');
     const isTakeout = isNewTakeout || isActiveTakeout;
@@ -147,8 +148,18 @@ export function TableCard({ table, onClick, onDelete, orderStatus, style, ...pro
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                         <ShoppingBag size={isActiveTakeout ? 40 : 32} style={{ color: currentStatusColor }} />
                         {isActiveTakeout && (
-                            <span style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--primary-color)' }}>
-                                #{table.currentOrderId?.slice(-4).toUpperCase()}
+                            <span style={{ 
+                                fontSize: customerName ? '0.8rem' : '0.9rem', 
+                                fontWeight: '800', 
+                                color: 'var(--primary-color)',
+                                textAlign: 'center',
+                                marginTop: '4px',
+                                maxWidth: '100%',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                            }}>
+                                {customerName || `#${table.currentOrderId?.slice(-4).toUpperCase()}`}
                             </span>
                         )}
                     </div>
