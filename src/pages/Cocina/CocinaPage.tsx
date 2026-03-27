@@ -1,10 +1,10 @@
-import { useRef, useEffect, useState, useMemo } from 'react';
-import { Lock, ShieldCheck, ChefHat, LogOut, Menu, Wallet, Zap, DollarSign } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Lock, ChefHat, Menu, Zap } from 'lucide-react';
 import type { RestaurantTable, Order } from '@/types';
 import { OrderModal } from '@/components/features/OrderModal';
 import { TableDetailModal } from '@/components/features/TableDetailModal';
 import { TableSelectorModal } from '@/components/features/TableSelectorModal';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrders } from '@/hooks/useOrders';
 import { useClosureStatus } from '@/hooks/useClosureStatus';
@@ -13,6 +13,7 @@ import { OrderFAB } from '@/components/shared/OrderFAB';
 import { OrderCard } from '@/components/features/OrderCard';
 import { OrderCardSkeleton } from '@/components/shared/Skeleton';
 import { NotificationBell } from '@/components/shared/NotificationBell';
+import { AppSidebar } from '@/components/shared/AppSidebar';
 import { useTenant } from '@/app/providers/TenantProvider';
 import { OrderStatus } from '@/types';
 
@@ -70,27 +71,14 @@ const FilterButton = ({ label, isActive, count, onClick }: FilterButtonProps) =>
 };
 
 export function CocinaPage() {
-    const { user, logout } = useAuth();
-    const navigate = useNavigate();
+    const { user } = useAuth();
     const { restaurantSlug } = useParams<{ restaurantSlug: string }>();
     const { activeOrders, deleteOrder } = useOrders();
     const { isClosed } = useClosureStatus();
     const [filterStatus, setFilterStatus] = useState<OrderStatus | 'all'>('all');
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const menuRef = useRef<HTMLDivElement>(null);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const { tenant } = useTenant();
     const enableQuickSale = tenant?.config?.enableQuickSale ?? false;
-
-    // Close menu when clicking outside
-    useEffect(() => {
-        function handleClickOutside(event: MouseEvent) {
-            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-                setIsMenuOpen(false);
-            }
-        }
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
 
     // Order creation flow (reusable hook)
     const orderCreation = useOrderCreation();
@@ -129,7 +117,7 @@ export function CocinaPage() {
             countsObj[order.status] = (countsObj[order.status] || 0) + 1;
         });
 
-        const filtered = activeOrders.filter(order => 
+        const filtered = activeOrders.filter(order =>
             filterStatus === 'all' ? true : order.status === filterStatus
         );
 
@@ -144,191 +132,163 @@ export function CocinaPage() {
 
     // Helper to construct minimal table object for OrderModal
     const getMinimalTable = (order: Order): RestaurantTable => ({
-        id: 'temp', // Not used for update
+        id: 'temp',
         restaurantId: user?.restaurantId || '',
         number: order.tableNumber,
         status: 'occupied',
-        capacity: 4 // Dummy
+        capacity: 4
     });
-
-
 
     return (
         <div className="bg-mesh" style={{ minHeight: '100vh', paddingBottom: '3rem' }}>
-            {/* Header */}
+
+            {/* ── AppSidebar (solo admin, caja y chef) ── */}
+            {restaurantSlug && (
+                <AppSidebar
+                    isOpen={isSidebarOpen}
+                    onClose={() => setIsSidebarOpen(false)}
+                    restaurantSlug={restaurantSlug}
+                />
+            )}
+
+            {/* ── Inline styles ── */}
             <style>{`
-                .cocina-layout-header {
-                    display: flex;
-                    flex-direction: column;
-                }
-                .cocina-layout-top {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-bottom: 1rem;
-                }
-                .cocina-layout-actions {
-                    display: flex;
-                    gap: 0.75rem;
-                }
-                .cocina-action-btn {
-                    flex: 1;
-                    justify-content: center;
-                    border: none !important;
-                    border-radius: 14px !important;
-                    transition: transform 0.15s, opacity 0.15s;
-                }
-                .cocina-action-btn:active {
-                    transform: scale(0.97);
-                }
-                .cocina-dropdown-menu {
-                    position: absolute;
-                    top: 100%;
-                    right: 0;
-                    margin-top: 0.5rem;
+                .cocina-header-bar {
+                    position: sticky;
+                    top: 0;
+                    z-index: 100;
                     background: var(--glass-bg);
                     backdrop-filter: blur(20px);
                     -webkit-backdrop-filter: blur(20px);
-                    border: 1px solid var(--glass-border);
-                    border-radius: 16px;
-                    box-shadow: 0 10px 40px rgba(0,0,0,0.12);
-                    min-width: 200px;
-                    z-index: 50;
-                    opacity: 0;
-                    transform: translateY(-10px);
-                    pointer-events: none;
-                    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-                    display: flex;
-                    flex-direction: column;
-                    padding: 0.5rem;
-                    gap: 0.25rem;
+                    border-bottom: 1px solid var(--glass-border);
                 }
-                .cocina-dropdown-menu.open {
-                    opacity: 1;
-                    transform: translateY(0);
-                    pointer-events: auto;
-                }
-                .cocina-dropdown-item {
+                .cocina-header-inner {
                     display: flex;
                     align-items: center;
                     gap: 0.75rem;
-                    padding: 0.75rem 1rem;
-                    border: none;
+                    padding: 1.1rem 1.5rem;
+                    max-width: 1280px;
+                    margin: 0 auto;
+                }
+                .cocina-hamburger {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 42px;
+                    height: 42px;
+                    border-radius: 50%;
+                    border: 1.5px solid var(--glass-border);
                     background: transparent;
-                    width: 100%;
-                    text-align: left;
-                    border-radius: 10px;
-                    cursor: pointer;
-                    font-size: 0.95rem;
-                    font-weight: 600;
                     color: var(--text-primary);
-                    transition: all 0.15s;
+                    cursor: pointer;
+                    flex-shrink: 0;
+                    transition: all 0.2s ease;
                 }
-                .cocina-dropdown-item:hover {
-                    background: var(--glass-bg);
+                .cocina-hamburger:hover {
+                    background: var(--background-color);
+                    border-color: var(--primary-color);
+                    color: var(--primary-color);
+                    transform: scale(1.05);
                 }
-                .cocina-dropdown-item.danger {
-                    color: var(--danger-color);
+                .cocina-hamburger:active {
+                    transform: scale(0.96);
                 }
-                .cocina-dropdown-item.danger:hover {
-                    background: rgba(230, 57, 70, 0.08);
+                .cocina-brand {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.7rem;
+                    flex: 1;
+                    min-width: 0;
                 }
-                @media (min-width: 768px) {
-                    .cocina-layout-header {
-                        flex-direction: row;
-                        justify-content: space-between;
-                        align-items: center;
-                    }
-                    .cocina-layout-top {
-                        margin-bottom: 0;
-                        flex: 1;
-                    }
+                .cocina-brand-icon {
+                    width: 42px;
+                    height: 42px;
+                    border-radius: 50%;
+                    background: rgba(237, 219, 203, 0.4);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: var(--text-primary);
+                    flex-shrink: 0;
+                }
+                .cocina-brand-text {
+                    min-width: 0;
+                }
+                .cocina-brand-title {
+                    margin: 0;
+                    color: var(--text-primary);
+                    font-size: 1.2rem;
+                    font-weight: 800;
+                    letter-spacing: -0.01em;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    font-family: var(--font-heading);
+                    line-height: 1.2;
+                }
+                .cocina-brand-sub {
+                    margin: 0;
+                    color: var(--text-secondary);
+                    font-size: 0.8rem;
+                    font-weight: 500;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+                .cocina-header-actions {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    flex-shrink: 0;
+                }
+                /* Stagger animation for main content when sidebar-used */
+                .cocina-content {
+                    transition: margin-left 0.3s ease-in-out;
                 }
             `}</style>
-            <div style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid var(--glass-border)', padding: '1.25rem 0', marginBottom: '2.5rem', position: 'relative', zIndex: 100 }}>
-                <div className="container cocina-layout-header">
-                    <div className="cocina-layout-top">
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flex: 1, minWidth: 0 }}>
-                            <div style={{
-                                width: '46px', height: '46px',
-                                backgroundColor: 'rgba(237, 219, 203, 0.4)',
-                                borderRadius: '50%',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                color: 'var(--text-primary)',
-                                flexShrink: 0
-                            }}>
-                                <ChefHat size={24} />
-                            </div>
-                            <div style={{ minWidth: 0 }}>
-                                <h1 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.25rem', fontWeight: '800', letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: 'var(--font-heading)' }}>
-                                    {user?.role === 'caja' ? 'Caja' : 'Cocina'}
-                                </h1>
-                                <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: '500', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                    {window.innerWidth < 640 ? `${user?.name?.split(' ')[0]}` : <>{'Hola, '}<span style={{ color: 'var(--primary-color)' }}>{user?.name}</span></>} &bull; {filteredOrders.length} ped.
-                                </p>
-                            </div>
+
+            {/* ── Header ── */}
+            <header className="cocina-header-bar" style={{ marginBottom: '2.5rem' }}>
+                <div className="cocina-header-inner">
+                    {/* Hamburguesa — IZQUIERDA */}
+                    <button
+                        className="cocina-hamburger"
+                        onClick={() => setIsSidebarOpen(true)}
+                        aria-label="Abrir menú de navegación"
+                        id="btn-open-sidebar"
+                        title="Menú"
+                    >
+                        <Menu size={20} />
+                    </button>
+
+                    {/* Brand */}
+                    <div className="cocina-brand">
+                        <div className="cocina-brand-icon">
+                            <ChefHat size={22} />
                         </div>
-
-                        <div style={{ flexShrink: 0, paddingLeft: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                            <NotificationBell />
-                            <div ref={menuRef} style={{ position: 'relative' }}>
-                                <button
-                                    onClick={() => setIsMenuOpen(!isMenuOpen)}
-                                    style={{
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        width: '42px', height: '42px',
-                                        borderRadius: '50%',
-                                        border: '1px solid var(--border-color)',
-                                        background: isMenuOpen ? 'var(--background-color)' : 'transparent',
-                                        color: 'var(--text-primary)',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s',
-                                    }}
-                                >
-                                    <Menu size={20} />
-                                </button>
-
-                                <div className={`cocina-dropdown-menu ${isMenuOpen ? 'open' : ''}`}>
-                                    {user?.role === 'admin' && (
-                                        <button
-                                            className="cocina-dropdown-item"
-                                            onClick={() => navigate(`/${restaurantSlug}/admin`)}
-                                        >
-                                            <ShieldCheck size={18} style={{ color: 'var(--primary-color)' }} />
-                                            <span>Administración</span>
-                                        </button>
-                                    )}
-                                    <button
-                                        className="cocina-dropdown-item"
-                                        onClick={() => { navigate(`/${restaurantSlug}/caja-chica`); setIsMenuOpen(false); }}
-                                    >
-                                        <Wallet size={18} style={{ color: '#f59e0b' }} />
-                                        <span>Caja Chica</span>
-                                    </button>
-                                    {(user?.role === 'admin' || user?.role === 'caja') && (
-                                        <button
-                                            className="cocina-dropdown-item"
-                                            onClick={() => { navigate(`/${restaurantSlug}/cierre-caja`); setIsMenuOpen(false); }}
-                                        >
-                                            <DollarSign size={18} style={{ color: 'var(--success-color)' }} />
-                                            <span>Cerrar Caja</span>
-                                        </button>
-                                    )}
-                                    <button
-                                        className="cocina-dropdown-item danger"
-                                        onClick={logout}
-                                    >
-                                        <LogOut size={18} />
-                                        <span>Cerrar Sesión</span>
-                                    </button>
-                                </div>
-                            </div>
+                        <div className="cocina-brand-text">
+                            <h1 className="cocina-brand-title">
+                                {user?.role === 'caja' ? 'Caja' : 'Cocina'}
+                            </h1>
+                            <p className="cocina-brand-sub">
+                                Hola,{' '}
+                                <span style={{ color: 'var(--primary-color)', fontWeight: 700 }}>
+                                    {user?.name?.split(' ')[0]}
+                                </span>
+                                {' '}· {filteredOrders.length} pedido{filteredOrders.length !== 1 ? 's' : ''}
+                            </p>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <div className="container">
+                    {/* Right actions */}
+                    <div className="cocina-header-actions">
+                        <NotificationBell />
+                    </div>
+                </div>
+            </header>
+
+            {/* ── Main Content ── */}
+            <div className="container cocina-content">
                 {/* Closure Banner */}
                 {isClosed && (
                     <div className="glass-card" style={{
@@ -361,47 +321,43 @@ export function CocinaPage() {
                         flexWrap: 'nowrap',
                         overflowX: 'auto',
                         paddingBottom: '8px',
-                        msOverflowStyle: 'none',
-                        scrollbarWidth: 'none',
-                        WebkitOverflowScrolling: 'touch'
+                        msOverflowStyle: 'none' as const,
+                        scrollbarWidth: 'none' as const,
+                        WebkitOverflowScrolling: 'touch' as const
                     }}>
-                        <style>{`
-                            div::-webkit-scrollbar {
-                                display: none;
-                            }
-                        `}</style>
-                        <FilterButton 
-                            status="all" 
-                            label="Todos" 
-                            isActive={filterStatus === 'all'} 
-                            count={orderCounts.all} 
-                            onClick={() => setFilterStatus('all')} 
+                        <style>{`div::-webkit-scrollbar { display: none; }`}</style>
+                        <FilterButton
+                            status="all"
+                            label="Todos"
+                            isActive={filterStatus === 'all'}
+                            count={orderCounts.all}
+                            onClick={() => setFilterStatus('all')}
                         />
-                        <FilterButton 
-                            status="pending" 
-                            label="Pendientes" 
-                            isActive={filterStatus === 'pending'} 
-                            count={orderCounts.pending} 
-                            onClick={() => setFilterStatus('pending')} 
+                        <FilterButton
+                            status="pending"
+                            label="Pendientes"
+                            isActive={filterStatus === 'pending'}
+                            count={orderCounts.pending}
+                            onClick={() => setFilterStatus('pending')}
                         />
-                        <FilterButton 
-                            status="in_preparation" 
-                            label="En Cocina" 
-                            isActive={filterStatus === 'in_preparation'} 
-                            count={orderCounts.in_preparation} 
-                            onClick={() => setFilterStatus('in_preparation')} 
+                        <FilterButton
+                            status="in_preparation"
+                            label="En Cocina"
+                            isActive={filterStatus === 'in_preparation'}
+                            count={orderCounts.in_preparation}
+                            onClick={() => setFilterStatus('in_preparation')}
                         />
-                        <FilterButton 
-                            status="ready" 
-                            label="Listos" 
-                            isActive={filterStatus === 'ready'} 
-                            count={orderCounts.ready} 
-                            onClick={() => setFilterStatus('ready')} 
+                        <FilterButton
+                            status="ready"
+                            label="Listos"
+                            isActive={filterStatus === 'ready'}
+                            count={orderCounts.ready}
+                            onClick={() => setFilterStatus('ready')}
                         />
                     </div>
                 </div>
 
-                {/* Grid */}
+                {/* Grid de pedidos */}
                 <div style={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))',
@@ -425,18 +381,19 @@ export function CocinaPage() {
                     )}
                 </div>
             </div>
+
+            {/* ── Edit Order Modal ── */}
             {orderToEdit && user?.restaurantId && (
                 <OrderModal
                     table={getMinimalTable(orderToEdit)}
                     initialOrder={orderToEdit}
                     onClose={() => setOrderToEdit(undefined)}
-                    onOrderCreated={() => { /* Order saved, let modal handle closure */ }}
+                    onOrderCreated={() => { }}
                 />
             )}
 
-            {/* --- Order Creation Flow (FAB + Modals) --- */}
+            {/* ── Order Creation Flow (FAB + Modals) ── */}
             {user?.role === 'caja' ? (
-                // Left side layout for the Plus FAB when there's a quick sale button, or regular if admin
                 <div style={{ position: 'fixed', bottom: '2rem', right: '2rem', display: 'flex', gap: '1rem', zIndex: 900 }}>
                     <div style={{ position: 'relative' }}>
                         <OrderFAB onClick={orderCreation.handleFABClick} style={{ position: 'relative', bottom: 0, right: 0, width: '64px', height: '64px' }} />
@@ -498,7 +455,7 @@ export function CocinaPage() {
                     table={orderCreation.selectedTable || undefined}
                     initialOrder={orderCreation.orderToEdit}
                     onClose={orderCreation.handleCloseOrderModal}
-                    onOrderCreated={() => { /* handled */ }}
+                    onOrderCreated={() => { }}
                     orderType={orderCreation.takeoutOrderType}
                 />
             )}
@@ -510,6 +467,13 @@ export function CocinaPage() {
                     onEdit={orderCreation.handleEditOrder}
                 />
             )}
+
+            <style>{`
+                @keyframes fab-pulse {
+                    0%, 100% { box-shadow: 0 6px 20px rgba(142, 115, 91, 0.4), 0 2px 6px rgba(0,0,0,0.15); }
+                    50% { box-shadow: 0 6px 20px rgba(142, 115, 91, 0.6), 0 2px 6px rgba(0,0,0,0.2), 0 0 0 8px rgba(142, 115, 91, 0.1); }
+                }
+            `}</style>
         </div>
     );
 }

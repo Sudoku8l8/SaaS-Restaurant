@@ -1,13 +1,9 @@
-import { useState } from 'react';
-import { Utensils, Users, LayoutGrid, ArrowLeft, FolderKanban, Printer, Globe, Shield, Settings, Crown, Wallet, Menu, X, ChevronRight } from 'lucide-react';
+import { LayoutGrid, Printer, Globe, Shield, Settings, Crown, Wallet, Menu, X, ChevronRight } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/shared';
 import { useTenant } from '@/app/providers/TenantProvider';
 
-import { ProductsTab } from '@/components/features/ProductsTab';
-import { UsersTab } from '@/components/features/UsersTab';
 import { TablesTab } from '@/components/features/TablesTab';
-import { CategoriesTab } from '@/components/features/CategoriesTab';
 import { PrinterTab } from '@/components/features/PrinterTab';
 import { DigitalMenuConfigPage } from '@/pages/Configuracion/DigitalMenuConfigPage';
 import { SecurityTab } from '@/components/features/SecurityTab';
@@ -18,7 +14,7 @@ import { PettyCashConfigTab } from '@/components/features/PettyCashConfigTab';
 
 import './ConfigPage.css';
 
-type Tab = 'general' | 'products' | 'categories' | 'users' | 'tables' | 'printer' | 'menu' | 'security' | 'pettycash';
+type Tab = 'general' | 'tables' | 'printer' | 'menu' | 'security' | 'pettycash';
 
 interface TabItem {
     id: Tab;
@@ -37,10 +33,6 @@ export function ConfigPage() {
 
     const tabs: TabItem[] = [
         { id: 'general', label: 'General', icon: Settings },
-        { id: 'products', label: 'Productos', icon: Utensils },
-        { id: 'categories', label: 'Categorías', icon: FolderKanban },
-
-        { id: 'users', label: 'Usuarios', icon: Users },
         { id: 'tables', label: 'Mesas', icon: LayoutGrid },
         { id: 'printer', label: 'Impresora', icon: Printer },
         { id: 'menu', label: 'Menú Digital', icon: Globe, premium: !hasDigitalMenu },
@@ -57,19 +49,34 @@ export function ConfigPage() {
     };
 
     return (
-        <div className="bg-mesh" style={{ minHeight: '100vh', padding: 'var(--spacing-md) 0' }}>
+        <div className="bg-mesh config-content" style={{ minHeight: '100vh', padding: 'var(--spacing-md) 0', transition: 'margin-left 0.3s ease-in-out' }}>
+            {restaurantSlug && (
+                <AppSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} restaurantSlug={restaurantSlug} />
+            )}
             <div className="container">
                 <header className="config-header">
-                    <div>
-                        <h1 style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, color: 'var(--text-primary)'}}>
-                            Configuración
-                        </h1>
-                        <p style={{ color: 'var(--text-secondary)' }}>Administración del Restaurante</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                        <button
+                            onClick={() => setIsSidebarOpen(true)}
+                            aria-label="Menú principal"
+                            style={{
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                width: '42px', height: '42px', borderRadius: '50%',
+                                border: '1.5px solid var(--glass-border)', background: 'transparent',
+                                color: 'var(--text-primary)', cursor: 'pointer', flexShrink: 0,
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            <Menu size={20} />
+                        </button>
+                        <div>
+                            <h1 style={{ margin: 0, fontFamily: 'var(--font-heading)', fontWeight: 800, color: 'var(--text-primary)'}}>
+                                Configuración
+                            </h1>
+                            <p style={{ margin: 0, color: 'var(--text-secondary)' }}>Administración del Restaurante</p>
+                        </div>
                     </div>
-                <Button variant="ghost" onClick={() => navigate(`/${restaurantSlug}/admin`)} className="config-back-btn">
-                    <ArrowLeft size={18} /> Volver
-                </Button>
-            </header>
+                </header>
 
             {/* Desktop: horizontal pill tabs */}
             <div className="config-tabs-desktop">
@@ -146,10 +153,6 @@ export function ConfigPage() {
             {/* Tab Content */}
             <div className="config-tab-content">
                 {activeTab === 'general' && <GeneralTab />}
-                {activeTab === 'products' && <ProductsTab />}
-                {activeTab === 'categories' && <CategoriesTab />}
-
-                {activeTab === 'users' && <UsersTab />}
                 {activeTab === 'tables' && <TablesTab />}
                 {activeTab === 'printer' && <PrinterTab />}
                 {activeTab === 'menu' && (

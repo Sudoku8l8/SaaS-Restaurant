@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { BarChart3, ArrowLeft, Search, Download, DollarSign, ShoppingBag, CalendarCheck, AlertTriangle, Lock, Clock, Eye } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { BarChart3, Search, Download, DollarSign, ShoppingBag, CalendarCheck, AlertTriangle, Lock, Clock, Eye, Menu } from 'lucide-react';
+import { useParams } from 'react-router-dom';
 import { db } from '@/services/firebase/config';
 import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
@@ -11,6 +11,7 @@ import { exportDailySalesToExcel } from '@/services/exportExcel';
 import type { PettyCashExportItem } from '@/services/exportExcel';
 import { getPeruDateString, getPeruNow } from '@/utils/dateUtils';
 import { DailyReportPreviewModal } from '@/components/features/DailyReportPreviewModal';
+import { AppSidebar } from '@/components/shared/AppSidebar';
 
 // A "day record" may come from a closure, from raw orders, or both.
 interface DayRecord {
@@ -26,8 +27,8 @@ interface DayRecord {
 
 export function ReportesPage() {
     const { user } = useAuth();
-    const navigate = useNavigate();
     const { restaurantSlug } = useParams();
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     // Date Range State (default: last 7 days)
     const [fromDate, setFromDate] = useState(format(subDays(new Date(), 7), 'yyyy-MM-dd'));
@@ -340,17 +341,32 @@ export function ReportesPage() {
 
     // ─── RENDER ────────────────────────────────────────────────────────────────
     return (
-        <div className="container mt-md bg-mesh" style={{ minHeight: '100vh', paddingBottom: '2rem' }}>
+        <div className="container mt-md bg-mesh" style={{ minHeight: '100vh', paddingBottom: '2rem', transition: 'margin-left 0.3s ease-in-out' }}>
+            {restaurantSlug && (
+                <AppSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} restaurantSlug={restaurantSlug} />
+            )}
             <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-                <div>
-                    <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontFamily: 'var(--font-heading)', fontWeight: 800 }}>
-                        <BarChart3 size={32} className="text-primary" /> Reportes Históricos
-                    </h1>
-                    <p>Ventas por rango de fechas — incluyendo días sin cierre de caja</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                    <button
+                        onClick={() => setIsSidebarOpen(true)}
+                        aria-label="Menú principal"
+                        style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            width: '42px', height: '42px', borderRadius: '50%',
+                            border: '1.5px solid var(--glass-border)', background: 'transparent',
+                            color: 'var(--text-primary)', cursor: 'pointer', flexShrink: 0,
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        <Menu size={20} />
+                    </button>
+                    <div>
+                        <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontFamily: 'var(--font-heading)', fontWeight: 800 }}>
+                            <BarChart3 size={32} className="text-primary" /> Reportes Históricos
+                        </h1>
+                        <p>Ventas por rango de fechas — incluyendo días sin cierre de caja</p>
+                    </div>
                 </div>
-                <Button variant="ghost" onClick={() => navigate(`/${restaurantSlug}/admin`)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <ArrowLeft size={18} /> Volver
-                </Button>
             </header>
 
             {/* Filter Section */}

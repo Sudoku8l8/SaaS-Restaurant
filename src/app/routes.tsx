@@ -12,6 +12,8 @@ import { NotFoundPage } from '@/pages/NotFoundPage';
 import { DigitalMenuPage } from '@/pages/Public/DigitalMenuPage';
 import { DigitalCheckoutPage } from '@/pages/Public/DigitalCheckoutPage';
 import { ProtectedRoute } from '@/components/shared/ProtectedRoute';
+import { ProductsPage } from '@/pages/Admin/ProductsPage';
+import { UsersPage } from '@/pages/Admin/UsersPage';
 import { UserRole } from '@/types';
 
 /**
@@ -82,7 +84,7 @@ export const router = createBrowserRouter([
                     },
                     {
                         path: 'mozo',
-                        element: <ProtectedRoute allowedRoles={[UserRole.WAITER, UserRole.ADMIN, UserRole.SHIFT_MANAGER]} />,
+                        element: <ProtectedRoute allowedRoles={[UserRole.WAITER, UserRole.ADMIN, UserRole.SHIFT_MANAGER, UserRole.CASHIER]} />,
                         children: [{ index: true, element: <MozoPage /> }],
                     },
                     {
@@ -117,13 +119,23 @@ export const router = createBrowserRouter([
                     },
                     {
                         path: 'inventario',
-                        element: <ProtectedRoute allowedRoles={[UserRole.ADMIN]} />,
+                        element: <ProtectedRoute allowedRoles={[UserRole.ADMIN, UserRole.CASHIER]} />,
                         children: [{ index: true, element: <InventoryPage /> }],
                     },
                     {
                         path: 'config',
                         element: <ProtectedRoute allowedRoles={[UserRole.ADMIN]} />,
                         children: [{ index: true, element: <ConfigPage /> }],
+                    },
+                    {
+                        path: 'productos',
+                        element: <ProtectedRoute allowedRoles={[UserRole.ADMIN]} />,
+                        children: [{ index: true, element: <ProductsPage /> }],
+                    },
+                    {
+                        path: 'usuarios',
+                        element: <ProtectedRoute allowedRoles={[UserRole.ADMIN]} />,
+                        children: [{ index: true, element: <UsersPage /> }],
                     },
                 ],
             },

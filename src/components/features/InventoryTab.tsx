@@ -12,7 +12,11 @@ import { getPeruNow } from '@/utils/dateUtils';
 
 type SubTab = 'products' | 'items' | 'movements';
 
-export function InventoryTab() {
+interface InventoryTabProps {
+    readOnly?: boolean;
+}
+
+export function InventoryTab({ readOnly = false }: InventoryTabProps) {
     const { user } = useAuth();
     const { products: allProducts, refresh: refreshCache } = useProductCache(user?.restaurantId);
     const [subTab, setSubTab] = useState<SubTab>('products');
@@ -182,6 +186,25 @@ export function InventoryTab() {
 
     return (
         <div>
+            {/* Read-only banner for cashier */}
+            {readOnly && (
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    padding: '0.75rem 1.25rem',
+                    borderRadius: 'var(--radius-md)',
+                    background: 'rgba(245, 158, 11, 0.08)',
+                    border: '1px solid rgba(245, 158, 11, 0.25)',
+                    marginBottom: '1.5rem',
+                    color: 'var(--warning-color)',
+                    fontSize: '0.88rem',
+                    fontWeight: 600,
+                }}>
+                    <AlertTriangle size={16} style={{ flexShrink: 0 }} />
+                    Vista de solo lectura — El inventario está disponible para consulta. Solo el administrador puede realizar cambios.
+                </div>
+            )}
             {/* Summary Cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
                 <Card style={{ padding: '1rem', border: '1px solid var(--divider-color)', textAlign: 'center' }}>
@@ -248,7 +271,7 @@ export function InventoryTab() {
                         <option value="low">Stock Bajo</option>
                         <option value="critical">Sin Existencias</option>
                     </select>
-                    {subTab === 'items' && (
+                    {subTab === 'items' && !readOnly && (
                         <Button variant="primary" onClick={() => openItemModal()} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <Plus size={18} /> Nuevo Insumo
                         </Button>
@@ -291,7 +314,9 @@ export function InventoryTab() {
                                         <td style={{ padding: '1rem' }}>{getStatusBadge(p.stockActual || 0, p.stockMinimo || 0)}</td>
                                         <td style={{ padding: '1rem', textAlign: 'right' }}>
                                             <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                                                <Button size="sm" variant="outline" onClick={() => { setAdjustProduct(p); setAdjustQty((p.stockActual || 0).toString()); }}>Ajustar</Button>
+                                                {!readOnly && (
+                                                    <Button size="sm" variant="outline" onClick={() => { setAdjustProduct(p); setAdjustQty((p.stockActual || 0).toString()); }}>Ajustar</Button>
+                                                )}
                                                 <Button size="sm" variant="ghost" onClick={() => setInspectProduct(p)}>
                                                     <ClipboardList size={14} /> Historial
                                                 </Button>
@@ -327,7 +352,9 @@ export function InventoryTab() {
                                         <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>/ {p.stockMinimo || 0} Min.</span>
                                     </div>
                                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                        <Button size="sm" variant="outline" onClick={() => { setAdjustProduct(p); setAdjustQty((p.stockActual || 0).toString()); }}>Ajustar</Button>
+                                        {!readOnly && (
+                                            <Button size="sm" variant="outline" onClick={() => { setAdjustProduct(p); setAdjustQty((p.stockActual || 0).toString()); }}>Ajustar</Button>
+                                        )}
                                         <Button size="sm" variant="ghost" onClick={() => setInspectProduct(p)}><ClipboardList size={14} /></Button>
                                     </div>
                                 </div>
@@ -366,14 +393,18 @@ export function InventoryTab() {
                                             <td style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>{i.stockMinimo}</td>
                                             <td style={{ padding: '1rem' }}>{getStatusBadge(i.stockActual, i.stockMinimo)}</td>
                                             <td style={{ padding: '1rem', textAlign: 'right' }}>
-                                                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                                                    <Button size="sm" variant="outline" onClick={() => openItemModal(i)} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                                                        <Edit2 size={14} /> Editar
-                                                    </Button>
-                                                    <Button size="sm" variant="danger" onClick={() => handleItemDelete(i.id)}>
-                                                        <Trash2 size={14} />
-                                                    </Button>
-                                                </div>
+                                                {!readOnly ? (
+                                                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                                                        <Button size="sm" variant="outline" onClick={() => openItemModal(i)} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                                            <Edit2 size={14} /> Editar
+                                                        </Button>
+                                                        <Button size="sm" variant="danger" onClick={() => handleItemDelete(i.id)}>
+                                                            <Trash2 size={14} />
+                                                        </Button>
+                                                    </div>
+                                                ) : (
+                                                    <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 500 }}>Solo lectura</span>
+                                                )}
                                             </td>
                                         </tr>
                                     ))}
@@ -404,10 +435,12 @@ export function InventoryTab() {
                                             }}>{i.stockActual}</span>
                                             <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>/ {i.stockMinimo} Min.</span>
                                         </div>
-                                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                            <Button size="sm" variant="outline" onClick={() => openItemModal(i)}><Edit2 size={14} /></Button>
-                                            <Button size="sm" variant="danger" onClick={() => handleItemDelete(i.id)}><Trash2 size={14} /></Button>
-                                        </div>
+                                        {!readOnly && (
+                                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                <Button size="sm" variant="outline" onClick={() => openItemModal(i)}><Edit2 size={14} /></Button>
+                                                <Button size="sm" variant="danger" onClick={() => handleItemDelete(i.id)}><Trash2 size={14} /></Button>
+                                            </div>
+                                        )}
                                     </div>
                                 </Card>
                             ))}

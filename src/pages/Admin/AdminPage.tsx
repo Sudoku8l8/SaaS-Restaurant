@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChefHat, DollarSign, BarChart3, Settings, AlertTriangle, ArrowRight, Package, Wallet, Building2, Moon, Sun } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Moon, Sun, Menu } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/shared';
 import { SalesDashboard } from '@/components/features/SalesDashboard';
@@ -8,6 +8,7 @@ import { usePendingClosures } from '@/hooks/usePendingClosures';
 import { useLowStock } from '@/hooks/useLowStock';
 import { BranchSelector } from '@/components/features/BranchSelector';
 import { useTenant } from '@/app/providers/TenantProvider';
+import { AppSidebar } from '@/components/shared/AppSidebar';
 
 export function AdminPage() {
     const { user, logout } = useAuth();
@@ -17,6 +18,7 @@ export function AdminPage() {
     const { pendingClosures, isLoading: loadingPending } = usePendingClosures();
     const { lowStockProducts, isLoading: loadingStock } = useLowStock();
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isDarkMode, setIsDarkMode] = useState(() => {
         const saved = localStorage.getItem('admin-dark-mode');
         if (saved !== null) return saved === 'true';
@@ -43,53 +45,15 @@ export function AdminPage() {
 
     const toggleTheme = () => setIsDarkMode(prev => !prev);
 
-    const navCards = [
-        ...(isMultiBranch ? [{
-            label: 'Dashboard Consolidado',
-            desc: 'Ventas totales de todos los locales',
-            icon: <Building2 size={isMobile ? 28 : 40} />,
-            accent: 'blue' as const,
-            path: `/${restaurantSlug}/owner-dashboard`,
-        }] : []),
-        {
-            label: 'Caja Chica',
-            desc: 'Gestión de gastos y fondo operativo',
-            icon: <Wallet size={isMobile ? 28 : 40} />,
-            accent: 'amber' as const,
-            path: `/${restaurantSlug}/caja-chica`,
-        },
-        {
-            label: 'Cierre de Caja',
-            desc: 'Finalizar las operaciones del turno',
-            icon: <DollarSign size={isMobile ? 28 : 40} />,
-            accent: 'blue' as const,
-            path: `/${restaurantSlug}/cierre-caja`,
-        },
-        {
-            label: 'Reportes',
-            desc: 'Análisis detallado e histórico de ventas',
-            icon: <BarChart3 size={isMobile ? 28 : 40} />,
-            accent: 'violet' as const,
-            path: `/${restaurantSlug}/reportes`,
-        },
-        {
-            label: 'Inventario',
-            desc: 'Control de stock e insumos en tiempo real',
-            icon: <Package size={isMobile ? 28 : 40} />,
-            accent: 'emerald' as const,
-            path: `/${restaurantSlug}/inventario`,
-        },
-        {
-            label: 'Configuración',
-            desc: 'Usuarios, productos y parámetros del local',
-            icon: <Settings size={isMobile ? 28 : 40} />,
-            accent: 'slate' as const,
-            path: `/${restaurantSlug}/config`,
-        },
-    ];
+
 
     return (
-        <div className="bg-mesh" style={{ minHeight: '100vh' }}>
+        <div className="bg-mesh admin-content" style={{ minHeight: '100vh', transition: 'margin-left 0.3s ease-in-out' }}>
+            
+            {restaurantSlug && (
+                <AppSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} restaurantSlug={restaurantSlug} />
+            )}
+
             <div className="container" style={{ paddingTop: isMobile ? '1.5rem' : '2.5rem', paddingBottom: '4rem' }}>
                 {/* ── Header ── */}
                 <header style={{
@@ -99,17 +63,33 @@ export function AdminPage() {
                     marginBottom: '3.5rem',
                     paddingTop: isMobile ? '3rem' : '0'
                 }}>
-                    <div style={{ paddingRight: isMobile ? '0' : '280px' }}>
-                        <h1 style={{
-                            fontSize: isMobile ? '1.75rem' : '2.5rem',
-                            fontWeight: 800,
-                            letterSpacing: '-0.02em',
-                            margin: 0,
-                            color: 'var(--text-primary)'
-                        }}>
-                            Panel de Administración
-                        </h1>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem' }}>
+                    <div style={{ paddingRight: isMobile ? '0' : '280px', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                        
+                        <button
+                            onClick={() => setIsSidebarOpen(true)}
+                            aria-label="Menú principal"
+                            style={{
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                width: '42px', height: '42px', borderRadius: '50%',
+                                border: '1.5px solid var(--glass-border)', background: 'transparent',
+                                color: 'var(--text-primary)', cursor: 'pointer', flexShrink: 0,
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            <Menu size={20} />
+                        </button>
+
+                        <div>
+                            <h1 style={{
+                                fontSize: isMobile ? '1.75rem' : '2.5rem',
+                                fontWeight: 800,
+                                letterSpacing: '-0.02em',
+                                margin: 0,
+                                color: 'var(--text-primary)'
+                            }}>
+                                Visión General
+                            </h1>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem' }}>
                             <span style={{
                                 width: '8px', height: '8px', borderRadius: '50%',
                                 backgroundColor: 'var(--success-color)',
@@ -125,6 +105,7 @@ export function AdminPage() {
                                 Bienvenido, {user?.name}
                             </p>
                         </div>
+                    </div>
                     </div>
 
                     <div style={{
@@ -155,22 +136,6 @@ export function AdminPage() {
                         >
                             {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
                         </button>
-
-                        <Button
-                            variant="ghost"
-                            size={isMobile ? "sm" : "md"}
-                            onClick={() => navigate(`/${restaurantSlug}/cocina`)}
-                            style={{
-                                display: 'flex', alignItems: 'center', gap: '0.5rem',
-                                borderRadius: 'var(--radius-md)',
-                                background: 'var(--glass-bg)',
-                                backdropFilter: 'blur(8px)',
-                                border: '1px solid var(--border-color)',
-                            }}
-                        >
-                            <ChefHat size={isMobile ? 16 : 18} />
-                            {isMobile ? 'Cocina' : ' Cocina'}
-                        </Button>
 
                         <button
                             onClick={logout}
@@ -275,43 +240,7 @@ export function AdminPage() {
                 {/* ── Sales Dashboard ── */}
                 <SalesDashboard />
 
-                {/* ── Navigation Grid ── */}
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: isMobile
-                        ? 'repeat(2, 1fr)'
-                        : `repeat(${Math.min(navCards.length, 5)}, 1fr)`,
-                    gap: isMobile ? '1rem' : '2rem',
-                    marginTop: '3rem'
-                }}>
-                    {navCards.map(card => (
-                        <div
-                            key={card.label}
-                            className="nav-card"
-                            onClick={() => navigate(card.path)}
-                        >
-                            <div className={`nav-card-icon ${card.accent}`}>
-                                {card.icon}
-                            </div>
-                            <h3 style={{
-                                fontSize: isMobile ? '1rem' : '1.25rem',
-                                fontWeight: 700,
-                                color: 'var(--text-primary)',
-                                marginBottom: '0.75rem'
-                            }}>
-                                {card.label}
-                            </h3>
-                            <p style={{
-                                fontSize: '0.875rem',
-                                color: 'var(--text-secondary)',
-                                lineHeight: 1.5,
-                                fontWeight: 500
-                            }}>
-                                {card.desc}
-                            </p>
-                        </div>
-                    ))}
-                </div>
+
 
                 {/* ── Footer ── */}
                 <footer style={{ textAlign: 'center', marginTop: '4rem', paddingTop: '2rem' }}>

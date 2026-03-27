@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Lock, Wallet, Zap } from 'lucide-react';
+import { Lock, Wallet, Zap, Menu } from 'lucide-react';
 import { OrderModal } from '@/components/features/OrderModal';
 import { TableDetailModal } from '@/components/features/TableDetailModal';
 import { TableMap } from '@/components/features/TableMap';
@@ -11,6 +11,7 @@ import { useTables } from '@/hooks/useTables';
 import { useOrders } from '@/hooks/useOrders';
 import { useClosureStatus } from '@/hooks/useClosureStatus';
 import { NotificationBell } from '@/components/shared/NotificationBell';
+import { AppSidebar } from '@/components/shared/AppSidebar';
 import { useTenant } from '@/app/providers/TenantProvider';
 import type { RestaurantTable, Order } from '@/types';
 
@@ -23,6 +24,7 @@ export function MozoPage() {
     const { tables } = useTables(); // Real-time tables from Firestore
     const { activeOrders } = useOrders();
     const { isClosed, isLoading: checkingClosure } = useClosureStatus();
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const { tenant } = useTenant();
     const enableTables = tenant?.config?.enableTables ?? true;
     const enableQuickSale = tenant?.config?.enableQuickSale ?? false;
@@ -152,7 +154,16 @@ export function MozoPage() {
     ];
 
     return (
-        <div className="container mt-md bg-mesh" style={{ minHeight: '100vh', paddingBottom: '2rem' }}>
+        <div className="container bg-mesh mozo-content" style={{ minHeight: '100vh', paddingBottom: '2rem', paddingTop: '1.5rem', transition: 'margin-left 0.3s ease-in-out' }}>
+            
+            {restaurantSlug && (
+                <AppSidebar
+                    isOpen={isSidebarOpen}
+                    onClose={() => setIsSidebarOpen(false)}
+                    restaurantSlug={restaurantSlug}
+                />
+            )}
+
             {/* Closure Banner */}
             {isClosed && (
                 <div className="glass-card" style={{
@@ -186,8 +197,22 @@ export function MozoPage() {
                 borderBottom: '1px solid var(--divider-color)',
                 flexWrap: 'wrap'
             }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xs)', flex: 1, minWidth: 0 }}>
-                    <h1 style={{
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)', flex: 1, minWidth: 0 }}>
+                    <button
+                        onClick={() => setIsSidebarOpen(true)}
+                        aria-label="Menú principal"
+                        style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            width: '42px', height: '42px', borderRadius: '50%',
+                            border: '1.5px solid var(--glass-border)', background: 'transparent',
+                            color: 'var(--text-primary)', cursor: 'pointer', flexShrink: 0,
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        <Menu size={20} />
+                    </button>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xs)', minWidth: 0 }}>
+                        <h1 style={{
                         margin: 0,
                         fontSize: '1.4rem',
                         fontWeight: '800',
@@ -200,6 +225,7 @@ export function MozoPage() {
                     }}>
                         {enableTables ? 'Mesas' : 'Pedidos'}
                     </h1>
+                </div>
                 </div>
 
                 <div style={{
