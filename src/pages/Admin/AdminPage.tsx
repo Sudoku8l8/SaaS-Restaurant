@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { AlertTriangle, ArrowRight, Moon, Sun, Menu } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Menu } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/shared';
 import { SalesDashboard } from '@/components/features/SalesDashboard';
@@ -11,7 +11,7 @@ import { useTenant } from '@/app/providers/TenantProvider';
 import { AppSidebar } from '@/components/shared/AppSidebar';
 
 export function AdminPage() {
-    const { user, logout } = useAuth();
+    const { user } = useAuth();
     const navigate = useNavigate();
     const { restaurantSlug } = useParams<{ restaurantSlug: string }>();
     const { tenant } = useTenant();
@@ -19,11 +19,6 @@ export function AdminPage() {
     const { lowStockProducts, isLoading: loadingStock } = useLowStock();
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [isDarkMode, setIsDarkMode] = useState(() => {
-        const saved = localStorage.getItem('admin-dark-mode');
-        if (saved !== null) return saved === 'true';
-        return document.documentElement.classList.contains('dark');
-    });
 
     const isMultiBranch = tenant?.config?.multiSucursal === true;
 
@@ -34,16 +29,9 @@ export function AdminPage() {
     }, []);
 
     // Sync dark mode class with state
-    useEffect(() => {
-        if (isDarkMode) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
-        localStorage.setItem('admin-dark-mode', String(isDarkMode));
-    }, [isDarkMode]);
+    // (Moved to AppSidebar)
 
-    const toggleTheme = () => setIsDarkMode(prev => !prev);
+
 
 
 
@@ -117,45 +105,6 @@ export function AdminPage() {
                         gap: isMobile ? '0.5rem' : '1rem'
                     }}>
                         {!isMobile && <BranchSelector />}
-
-                        {/* Dark Mode Toggle */}
-                        <button
-                            onClick={toggleTheme}
-                            title={isDarkMode ? 'Modo Claro' : 'Modo Oscuro'}
-                            style={{
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                width: isMobile ? '36px' : '40px', height: isMobile ? '36px' : '40px',
-                                borderRadius: 'var(--radius-md)',
-                                border: '1px solid var(--border-color)',
-                                background: 'var(--glass-bg)',
-                                backdropFilter: 'blur(8px)',
-                                color: 'var(--text-secondary)',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s'
-                            }}
-                        >
-                            {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
-                        </button>
-
-                        <button
-                            onClick={logout}
-                            style={{
-                                background: isDarkMode
-                                    ? 'linear-gradient(135deg, #06b6d4, #2563eb)'
-                                    : 'linear-gradient(135deg, #2563eb, #4338ca)',
-                                color: 'white',
-                                padding: isMobile ? '0.5rem 1rem' : '0.625rem 2rem',
-                                borderRadius: 'var(--radius-md)',
-                                border: 'none',
-                                fontWeight: 700,
-                                fontSize: isMobile ? '0.85rem' : '0.95rem',
-                                cursor: 'pointer',
-                                transition: 'all 0.3s',
-                                boxShadow: '0 4px 14px rgba(37, 99, 235, 0.25)',
-                            }}
-                        >
-                            Cerrar Sesión
-                        </button>
                     </div>
                 </header>
 

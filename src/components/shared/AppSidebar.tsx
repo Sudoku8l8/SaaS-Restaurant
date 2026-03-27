@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
     X,
@@ -14,6 +14,8 @@ import {
     Users,
     Store,
     ChefHat,
+    Sun,
+    Moon
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { UserRole } from '@/types';
@@ -86,6 +88,24 @@ export function AppSidebar({ isOpen, onClose, restaurantSlug }: AppSidebarProps)
         onClose();
         logout();
     };
+
+    // ── Dark Mode Logic ──
+    const [isDarkMode, setIsDarkMode] = useState(() => {
+        const saved = localStorage.getItem('admin-dark-mode');
+        if (saved !== null) return saved === 'true';
+        return document.documentElement.classList.contains('dark');
+    });
+
+    useEffect(() => {
+        if (isDarkMode) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+        localStorage.setItem('admin-dark-mode', String(isDarkMode));
+    }, [isDarkMode]);
+
+    const toggleTheme = () => setIsDarkMode(p => !p);
 
     // ── Navigation items definition ──────────────────────────────
     const navItems: SidebarItem[] = [
@@ -254,11 +274,27 @@ export function AppSidebar({ isOpen, onClose, restaurantSlug }: AppSidebarProps)
                         <div className={styles.userAvatar}>{userInitials}</div>
                         <div className={styles.userName}>
                             <span className={styles.userNameText}>{user?.name}</span>
-                            <span
-                                className={`${styles.userRoleBadge} ${ROLE_CLASS[user?.role || ''] || styles.roleAdmin}`}
-                            >
-                                {ROLE_LABEL[user?.role || ''] || user?.role}
-                            </span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span
+                                    className={`${styles.userRoleBadge} ${ROLE_CLASS[user?.role || ''] || styles.roleAdmin}`}
+                                >
+                                    {ROLE_LABEL[user?.role || ''] || user?.role}
+                                </span>
+                                <button
+                                    onClick={toggleTheme}
+                                    title={isDarkMode ? 'Modo Claro' : 'Modo Oscuro'}
+                                    style={{
+                                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                        background: 'transparent', cursor: 'pointer',
+                                        color: 'var(--text-secondary)', padding: '0',
+                                        width: '24px', height: '24px',
+                                        borderRadius: '6px', border: '1px solid var(--border-color)',
+                                        transition: 'all 0.2s', flexShrink: 0
+                                    }}
+                                >
+                                    {isDarkMode ? <Sun size={13} /> : <Moon size={13} />}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

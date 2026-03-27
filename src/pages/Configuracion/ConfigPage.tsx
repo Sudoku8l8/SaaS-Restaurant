@@ -1,6 +1,6 @@
+import { useState } from 'react';
 import { LayoutGrid, Printer, Globe, Shield, Settings, Crown, Wallet, Menu, X, ChevronRight } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { Button } from '@/components/shared';
+import { useParams } from 'react-router-dom';
 import { useTenant } from '@/app/providers/TenantProvider';
 
 import { TablesTab } from '@/components/features/TablesTab';
@@ -10,6 +10,7 @@ import { SecurityTab } from '@/components/features/SecurityTab';
 import { GeneralTab } from '@/components/features/GeneralTab';
 import { PremiumUpgradeBanner } from '@/components/features/PremiumUpgradeBanner';
 import { PettyCashConfigTab } from '@/components/features/PettyCashConfigTab';
+import { AppSidebar } from '@/components/shared/AppSidebar';
 
 
 import './ConfigPage.css';
@@ -24,12 +25,12 @@ interface TabItem {
 }
 
 export function ConfigPage() {
-    const navigate = useNavigate();
     const { restaurantSlug } = useParams();
     const { tenant } = useTenant();
     const hasDigitalMenu = tenant?.features?.digitalMenu ?? false;
     const [activeTab, setActiveTab] = useState<Tab>('general');
     const [menuOpen, setMenuOpen] = useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     const tabs: TabItem[] = [
         { id: 'general', label: 'General', icon: Settings },

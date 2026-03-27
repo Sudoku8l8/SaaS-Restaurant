@@ -1,16 +1,17 @@
 import { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { Card, Button, Badge, Input } from '@/components/shared';
 import { useAuth } from '@/hooks/useAuth';
 import { usePettyCash } from '@/hooks/usePettyCash';
 import {
-    ArrowLeft, Wallet, Plus, Clock, CheckCircle, XCircle, AlertTriangle,
+    Wallet, Plus, Clock, CheckCircle, XCircle, AlertTriangle,
     Eye, Camera, Send, X, ShieldCheck, FileText, TrendingDown,
-    ChevronDown, ChevronUp, Image as ImageIcon
+    ChevronDown, ChevronUp, Image as ImageIcon, Menu
 } from 'lucide-react';
 import { PettyCashExpenseStatus as PCStatus, PettyCashCategory, UserRole } from '@/types';
 import type { PettyCashExpense, PettyCashCategory as PCCategoryType } from '@/types';
 import { formatPeruDisplay } from '@/utils/dateUtils';
+import { AppSidebar } from '@/components/shared/AppSidebar';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
@@ -31,7 +32,7 @@ const CATEGORY_ICONS: Record<string, string> = {
 };
 
 export function CajaChicaPage() {
-    const navigate = useNavigate();
+    const { restaurantSlug } = useParams();
     const { user } = useAuth();
     const {
         expenses, isLoading, summary, config, pettyCashBalance, currentSession,
@@ -46,6 +47,7 @@ export function CajaChicaPage() {
     const [showObsModal, setShowObsModal] = useState<string | null>(null);
     const [showReceiptImage, setShowReceiptImage] = useState<string | null>(null);
     const [expandedExpense, setExpandedExpense] = useState<string | null>(null);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     // Expense form
     const [formData, setFormData] = useState({ amount: '', description: '', category: PettyCashCategory.INGREDIENTS as PCCategoryType });
@@ -68,10 +70,27 @@ export function CajaChicaPage() {
 
     if (!currentSession) {
         return (
-            <div className="container mt-md bg-mesh" style={{ maxWidth: '480px', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-                <Button variant="ghost" onClick={() => navigate(-1)} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
-                    <ArrowLeft size={16} /> Volver
-                </Button>
+            <div className="container mt-md bg-mesh" style={{ maxWidth: '480px', minHeight: '100vh', display: 'flex', flexDirection: 'column', transition: 'margin-left 0.3s ease-in-out' }}>
+                {restaurantSlug && (
+                    <AppSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} restaurantSlug={restaurantSlug} />
+                )}
+                <header style={{ marginBottom: '1.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                        <button
+                            onClick={() => setIsSidebarOpen(true)}
+                            aria-label="Menú principal"
+                            style={{
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                width: '42px', height: '42px', borderRadius: '50%',
+                                border: '1.5px solid var(--glass-border)', background: 'transparent',
+                                color: 'var(--text-primary)', cursor: 'pointer', flexShrink: 0,
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            <Menu size={20} />
+                        </button>
+                    </div>
+                </header>
                 <Card className="glass-card" style={{ padding: '2.5rem 2rem', textAlign: 'center' }}>
                     <div style={{
                         background: 'linear-gradient(135deg, rgba(245,158,11,0.12), rgba(245,158,11,0.06))',
@@ -82,13 +101,10 @@ export function CajaChicaPage() {
                         <Wallet size={36} color="#f59e0b" />
                     </div>
                     <h1 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '0.5rem' }}>Caja Chica</h1>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.5' }}>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.5', marginBottom: 0 }}>
                         No hay una sesión de caja abierta hoy.<br />
                         Primero debes <strong>abrir la caja</strong> desde el Cierre de Caja.
                     </p>
-                    <Button fullWidth onClick={() => navigate(-1)} style={{ marginTop: '1.5rem' }}>
-                        Ir a Cierre de Caja
-                    </Button>
                 </Card>
             </div>
         );
@@ -194,17 +210,31 @@ export function CajaChicaPage() {
 
     // ── MAIN RENDER ──────────────────────────────────────────────────────────
     return (
-        <div className="container mt-md bg-mesh" style={{ minHeight: '100vh', paddingBottom: '2rem' }}>
+        <div className="container mt-md bg-mesh" style={{ minHeight: '100vh', paddingBottom: '2rem', transition: 'margin-left 0.3s ease-in-out' }}>
+            {restaurantSlug && (
+                <AppSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} restaurantSlug={restaurantSlug} />
+            )}
             {/* ── HEADER ── */}
             <header style={{
                 marginBottom: '1.5rem', paddingBottom: '1.25rem',
                 borderBottom: '1px solid var(--divider-color)'
             }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
-                    <Button variant="ghost" onClick={() => navigate(-1)} size="sm"
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                        <ArrowLeft size={16} /> Volver
-                    </Button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                        <button
+                            onClick={() => setIsSidebarOpen(true)}
+                            aria-label="Menú principal"
+                            style={{
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                width: '42px', height: '42px', borderRadius: '50%',
+                                border: '1.5px solid var(--glass-border)', background: 'transparent',
+                                color: 'var(--text-primary)', cursor: 'pointer', flexShrink: 0,
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            <Menu size={20} />
+                        </button>
+                    </div>
                     {!isClosed && isSessionOpen && (
                         <button
                             onClick={() => setShowExpenseModal(true)}

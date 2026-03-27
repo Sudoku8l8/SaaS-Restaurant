@@ -6,17 +6,19 @@ import { useAuth } from '@/hooks/useAuth';
 import { useOrders } from '@/hooks/useOrders';
 import { useCashSession } from '@/hooks/useCashSession';
 import { Card, Button, Badge, Input } from '@/components/shared';
-import { Download, ArrowLeft, CheckCircle, AlertTriangle, Check, Lock, DollarSign, CreditCard, User, Wallet, List, ExternalLink } from 'lucide-react';
+import { Download, CheckCircle, AlertTriangle, Check, Lock, DollarSign, CreditCard, User, Wallet, List, ExternalLink, Menu } from 'lucide-react';
 import { updateDoc, doc, collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/services/firebase/config';
 import { exportDailySalesToExcel } from '@/services/exportExcel';
 import type { PettyCashExportItem } from '@/services/exportExcel';
 import { getPeruDateString, getPeruNow, formatPeruDisplay } from '@/utils/dateUtils';
+import { AppSidebar } from '@/components/shared/AppSidebar';
 
 export function CierreCajaPage() {
     const navigate = useNavigate();
     const { restaurantSlug } = useParams<{ restaurantSlug: string }>();
     const [searchParams] = useSearchParams();
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const dateParam = searchParams.get('date');
     const targetDate = dateParam ? parseISO(dateParam) : new Date();
     const targetDateStr = getPeruDateString(targetDate);
@@ -135,10 +137,27 @@ export function CierreCajaPage() {
     // ── APERTURA DE CAJA ─────────────────────────────────────────────────────
     if (isToday && !sessionExists) {
         return (
-            <div className="container mt-md bg-mesh" style={{ maxWidth: '480px', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-                <Button variant="ghost" onClick={() => navigate(-1)} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
-                    <ArrowLeft size={16} /> Volver
-                </Button>
+            <div className="container mt-md bg-mesh" style={{ maxWidth: '480px', minHeight: '100vh', display: 'flex', flexDirection: 'column', transition: 'margin-left 0.3s ease-in-out' }}>
+                {restaurantSlug && (
+                    <AppSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} restaurantSlug={restaurantSlug} />
+                )}
+                <header style={{ marginBottom: '1.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                        <button
+                            onClick={() => setIsSidebarOpen(true)}
+                            aria-label="Menú principal"
+                            style={{
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                width: '42px', height: '42px', borderRadius: '50%',
+                                border: '1.5px solid var(--glass-border)', background: 'transparent',
+                                color: 'var(--text-primary)', cursor: 'pointer', flexShrink: 0,
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            <Menu size={20} />
+                        </button>
+                    </div>
+                </header>
                 <Card className="glass-card" style={{ padding: '2.5rem 2rem', textAlign: 'center' }}>
                     <div style={{
                         background: 'linear-gradient(135deg, rgba(37,99,235,0.12), rgba(37,99,235,0.06))',
@@ -177,7 +196,10 @@ export function CierreCajaPage() {
 
     // ── MAIN LAYOUT ──────────────────────────────────────────────────────────
     return (
-        <div className="container mt-md bg-mesh" style={{ minHeight: '100vh', paddingBottom: '2rem' }}>
+        <div className="container mt-md bg-mesh" style={{ minHeight: '100vh', paddingBottom: '2rem', transition: 'margin-left 0.3s ease-in-out' }}>
+            {restaurantSlug && (
+                <AppSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} restaurantSlug={restaurantSlug} />
+            )}
 
             {/* ── RESPONSIVE HEADER ── */}
             <header style={{
@@ -187,9 +209,21 @@ export function CierreCajaPage() {
             }}>
                 {/* Top row: back button + action buttons */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
-                    <Button variant="ghost" onClick={() => navigate(-1)} size="sm" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0 }}>
-                        <ArrowLeft size={16} /> Volver
-                    </Button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                        <button
+                            onClick={() => setIsSidebarOpen(true)}
+                            aria-label="Menú principal"
+                            style={{
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                width: '42px', height: '42px', borderRadius: '50%',
+                                border: '1.5px solid var(--glass-border)', background: 'transparent',
+                                color: 'var(--text-primary)', cursor: 'pointer', flexShrink: 0,
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            <Menu size={20} />
+                        </button>
+                    </div>
 
                     {/* Action buttons — icon-only on mobile, labeled on desktop */}
                     <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
