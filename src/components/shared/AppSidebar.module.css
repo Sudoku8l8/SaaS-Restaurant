@@ -280,14 +280,8 @@
   transform: scale(1.05);
 }
 
-/* Color variants for icons */
-.iconAdmin    { background: rgba(37, 99, 235, 0.1);   color: var(--accent-blue); }
-.iconCaja     { background: rgba(16, 185, 129, 0.1);  color: var(--success-color); }
-.iconInv      { background: rgba(245, 158, 11, 0.1);  color: var(--warning-color); }
-.iconReportes { background: rgba(124, 58, 237, 0.1);  color: var(--accent-violet); }
-.iconConfig   { background: rgba(71, 85, 105, 0.1);   color: var(--accent-slate); }
-.iconCajaCh   { background: rgba(234, 179, 8, 0.1);   color: #ca8a04; }
-.iconLogout   { background: rgba(239, 68, 68, 0.08);  color: var(--danger-color); }
+/* Monochromatic uniform icon styling */
+/* (Individual icon color variants have been removed in favor of neutral Slate styling) */
 
 /* Active state */
 .navItemActive {

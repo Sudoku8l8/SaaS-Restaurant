@@ -45,13 +45,14 @@ export function AdminPage() {
             <div className="container" style={{ paddingTop: isMobile ? '1.5rem' : '2.5rem', paddingBottom: '4rem' }}>
                 {/* ── Header ── */}
                 <header style={{
-                    position: 'relative',
                     display: 'flex',
-                    flexDirection: 'column',
-                    marginBottom: '3.5rem',
-                    paddingTop: isMobile ? '3rem' : '0'
+                    flexDirection: isMobile ? 'column' : 'row',
+                    justifyContent: 'space-between',
+                    alignItems: isMobile ? 'flex-start' : 'center',
+                    marginBottom: '2rem',
+                    gap: '1rem'
                 }}>
-                    <div style={{ paddingRight: isMobile ? '0' : '280px', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
                         
                         <button
                             onClick={() => setIsSidebarOpen(true)}
@@ -96,16 +97,11 @@ export function AdminPage() {
                     </div>
                     </div>
 
-                    <div style={{
-                        position: isMobile ? 'absolute' : 'absolute',
-                        top: isMobile ? '0' : '0.5rem',
-                        right: '0',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: isMobile ? '0.5rem' : '1rem'
-                    }}>
-                        {!isMobile && <BranchSelector />}
-                    </div>
+                    {!isMobile && isMultiBranch && (
+                        <div>
+                            <BranchSelector />
+                        </div>
+                    )}
                 </header>
 
                 {/* Mobile Branch Selector */}

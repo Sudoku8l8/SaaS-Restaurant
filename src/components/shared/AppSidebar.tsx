@@ -2,20 +2,20 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
     X,
-    DollarSign,
-    Package,
-    BarChart2,
-    Settings,
-    Wallet,
     LogOut,
     UtensilsCrossed,
     LayoutDashboard,
-    Utensils,
     Users,
     Store,
     ChefHat,
     Sun,
-    Moon
+    Moon,
+    Tags,
+    Boxes,
+    Archive,
+    PieChart,
+    Sliders,
+    Wallet
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { UserRole } from '@/types';
@@ -25,7 +25,6 @@ interface SidebarItem {
     id: string;
     label: string;
     icon: React.ComponentType<{ size?: number }>;
-    iconClass: string;
     path?: string;           // navigate to this path
     action?: () => void;     // or execute this action
     roles: UserRole[];       // which roles see this item
@@ -114,7 +113,6 @@ export function AppSidebar({ isOpen, onClose, restaurantSlug }: AppSidebarProps)
             id: 'dashboard',
             label: 'Dashboard',
             icon: LayoutDashboard,
-            iconClass: styles.iconAdmin,
             path: `/${restaurantSlug}/admin`,
             roles: [UserRole.ADMIN],
             section: 'Gestión',
@@ -122,24 +120,21 @@ export function AppSidebar({ isOpen, onClose, restaurantSlug }: AppSidebarProps)
         {
             id: 'productos',
             label: 'Productos',
-            icon: Utensils,
-            iconClass: styles.iconInv,
+            icon: Tags,
             path: `/${restaurantSlug}/productos`,
             roles: [UserRole.ADMIN],
         },
         {
             id: 'inventario',
             label: 'Inventario',
-            icon: Package,
-            iconClass: styles.iconCajaCh, // We'll recycle a yellowish color
+            icon: Boxes,
             path: `/${restaurantSlug}/inventario`,
             roles: [UserRole.ADMIN, UserRole.CASHIER],
         },
         {
             id: 'usuarios',
-            label: 'Usuarios & Roles',
+            label: 'Usuarios y Roles',
             icon: Users,
-            iconClass: styles.iconReportes,
             path: `/${restaurantSlug}/usuarios`,
             roles: [UserRole.ADMIN],
         },
@@ -148,7 +143,6 @@ export function AppSidebar({ isOpen, onClose, restaurantSlug }: AppSidebarProps)
             id: 'ventas',
             label: 'Ventas (POS)',
             icon: Store,
-            iconClass: styles.iconCaja,
             path: `/${restaurantSlug}/mozo`,
             roles: [UserRole.ADMIN, UserRole.CASHIER, UserRole.WAITER, UserRole.SHIFT_MANAGER],
             section: 'Operaciones',
@@ -157,15 +151,13 @@ export function AppSidebar({ isOpen, onClose, restaurantSlug }: AppSidebarProps)
             id: 'cocina',
             label: 'Cocina',
             icon: ChefHat,
-            iconClass: styles.iconCajaCh,
             path: `/${restaurantSlug}/cocina`,
             roles: [UserRole.ADMIN, UserRole.CASHIER, UserRole.CHEF, UserRole.SHIFT_MANAGER],
         },
         {
             id: 'cierre',
             label: 'Cierre de Caja',
-            icon: DollarSign,
-            iconClass: styles.iconConfig,
+            icon: Archive,
             path: `/${restaurantSlug}/cierre-caja`,
             roles: [UserRole.ADMIN, UserRole.CASHIER],
         },
@@ -173,7 +165,6 @@ export function AppSidebar({ isOpen, onClose, restaurantSlug }: AppSidebarProps)
             id: 'cajachica',
             label: 'Caja Chica',
             icon: Wallet,
-            iconClass: styles.iconCajaCh,
             path: `/${restaurantSlug}/caja-chica`,
             roles: [UserRole.ADMIN, UserRole.CASHIER, UserRole.CHEF, UserRole.WAITER, UserRole.SHIFT_MANAGER],
         },
@@ -181,8 +172,7 @@ export function AppSidebar({ isOpen, onClose, restaurantSlug }: AppSidebarProps)
         {
             id: 'reportes',
             label: 'Reportes',
-            icon: BarChart2,
-            iconClass: styles.iconReportes,
+            icon: PieChart,
             path: `/${restaurantSlug}/reportes`,
             roles: [UserRole.ADMIN],
             section: 'Reportes',
@@ -190,9 +180,8 @@ export function AppSidebar({ isOpen, onClose, restaurantSlug }: AppSidebarProps)
         // --- SISTEMA ---
         {
             id: 'config',
-            label: 'Configuración',
-            icon: Settings,
-            iconClass: styles.iconConfig,
+            label: 'Configuración general',
+            icon: Sliders,
             path: `/${restaurantSlug}/config`,
             roles: [UserRole.ADMIN, UserRole.CASHIER],
             section: 'Sistema',
@@ -323,7 +312,7 @@ export function AppSidebar({ isOpen, onClose, restaurantSlug }: AppSidebarProps)
                                         aria-current={active ? 'page' : undefined}
                                         id={`sidebar-item-${item.id}`}
                                     >
-                                        <span className={`${styles.navIcon} ${item.iconClass}`}>
+                                        <span className={styles.navIcon}>
                                             <Icon size={17} />
                                         </span>
                                         {item.label}
