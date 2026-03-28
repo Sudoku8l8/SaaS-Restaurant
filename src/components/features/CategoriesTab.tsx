@@ -143,15 +143,6 @@ export function CategoriesTab() {
         dragOverIndex.current = null;
     };
 
-    // ── Move up/down (keyboard-friendly alternative) ──────────────────────────
-    const moveItem = (index: number, direction: 'up' | 'down') => {
-        const newIndex = direction === 'up' ? index - 1 : index + 1;
-        if (newIndex < 0 || newIndex >= localOrder.length) return;
-        const updated = [...localOrder];
-        [updated[index], updated[newIndex]] = [updated[newIndex], updated[index]];
-        setLocalOrder(updated);
-        setOrderDirty(true);
-    };
 
     // ── Save order to Firestore ───────────────────────────────────────────────
     const handleSaveOrder = async () => {
@@ -270,12 +261,9 @@ export function CategoriesTab() {
                             key={category.id}
                             category={category}
                             index={index}
-                            total={localOrder.length}
                             onDragStart={handleDragStart}
                             onDragEnter={handleDragEnter}
                             onDragEnd={handleDragEnd}
-                            onMoveUp={() => moveItem(index, 'up')}
-                            onMoveDown={() => moveItem(index, 'down')}
                             onDelete={() => handleDelete(category.id, category.name)}
                             onRename={(name, nameEn, color) => handleRename(category.id, name, nameEn, color)}
                             defaultColors={DEFAULT_CATEGORY_COLORS}
@@ -297,21 +285,18 @@ export function CategoriesTab() {
 interface CategoryRowProps {
     category: Category;
     index: number;
-    total: number;
     onDragStart: (i: number) => void;
     onDragEnter: (i: number) => void;
     onDragEnd: () => void;
-    onMoveUp: () => void;
-    onMoveDown: () => void;
     onDelete: () => void;
     onRename: (name: string, nameEn: string, color?: string) => void;
     defaultColors: string[];
 }
 
 function CategoryRow({
-    category, index, total,
+    category, index,
     onDragStart, onDragEnter, onDragEnd,
-    onMoveUp, onMoveDown, onDelete, onRename, defaultColors
+    onDelete, onRename, defaultColors
 }: CategoryRowProps) {
     const [editing, setEditing] = useState(false);
     const [editName, setEditName] = useState(category.name);

@@ -34,7 +34,12 @@
 
 .input:focus {
     outline: none;
-    border-color: var(--text-primary);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+:global(.dark) .input:focus {
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
 .hasError {
