@@ -145,7 +145,7 @@ export function TableCard({ table, onClick, onDelete, orderStatus, customerName,
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', transform: isTakeout ? 'none' : 'translateX(-5px)' }}>
                 {isTakeout ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', width: '100%' }}>
                         <ShoppingBag size={isActiveTakeout ? 40 : 32} style={{ color: currentStatusColor }} />
                         {isActiveTakeout && (
                             <span style={{ 
@@ -154,7 +154,8 @@ export function TableCard({ table, onClick, onDelete, orderStatus, customerName,
                                 color: 'var(--primary-color)',
                                 textAlign: 'center',
                                 marginTop: '4px',
-                                maxWidth: '100%',
+                                width: '100%',
+                                display: 'block',
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
                                 whiteSpace: 'nowrap'

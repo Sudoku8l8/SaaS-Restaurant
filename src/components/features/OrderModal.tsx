@@ -12,6 +12,7 @@ import { Card, Button, Input } from '@/components/shared';
 import { PaymentModal } from '@/components/features/PaymentModal';
 import { printerService } from '@/services/printer/PrinterService';
 import { ensurePeruDate, getPeruNow } from '@/utils/dateUtils';
+import toast from 'react-hot-toast';
 
 interface OrderModalProps {
     table?: RestaurantTable; // Optional for takeout
@@ -162,9 +163,9 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
 
     // Default colors for categories without a color set
     const DEFAULT_COLORS = [
-        '#2563EB', '#059669', '#D97706', '#DC2626', '#7C3AED', '#0891B2',
-        '#EA580C', '#4F46E5', '#BE185D', '#15803D', '#64748B', '#A855F7',
-        '#DB2777', '#0D9488', '#CA8A04', '#6366F1',
+        '#60A5FA', '#34D399', '#FBBF24', '#F87171', '#A78BFA', '#22D3EE',
+        '#FB923C', '#818CF8', '#F472B6', '#4ADE80', '#94A3B8', '#C084FC',
+        '#FB7185', '#2DD4BF', '#FACC15', '#A3B8CC'
     ];
 
     // Auto-switch to products view when search term is entered (Vista Rápida)
@@ -254,6 +255,7 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
             }];
         });
 
+        toast.success(`Añadido: ${product.name}`, { duration: 1500, icon: '🛒' });
         setModifierProduct(null);
     };
 
@@ -1182,7 +1184,7 @@ export function OrderModal({ table, initialOrder, onClose, onOrderCreated, order
                                         }}
                                     >
                                         {isSaving
-                                            ? 'Guardando...'
+                                            ? 'Enviando a cocina...'
                                             : (isSaved && !itemsChangedAfterSave)
                                                 ? '¡Pedido Guardado!'
                                                 : (isSaved && itemsChangedAfterSave)

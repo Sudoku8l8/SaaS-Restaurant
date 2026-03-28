@@ -4,7 +4,7 @@ import { collection, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestor
 import { useAuth } from '@/hooks/useAuth';
 import { useProductCache } from '@/hooks/useProductCache';
 import { Button, Input, Card, Badge } from '@/components/shared';
-import { Trash2, Edit2, ChefHat, Plus, X, Settings2, Search } from 'lucide-react';
+import { Trash2, Edit2, ChefHat, Plus, X, Settings2, Search, Star } from 'lucide-react';
 import type { Product, InventoryType, UnitOfMeasure, ProductModifier, ModifierOption } from '@/types';
 import { UnitOfMeasure as UC } from '@/types';
 import { RecipeModal } from './RecipeModal';
@@ -353,7 +353,7 @@ export function ProductsTab() {
                                     }}>
                                         <div style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', fontSize: '1rem', marginBottom: '0.3rem' }}>
                                             {product.name}
-                                            {product.isPopular && <span title="Popular">⭐</span>}
+                                            {product.isPopular && <span title="Popular" style={{ color: '#EAB308', display: 'flex' }}><Star size={16} /></span>}
                                             {product.tipoInventario === 'recipe' && <span title="Tiene receta"><ChefHat size={14} color="var(--primary-color)" /></span>}
                                             {(product.dietaryTags || []).map(tag => (
                                                 <span key={tag} title={tag} style={{ fontSize: '0.85rem' }}>
@@ -413,13 +413,13 @@ export function ProductsTab() {
                                     value={formData.name}
                                     onChange={e => setFormData({ ...formData, name: e.target.value })}
                                     required
-                                    placeholder="Ceviche Clásico"
+                                    placeholder="Ej: Lomo Saltado"
                                 />
                                 <Input
                                     label="Nombre (EN) - Opcional"
                                     value={formData.nameEn}
                                     onChange={e => setFormData({ ...formData, nameEn: e.target.value })}
-                                    placeholder="Classic Ceviche"
+                                    placeholder="Ej: Beef Stir-fry"
                                 />
                             </div>
 
@@ -526,7 +526,7 @@ export function ProductsTab() {
                                         checked={formData.isPopular}
                                         onChange={e => setFormData({ ...formData, isPopular: e.target.checked })}
                                     />
-                                    ⭐ Popular
+                                    <Star size={16} style={{ color: '#EAB308' }} /> Popular
                                 </label>
                             </div>
 
@@ -579,9 +579,9 @@ export function ProductsTab() {
                                                 </div>
                                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
                                                     <Input label="Stock Actual" type="number" min="0" step="0.01" value={formData.stockActual}
-                                                        onChange={e => setFormData({ ...formData, stockActual: e.target.value })} required placeholder="50" />
+                                                        onChange={e => setFormData({ ...formData, stockActual: e.target.value })} required placeholder="Ej: 50" />
                                                     <Input label="Stock Mínimo" type="number" min="0" step="0.01" value={formData.stockMinimo}
-                                                        onChange={e => setFormData({ ...formData, stockMinimo: e.target.value })} required placeholder="10" />
+                                                        onChange={e => setFormData({ ...formData, stockMinimo: e.target.value })} required placeholder="Ej: 10" />
                                                     <Input label="Stock Máximo" type="number" min="0" step="0.01" value={formData.stockMaximo}
                                                         onChange={e => setFormData({ ...formData, stockMaximo: e.target.value })} placeholder="Opcional" />
                                                 </div>

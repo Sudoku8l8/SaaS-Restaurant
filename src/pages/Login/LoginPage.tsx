@@ -25,17 +25,42 @@ export function LoginPage() {
         }
     }, [user, navigate, restaurantSlug]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!pin) return;
+    const doSubmit = async () => {
+        if (!pin || pin.length < 4) return;
         try {
-            // Pass restaurantSlug to enforce security
             await login(pin, restaurantSlug);
         } catch (err) {
-            // Error handled by AuthProvider and displayed via error state
             console.error(err);
         }
     };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        await doSubmit();
+    };
+
+    useEffect(() => {
+        if (pin.length === 4 && !error && !isLoading) {
+            doSubmit();
+        }
+    }, [pin]);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (isLoading) return;
+            if (e.key >= '0' && e.key <= '9') {
+                if (pin.length < 4) setPin(prev => prev + e.key);
+            } else if (e.key === 'Backspace') {
+                setPin(prev => prev.slice(0, -1));
+            } else if (e.key === 'Escape' || e.key.toLowerCase() === 'c') {
+                setPin('');
+            } else if (e.key === 'Enter') {
+                if (pin.length >= 4) doSubmit();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [pin, isLoading, restaurantSlug, login]);
 
     const handleNumPadClick = (num: string) => {
         if (pin.length < 4) {
@@ -53,12 +78,13 @@ export function LoginPage() {
 
     return (
         <div className="bg-mesh" style={{
-            display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh',
-            padding: '1rem'
+            display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100dvh',
+            padding: '1rem', overflowY: 'auto'
         }}>
             <div className="glass-card" style={{
                 width: '100%', maxWidth: '380px', padding: '1.5rem',
-                borderRadius: 'var(--radius-2xl)', display: 'flex', flexDirection: 'column', gap: '1.25rem'
+                borderRadius: 'var(--radius-2xl)', display: 'flex', flexDirection: 'column', gap: '1rem',
+                margin: 'auto 0'
             }}>
                 <div style={{ textAlign: 'center' }}>
                     <div style={{

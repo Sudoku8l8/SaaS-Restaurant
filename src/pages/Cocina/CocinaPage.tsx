@@ -368,7 +368,7 @@ export function CocinaPage() {
                             key={order.id}
                             order={order}
                             onEdit={() => setOrderToEdit(order)}
-                            onDelete={() => handleDelete(order.id)}
+                            onDelete={user?.role === 'admin' ? () => handleDelete(order.id) : undefined}
                         />
                     ))}
 

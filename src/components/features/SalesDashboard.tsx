@@ -101,7 +101,7 @@ export function SalesDashboard() {
                                 <Users size={24} color="var(--text-muted, var(--text-secondary))" />
                             </div>
                             <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.9rem', fontWeight: 500 }}>
-                                Esperando datos...
+                                Sin ventas registradas
                             </span>
                         </div>
                     ) : (

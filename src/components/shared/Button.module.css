@@ -23,18 +23,18 @@
 
 .primary:hover:not(:disabled) {
     background-color: var(--primary-hover);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    box-shadow: var(--shadow-md);
 }
 
 .secondary {
-    background: linear-gradient(135deg, #06b6d4, #2563eb);
+    background: linear-gradient(135deg, var(--text-secondary), var(--text-primary));
     color: white;
     border: none;
-    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.2);
+    box-shadow: var(--shadow-sm);
 }
 
 .secondary:hover:not(:disabled) {
-    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35);
+    box-shadow: var(--shadow-md);
 }
 
 .danger {

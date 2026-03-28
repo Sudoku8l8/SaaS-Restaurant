@@ -4,6 +4,7 @@ import { ArrowLeft, Building2, DollarSign, TrendingUp, Users, AlertTriangle } fr
 import { db } from '@/services/firebase/config';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { Button, Card, Badge } from '@/components/shared';
+import { DashboardSkeleton } from '@/components/shared/Skeleton';
 import { useTenant } from '@/app/providers/TenantProvider';
 import { getPeruDateString } from '@/utils/dateUtils';
 import type { Restaurant } from '@/types';
@@ -120,9 +121,7 @@ export function OwnerDashboardPage() {
             </header>
 
             {isLoading ? (
-                <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-secondary)' }}>
-                    Cargando datos de todas las sucursales...
-                </div>
+                <DashboardSkeleton />
             ) : (
                 <>
                     {/* Summary KPIs */}

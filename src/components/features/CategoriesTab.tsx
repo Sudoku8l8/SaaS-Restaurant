@@ -286,7 +286,7 @@ export function CategoriesTab() {
 
             {localOrder.length > 0 && (
                 <p style={{ marginTop: '1rem', fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <GripVertical size={13} /> Arrastra las filas para reordenar · También puedes usar las flechas ↑↓
+                    <GripVertical size={13} /> Arrastra las filas para reordenar
                 </p>
             )}
         </div>
@@ -454,56 +454,12 @@ function CategoryRow({
                                 <span style={{ fontSize: '0.7rem', fontWeight: 600, padding: '2px 6px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '4px', color: 'rgb(59, 130, 246)' }}>EN</span>
                             </span>
                         )}
-                        {!category.nameEn && (
-                            <span style={{ fontSize: '0.8rem', color: '#aaa', fontStyle: 'italic', marginTop: '0.2rem' }}>
-                                Sin traducción añadida
-                            </span>
-                        )}
                     </div>
                 )}
             </div>
 
-            {/* ── Right Controls (Arrows & Delete) ── */}
+            {/* ── Right Controls (Delete) ── */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0, marginLeft: 'auto' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                    <button
-                        onClick={onMoveUp}
-                        disabled={index === 0}
-                        title="Subir"
-                        style={{
-                            width: '32px', height: '24px',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            background: index === 0 ? 'transparent' : 'var(--background-color)',
-                            border: '1px solid',
-                            borderColor: index === 0 ? 'transparent' : 'var(--divider-color)',
-                            borderRadius: '6px 6px 2px 2px',
-                            cursor: index === 0 ? 'not-allowed' : 'pointer',
-                            color: index === 0 ? '#ebebeb' : 'var(--text-secondary)',
-                            fontSize: '0.7rem',
-                            transition: 'all 0.15s',
-                        }}
-                    >▲</button>
-                    <button
-                        onClick={onMoveDown}
-                        disabled={index === total - 1}
-                        title="Bajar"
-                        style={{
-                            width: '32px', height: '24px',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            background: index === total - 1 ? 'transparent' : 'var(--background-color)',
-                            border: '1px solid',
-                            borderColor: index === total - 1 ? 'transparent' : 'var(--divider-color)',
-                            borderRadius: '2px 2px 6px 6px',
-                            cursor: index === total - 1 ? 'not-allowed' : 'pointer',
-                            color: index === total - 1 ? '#ebebeb' : 'var(--text-secondary)',
-                            fontSize: '0.7rem',
-                            transition: 'all 0.15s',
-                        }}
-                    >▼</button>
-                </div>
-
-                <div style={{ width: '1px', height: '32px', background: 'var(--divider-color)', margin: '0 0.2rem' }}></div>
-
                 <button
                     onClick={onDelete}
                     title="Eliminar categoría"

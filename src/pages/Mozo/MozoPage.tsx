@@ -328,7 +328,7 @@ export function MozoPage() {
                     }}
                     title="Venta Rápida"
                 >
-                    <Zap size={28} fill="white" />
+                    <Zap size={28} />
                 </button>
             )}
 
