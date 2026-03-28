@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { db } from '@/services/firebase/config';
 import {
     collection, query, where, getDocs,
@@ -170,9 +171,9 @@ export function RecipeModal({ productId, productName, isOpen, onClose }: Props) 
 
     if (!isOpen) return null;
 
-    return (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
-            <Card style={{ padding: '2rem', width: '600px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+    return createPortal(
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '1rem' }}>
+            <Card style={{ padding: '2rem', width: '600px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto', backgroundColor: 'var(--surface-color)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
                     <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <ChefHat size={22} color="var(--primary-color)" />
@@ -275,6 +276,7 @@ export function RecipeModal({ productId, productName, isOpen, onClose }: Props) 
                     </>
                 )}
             </Card>
-        </div>
+        </div>,
+        document.body
     );
 }

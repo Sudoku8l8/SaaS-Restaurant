@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { db } from '@/services/firebase/config';
 import { collection, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
@@ -399,12 +400,12 @@ export function ProductsTab() {
             )}
 
             {/* Modal Simple implementation inline for speed */}
-            {isModalOpen && (
+            {isModalOpen && createPortal(
                 <div style={{
                     position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                    background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
+                    background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999
                 }}>
-                    <Card style={{ padding: '1.5rem 2rem', width: '450px', maxWidth: '90%', maxHeight: '90vh', overflowY: 'auto' }}>
+                    <Card style={{ padding: '1.5rem 2rem', width: '450px', maxWidth: '90%', maxHeight: '90vh', overflowY: 'auto', backgroundColor: 'var(--surface-color)' }}>
                         <h2 style={{ marginBottom: '1.25rem' }}>{editingProduct ? 'Editar' : 'Nuevo'} Producto</h2>
                         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -771,7 +772,8 @@ export function ProductsTab() {
                             </div>
                         </form>
                     </Card>
-                </div>
+                </div>,
+                document.body
             )}
 
             {/* Recipe Modal */}
