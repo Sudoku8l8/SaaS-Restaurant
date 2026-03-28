@@ -255,21 +255,35 @@ class PrinterService {
         add([GS, 0x21, 0x00]); // Normal Size
 
         add([ESC, 0x61, 0x00]); // Left
-        addText(`Mesa: ${order.tableNumber === 0 ? 'Para Llevar' : order.tableNumber}\n`);
+        
+        // Emphasize Table Number
+        add([GS, 0x21, 0x11]); // Double Size
+        add([ESC, 0x45, 0x01]); // Bold on
+        addText(`MESA: ${order.tableNumber === 0 ? 'Para Llevar' : order.tableNumber}\n`);
+        add([GS, 0x21, 0x00]); // Normal Size
+        add([ESC, 0x45, 0x00]); // Bold off
+        
+        add([ESC, 0x45, 0x01]); // Bold on
         addText(`Cliente: ${order.customerName || 'N/A'}\n`);
+        add([ESC, 0x45, 0x00]); // Bold off
+        
         addText(`Mozo: ${order.userName}\n`);
         addText(`Fecha: ${order.createdAt.toLocaleString()}\n`);
         addText("--------------------------------\n");
 
         // Items
-        add([ESC, 0x45, 0x01]); // Bold on (ESC E 1)
         order.items.forEach(item => {
+            // High visibility for Product Quantity and Name
+            add([ESC, 0x45, 0x01]); // Bold on
+            add([GS, 0x21, 0x01]); // Double Height (0x01)
+            
             const qtyText = `${item.quantity}x `.padEnd(4);
             const nameText = item.productName.substring(0, 28) + "\n";
             addText(qtyText + nameText);
 
-            // Turn off bold for options and notes
-            add([ESC, 0x45, 0x00]);
+            // Turn off bold and double height for options and notes
+            add([GS, 0x21, 0x00]); // Normal size
+            add([ESC, 0x45, 0x00]); // Bold off
 
             if (item.selectedOptions && item.selectedOptions.length > 0) {
                 item.selectedOptions.forEach(opt => {
@@ -281,11 +295,7 @@ class PrinterService {
             if (item.notes) {
                 addText(`  Obs: ${item.notes}\n`);
             }
-
-            // Turn bold back on for next item
-            add([ESC, 0x45, 0x01]);
         });
-        add([ESC, 0x45, 0x00]); // Bold off
 
         addText("--------------------------------\n");
         add([ESC, 0x61, 0x02]); // Right

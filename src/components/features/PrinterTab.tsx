@@ -3,6 +3,8 @@ import { Bluetooth, Usb, Printer, Unlink, CheckCircle2, AlertCircle, ToggleLeft,
 import { Button } from '@/components/shared';
 import { printerService } from '@/services/printer/PrinterService';
 
+import { TicketSimulator } from './TicketSimulator';
+
 export function PrinterTab() {
     const [isConnected, setIsConnected] = useState(printerService.isConnected);
     const [deviceName, setDeviceName] = useState(printerService.connectedDeviceName);
@@ -109,14 +111,21 @@ export function PrinterTab() {
     };
 
     return (
-        <div style={{ padding: '1rem', width: '100%', maxWidth: '600px', margin: '0 auto', boxSizing: 'border-box' }}>
+        <div style={{ padding: '1rem', width: '100%', maxWidth: '1200px', margin: '0 auto', boxSizing: 'border-box' }}>
             <div style={{
-                backgroundColor: 'var(--surface-color)',
-                borderRadius: 'var(--radius-lg)',
-                padding: '2rem',
-                border: '1px solid var(--border-color)',
-                boxShadow: 'var(--shadow-md)'
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+                gap: '2rem',
+                alignItems: 'start'
             }}>
+                {/* Panel de Configuración de Impresora */}
+                <div style={{
+                    backgroundColor: 'var(--surface-color)',
+                    borderRadius: 'var(--radius-lg)',
+                    padding: '2rem',
+                    border: '1px solid var(--border-color)',
+                    boxShadow: 'var(--shadow-md)'
+                }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
                     <div style={{
                         width: '48px',
@@ -282,6 +291,12 @@ export function PrinterTab() {
                     <p>Compatible con impresoras térmicas ESC/POS de 58mm y 80mm.</p>
                 </div>
             </div>
+
+            {/* Panel de Previsualización / Simulador ESC/POS */}
+            <div style={{ height: '700px' }}>
+                <TicketSimulator />
+            </div>
+          </div>
         </div>
     );
 }
