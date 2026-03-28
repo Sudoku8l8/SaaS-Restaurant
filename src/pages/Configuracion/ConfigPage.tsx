@@ -1,21 +1,19 @@
 import { useState } from 'react';
-import { LayoutGrid, Printer, Globe, Shield, Settings, Crown, Wallet, Menu, X, ChevronRight } from 'lucide-react';
+import { LayoutGrid, Printer, Shield, Settings, Crown, Wallet, Menu, X, ChevronRight } from 'lucide-react';
 import { useParams } from 'react-router-dom';
-import { useTenant } from '@/app/providers/TenantProvider';
+
 
 import { TablesTab } from '@/components/features/TablesTab';
 import { PrinterTab } from '@/components/features/PrinterTab';
-import { DigitalMenuConfigPage } from '@/pages/Configuracion/DigitalMenuConfigPage';
 import { SecurityTab } from '@/components/features/SecurityTab';
 import { GeneralTab } from '@/components/features/GeneralTab';
-import { PremiumUpgradeBanner } from '@/components/features/PremiumUpgradeBanner';
 import { PettyCashConfigTab } from '@/components/features/PettyCashConfigTab';
 import { AppSidebar } from '@/components/shared/AppSidebar';
 
 
 import './ConfigPage.css';
 
-type Tab = 'general' | 'tables' | 'printer' | 'menu' | 'security' | 'pettycash';
+type Tab = 'general' | 'tables' | 'printer' | 'security' | 'pettycash';
 
 interface TabItem {
     id: Tab;
@@ -26,8 +24,6 @@ interface TabItem {
 
 export function ConfigPage() {
     const { restaurantSlug } = useParams();
-    const { tenant } = useTenant();
-    const hasDigitalMenu = tenant?.features?.digitalMenu ?? false;
     const [activeTab, setActiveTab] = useState<Tab>('general');
     const [menuOpen, setMenuOpen] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -36,7 +32,6 @@ export function ConfigPage() {
         { id: 'general', label: 'General', icon: Settings },
         { id: 'tables', label: 'Mesas', icon: LayoutGrid },
         { id: 'printer', label: 'Impresora', icon: Printer },
-        { id: 'menu', label: 'Menú Digital', icon: Globe, premium: !hasDigitalMenu },
         { id: 'security', label: 'Seguridad', icon: Shield },
         { id: 'pettycash', label: 'Caja Chica', icon: Wallet },
     ];
@@ -156,11 +151,6 @@ export function ConfigPage() {
                 {activeTab === 'general' && <GeneralTab />}
                 {activeTab === 'tables' && <TablesTab />}
                 {activeTab === 'printer' && <PrinterTab />}
-                {activeTab === 'menu' && (
-                    hasDigitalMenu
-                        ? <DigitalMenuConfigPage />
-                        : <PremiumUpgradeBanner feature="Menú Digital" />
-                )}
                 {activeTab === 'security' && <SecurityTab />}
                 {activeTab === 'pettycash' && <PettyCashConfigTab />}
             </div>

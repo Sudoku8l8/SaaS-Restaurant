@@ -15,7 +15,8 @@ import {
     Archive,
     PieChart,
     Sliders,
-    Wallet
+    Wallet,
+    Globe
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { UserRole } from '@/types';
@@ -122,6 +123,13 @@ export function AppSidebar({ isOpen, onClose, restaurantSlug }: AppSidebarProps)
             label: 'Productos',
             icon: Tags,
             path: `/${restaurantSlug}/productos`,
+            roles: [UserRole.ADMIN],
+        },
+        {
+            id: 'menu-digital',
+            label: 'Menú Digital',
+            icon: Globe,
+            path: `/${restaurantSlug}/menu-digital`,
             roles: [UserRole.ADMIN],
         },
         {

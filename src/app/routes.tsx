@@ -13,6 +13,7 @@ import { DigitalMenuPage } from '@/pages/Public/DigitalMenuPage';
 import { DigitalCheckoutPage } from '@/pages/Public/DigitalCheckoutPage';
 import { ProtectedRoute } from '@/components/shared/ProtectedRoute';
 import { ProductsPage } from '@/pages/Admin/ProductsPage';
+import { DigitalMenuPage as AdminDigitalMenuPage } from '@/pages/Admin/DigitalMenuPage';
 import { UsersPage } from '@/pages/Admin/UsersPage';
 import { UserRole } from '@/types';
 
@@ -131,6 +132,11 @@ export const router = createBrowserRouter([
                         path: 'productos',
                         element: <ProtectedRoute allowedRoles={[UserRole.ADMIN]} />,
                         children: [{ index: true, element: <ProductsPage /> }],
+                    },
+                    {
+                        path: 'menu-digital',
+                        element: <ProtectedRoute allowedRoles={[UserRole.ADMIN]} />,
+                        children: [{ index: true, element: <AdminDigitalMenuPage /> }],
                     },
                     {
                         path: 'usuarios',
