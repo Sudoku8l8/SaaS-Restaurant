@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { db } from '@/services/firebase/config';
 import { collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
 import { useAuth } from './useAuth';
-import { format, subDays } from 'date-fns';
+import { getPeruDateString } from '@/utils/dateUtils';
+import { subDays } from 'date-fns';
 
 export interface PendingClosure {
     date: string;
@@ -21,7 +22,7 @@ export function usePendingClosures() {
         // Query closures of the last 30 days to check what's missing
         const checkPending = async () => {
             try {
-                const todayStr = format(new Date(), 'yyyy-MM-dd');
+                const todayStr = getPeruDateString();
 
                 // 1. Get all paid orders from the last 30 days
                 // To avoid overloading, we only check the last 30 days
@@ -39,7 +40,7 @@ export function usePendingClosures() {
                 ordersSnapshot.docs.forEach(doc => {
                     const data = doc.data();
                     const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
-                    const dateStr = format(createdAt, 'yyyy-MM-dd');
+                    const dateStr = getPeruDateString(createdAt);
 
                     if (dateStr !== todayStr) { // Only check past days
                         if (!ordersByDate[dateStr]) {
@@ -54,7 +55,7 @@ export function usePendingClosures() {
                 const closuresQuery = query(
                     collection(db, 'closures'),
                     where('restaurantId', '==', user.restaurantId),
-                    where('date', '>=', format(thirtyDaysAgo, 'yyyy-MM-dd'))
+                    where('date', '>=', getPeruDateString(thirtyDaysAgo))
                 );
 
                 const closuresSnapshot = await getDocs(closuresQuery);

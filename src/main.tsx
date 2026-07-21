@@ -24,4 +24,4 @@ createRoot(document.getElementById('root')!).render(
     </GlobalErrorBoundary>
   </StrictMode>
 );
-;
+

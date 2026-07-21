@@ -60,8 +60,19 @@ export function useOrders() {
     }, [restaurantId]);
 
     const createOrder = async (order: Order) => {
-        const { runTransaction, doc, collection, query, where, limit, getDocs, increment } = await import('firebase/firestore');
-        const { getPeruDateString } = await import('@/utils/dateUtils');
+        const { runTransaction } = await import('firebase/firestore');
+
+        // OPT: Pre-read table doc OUTSIDE transaction (getDocs is not transactional)
+        const tablesRef = collection(db, 'tables');
+        const tableQuery = query(
+            tablesRef,
+            where('restaurantId', '==', restaurantId),
+            where('number', '==', order.tableNumber),
+            limit(1)
+        );
+        const tableSnap = await getDocs(tableQuery);
+        const tableDocId = !tableSnap.empty ? tableSnap.docs[0].id : undefined;
+        const tableDocRef = tableDocId ? doc(db, 'tables', tableDocId) : undefined;
 
         await runTransaction(db, async (transaction) => {
             const dateStr = getPeruDateString(order.createdAt);
@@ -76,22 +87,6 @@ export function useOrders() {
                 transaction.set(counterRef, { count: 1 });
             }
 
-            // OPT: Find table doc BEFORE transaction (reads outside, writes inside)
-            // Note: this pre-read was moved outside, but since we're already in a
-            // transaction and Firebase allows reads before writes, we keep it here.
-
-            // Find and update table status
-            const tablesRef = collection(db, 'tables');
-            const q = query(
-                tablesRef,
-                where('restaurantId', '==', restaurantId),
-                where('number', '==', order.tableNumber),
-                limit(1)
-            );
-            const tableSnap = await getDocs(q);
-
-            const tableDocId = !tableSnap.empty ? tableSnap.docs[0].id : undefined;
-
             // Assign daily number + dateStr + tableId to order
             const orderWithExtras = {
                 ...order,
@@ -102,9 +97,8 @@ export function useOrders() {
             const orderRef = doc(db, 'orders', order.id);
             transaction.set(orderRef, orderWithExtras);
 
-            if (!tableSnap.empty) {
-                const tableDoc = tableSnap.docs[0];
-                transaction.update(tableDoc.ref, {
+            if (tableDocRef) {
+                transaction.update(tableDocRef, {
                     status: 'occupied',
                     currentOrderId: order.id
                 });

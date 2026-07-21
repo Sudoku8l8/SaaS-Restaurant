@@ -139,7 +139,7 @@ export function LoginPage() {
                                     cursor: 'pointer', transition: 'all 0.15s'
                                 }}
                                 onMouseEnter={e => {
-                                    e.currentTarget.style.background = 'var(--glass-bg)';
+                                    e.currentTarget.style.background = 'var(--divider-color)';
                                     e.currentTarget.style.transform = 'translateY(-2px)';
                                     e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
                                 }}
@@ -157,12 +157,12 @@ export function LoginPage() {
                             onClick={handleClear}
                             style={{
                                 height: '56px', fontSize: '1.1rem', fontWeight: 700,
-                                background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)',
+                                background: 'var(--divider-color)', border: '1px solid var(--border-color)',
                                 color: 'var(--danger-color)', borderRadius: 'var(--radius-md)',
                                 cursor: 'pointer', transition: 'all 0.15s'
                             }}
-                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)'}
-                            onMouseLeave={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
+                            onMouseEnter={e => e.currentTarget.style.background = 'var(--background-color)'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'var(--divider-color)'}
                         >
                             C
                         </button>
@@ -176,7 +176,7 @@ export function LoginPage() {
                                 transition: 'all 0.15s'
                             }}
                             onMouseEnter={e => {
-                                e.currentTarget.style.background = 'var(--glass-bg)';
+                                e.currentTarget.style.background = 'var(--divider-color)';
                                 e.currentTarget.style.transform = 'translateY(-2px)';
                                 e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
                             }}

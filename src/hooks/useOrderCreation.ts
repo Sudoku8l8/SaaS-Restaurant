@@ -25,7 +25,7 @@ export function useOrderCreation() {
     const [orderToEdit, setOrderToEdit] = useState<Order | undefined>(undefined);
     const [takeoutOrderType, setTakeoutOrderType] = useState<'dine-in' | 'takeout' | 'quick-sale'>('dine-in');
 
-    const takeoutOrders = activeOrders?.filter(o => o.orderType === 'takeout') || [];
+    const takeoutOrders = activeOrders?.filter(o => o.orderType === 'takeout' || o.orderType === 'quick-sale') || [];
 
     // Virtual takeout cards (same pattern as MozoPage)
     const newTakeoutCard: RestaurantTable = {

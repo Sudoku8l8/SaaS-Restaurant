@@ -300,7 +300,7 @@ export function OrderCard({ order, onEdit, onDelete }: OrderCardProps) {
                                     </span>
                                 </div>
                                 <span style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', fontWeight: '700', marginTop: '4px' }}>
-                                    S/ {item.price.toFixed(2)}
+                                    S/ {(item.subtotal ?? (item.price * item.quantity)).toFixed(2)}
                                 </span>
                             </div>
 
@@ -308,7 +308,7 @@ export function OrderCard({ order, onEdit, onDelete }: OrderCardProps) {
                             {item.notes && (
                                 <div style={{
                                     marginLeft: '3.2rem',
-                                    backgroundColor: 'rgba(168, 218, 220, 0.15)', // Light variant of --secondary-color
+                                    backgroundColor: 'var(--divider-color)',
                                     borderLeft: '4px solid var(--secondary-color)',
                                     padding: '6px 12px',
                                     borderRadius: 'var(--radius-sm)',

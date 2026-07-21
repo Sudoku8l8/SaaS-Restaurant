@@ -11,7 +11,6 @@ import { useClosureStatus } from '@/hooks/useClosureStatus';
 import { useOrderCreation } from '@/hooks/useOrderCreation';
 import { OrderFAB } from '@/components/shared/OrderFAB';
 import { OrderCard } from '@/components/features/OrderCard';
-import { OrderCardSkeleton } from '@/components/shared/Skeleton';
 import { NotificationBell } from '@/components/shared/NotificationBell';
 import { AppSidebar } from '@/components/shared/AppSidebar';
 import { useTenant } from '@/app/providers/TenantProvider';
@@ -84,22 +83,9 @@ export function CocinaPage() {
     const orderCreation = useOrderCreation();
     const [orderToEdit, setOrderToEdit] = useState<Order | undefined>(undefined);
 
-    if (!activeOrders) {
-        return (
-            <div style={{ minHeight: '100vh', backgroundColor: 'var(--background-color)' }}>
-                <div style={{ height: '90px', backgroundColor: 'var(--surface-color)', borderBottom: '1px solid var(--border-color)', marginBottom: '2.5rem' }} />
-                <div className="container" style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))',
-                    gap: '1.5rem'
-                }}>
-                    {[1, 2, 3, 4, 5, 6].map(i => (
-                        <OrderCardSkeleton key={i} />
-                    ))}
-                </div>
-            </div>
-        );
-    }
+    // Note: activeOrders is always an array (never null/undefined).
+    // We show skeleton only during the very first mount before any data arrives.
+    // useOrders initializes with [] so we don't have a separate isLoading flag.
 
     // Memoize filtered orders and counts for performance
     const { filteredOrders, orderCounts } = useMemo(() => {
@@ -204,7 +190,7 @@ export function CocinaPage() {
                     width: 42px;
                     height: 42px;
                     border-radius: 50%;
-                    background: rgba(237, 219, 203, 0.4);
+                    background: var(--divider-color);
                     display: flex;
                     align-items: center;
                     justify-content: center;
@@ -372,11 +358,18 @@ export function CocinaPage() {
                         />
                     ))}
 
-                    {activeOrders.length === 0 && (
+                    {filteredOrders.length === 0 && (
                         <div className="glass-card" style={{ gridColumn: '1/-1', textAlign: 'center', padding: '6rem 2rem', color: 'var(--text-secondary)', borderStyle: 'dashed', border: '2px dashed var(--glass-border)' }}>
                             <div style={{ fontSize: '4.5rem', marginBottom: '1.5rem', opacity: 0.15 }}>⚡</div>
-                            <h3 style={{ color: 'var(--text-primary)', marginBottom: '0.5rem', fontWeight: '800', fontSize: '1.25rem' }}>No hay pedidos en curso</h3>
-                            <p style={{ fontWeight: '500' }}>Los pedidos que generen los mozos aparecerán aquí al instante.</p>
+                            <h3 style={{ color: 'var(--text-primary)', marginBottom: '0.5rem', fontWeight: '800', fontSize: '1.25rem' }}>
+                                {activeOrders.length === 0 ? 'No hay pedidos en curso' : 'No hay pedidos con este filtro'}
+                            </h3>
+                            <p style={{ fontWeight: '500' }}>
+                                {activeOrders.length === 0
+                                    ? 'Los pedidos que generen los mozos aparecerán aquí al instante.'
+                                    : 'Prueba seleccionando otro estado de pedido.'
+                                }
+                            </p>
                         </div>
                     )}
                 </div>

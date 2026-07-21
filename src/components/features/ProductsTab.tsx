@@ -25,8 +25,8 @@ export function ProductsTab() {
     const filteredProducts = useMemo(() => {
         return products.filter(p => {
             const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                  p.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                  (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase()));
+                p.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase()));
             const matchesCategory = selectedCategory === 'Todas' || p.category === selectedCategory;
             return matchesSearch && matchesCategory;
         });
@@ -89,7 +89,7 @@ export function ProductsTab() {
         if (categories.length > 0 && !formData.category) {
             setFormData(prev => ({ ...prev, category: categories[0].name }));
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [categoriesKey]);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -236,17 +236,17 @@ export function ProductsTab() {
                         Nuevo Producto
                     </Button>
                 </div>
-                
+
                 <div style={{ position: 'relative', width: '100%', maxWidth: '400px' }}>
-                    <input 
-                        type="text" 
-                        placeholder="Buscar productos por nombre, categoría o descripción..." 
+                    <input
+                        type="text"
+                        placeholder="Buscar productos por nombre, categoría o descripción..."
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
-                        style={{ 
-                            width: '100%', 
-                            padding: '0.6rem 1rem 0.6rem 2.5rem', 
-                            borderRadius: '8px', 
+                        style={{
+                            width: '100%',
+                            padding: '0.6rem 1rem 0.6rem 2.5rem',
+                            borderRadius: '8px',
                             border: '1px solid var(--divider-color)',
                             backgroundColor: 'var(--surface-color)',
                             color: 'var(--text-primary)',
@@ -319,9 +319,9 @@ export function ProductsTab() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
                     {sortedCategoriesList.map(category => (
                         <div key={category}>
-                            <h4 style={{ 
-                                marginBottom: '1.25rem', 
-                                paddingBottom: '0.5rem', 
+                            <h4 style={{
+                                marginBottom: '1.25rem',
+                                paddingBottom: '0.5rem',
                                 borderBottom: '2px solid var(--divider-color)',
                                 color: 'var(--text-primary)',
                                 display: 'flex',
@@ -331,20 +331,20 @@ export function ProductsTab() {
                                 fontWeight: 600
                             }}>
                                 {category}
-                                <span style={{ 
-                                    background: 'var(--primary-color)', 
-                                    color: 'white', 
-                                    padding: '0.15rem 0.5rem', 
-                                    borderRadius: '12px', 
+                                <span style={{
+                                    background: 'var(--primary-color)',
+                                    color: 'white',
+                                    padding: '0.15rem 0.5rem',
+                                    borderRadius: '12px',
                                     fontSize: '0.75rem',
                                     fontWeight: 'bold'
                                 }}>{groupedProducts[category].length}</span>
                             </h4>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
                                 {groupedProducts[category].map(product => (
-                                    <Card key={product.id} style={{ 
-                                        padding: '1rem', 
-                                        position: 'relative', 
+                                    <Card key={product.id} style={{
+                                        padding: '1rem',
+                                        position: 'relative',
                                         opacity: product.available ? 1 : 0.6,
                                         display: 'flex',
                                         flexDirection: 'column',
@@ -365,11 +365,11 @@ export function ProductsTab() {
                                         <div style={{ color: 'var(--color-primary)', fontSize: '1.2rem', fontWeight: 700, marginBottom: '0.3rem' }}>S/ {product.price.toFixed(2)}</div>
                                         {/* Omit the category label because we are already grouping by category */}
                                         {product.description && (
-                                            <div style={{ 
-                                                fontSize: '0.78rem', 
-                                                color: '#777', 
-                                                fontStyle: 'italic', 
-                                                marginBottom: '0.75rem', 
+                                            <div style={{
+                                                fontSize: '0.78rem',
+                                                color: '#777',
+                                                fontStyle: 'italic',
+                                                marginBottom: '0.75rem',
                                                 lineHeight: 1.4,
                                                 flex: 1
                                             }}>

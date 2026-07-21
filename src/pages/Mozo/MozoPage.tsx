@@ -250,7 +250,7 @@ export function MozoPage() {
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             width: '36px', height: '36px', borderRadius: '50%',
                             border: '1px solid var(--divider-color)', background: 'var(--background-color)',
-                            color: '#f59e0b', cursor: 'pointer', transition: 'all 0.2s',
+                            color: 'var(--warning-color)', cursor: 'pointer', transition: 'all 0.2s',
                         }}
                     >
                         <Wallet size={18} />

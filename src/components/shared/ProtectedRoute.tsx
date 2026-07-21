@@ -20,6 +20,7 @@ export const ProtectedRoute = ({ allowedRoles }: { allowedRoles?: UserRole[] }) 
         if (user.role === UserRole.WAITER) return <Navigate to={`${basePath}/mozo`} replace />;
         if (user.role === UserRole.ADMIN) return <Navigate to={`${basePath}/admin`} replace />;
         if (user.role === UserRole.CHEF) return <Navigate to={`${basePath}/cocina`} replace />;
+        if (user.role === UserRole.CASHIER) return <Navigate to={`${basePath}/cocina`} replace />;
         if (user.role === UserRole.SHIFT_MANAGER) return <Navigate to={`${basePath}/mozo`} replace />;
         return <Navigate to={`${basePath}/login`} replace />;
     }
