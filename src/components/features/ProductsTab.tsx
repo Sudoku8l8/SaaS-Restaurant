@@ -5,10 +5,11 @@ import { collection, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestor
 import { useAuth } from '@/hooks/useAuth';
 import { useProductCache } from '@/hooks/useProductCache';
 import { Button, Input, Card, Badge } from '@/components/shared';
-import { Trash2, Edit2, ChefHat, Plus, X, Settings2, Search, Star } from 'lucide-react';
+import { Trash2, Edit2, ChefHat, Plus, X, Settings2, Search, Star, Sparkles } from 'lucide-react';
 import type { Product, InventoryType, UnitOfMeasure, ProductModifier, ModifierOption } from '@/types';
 import { UnitOfMeasure as UC } from '@/types';
 import { RecipeModal } from './RecipeModal';
+import { MenuScannerModal } from './MenuScannerModal';
 import { generateUUID } from '@/utils/uuid';
 
 export function ProductsTab() {
@@ -18,6 +19,7 @@ export function ProductsTab() {
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     const [recipeModalOpen, setRecipeModalOpen] = useState(false);
     const [recipeProduct, setRecipeProduct] = useState<Product | null>(null);
+    const [isScannerOpen, setIsScannerOpen] = useState(false);
     const [modifiers, setModifiers] = useState<ProductModifier[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string>('Todas');
@@ -231,10 +233,23 @@ export function ProductsTab() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
                     <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>Inventario ({products.length})</h3>
-                    <Button onClick={() => openModal()}>
-                        <Plus size={16} className="mr-2" />
-                        Nuevo Producto
-                    </Button>
+                    <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                        <Button
+                            onClick={() => setIsScannerOpen(true)}
+                            style={{
+                                background: 'linear-gradient(135deg, var(--primary-color), var(--secondary-color))',
+                                border: 'none',
+                                color: 'white'
+                            }}
+                        >
+                            <Sparkles size={16} className="mr-2" />
+                            Cargar por Foto (IA)
+                        </Button>
+                        <Button onClick={() => openModal()}>
+                            <Plus size={16} className="mr-2" />
+                            Nuevo Producto
+                        </Button>
+                    </div>
                 </div>
 
                 <div style={{ position: 'relative', width: '100%', maxWidth: '400px' }}>
@@ -783,6 +798,17 @@ export function ProductsTab() {
                     productName={recipeProduct.name}
                     isOpen={recipeModalOpen}
                     onClose={() => { setRecipeModalOpen(false); setRecipeProduct(null); }}
+                />
+            )}
+
+            {/* Menu Scanner AI Modal */}
+            {isScannerOpen && (
+                <MenuScannerModal
+                    onClose={() => setIsScannerOpen(false)}
+                    existingCategories={categories.map(c => c.name)}
+                    onImportSuccess={() => {
+                        refreshCache();
+                    }}
                 />
             )}
         </div>
