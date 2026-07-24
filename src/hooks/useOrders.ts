@@ -17,6 +17,7 @@ import {
 import { useAuth } from './useAuth';
 import type { Order, OrderStatus, OrderPayment } from '@/types';
 import { ensurePeruDate, getPeruNow, getPeruDateString } from '@/utils/dateUtils';
+import { productCacheService } from '@/services/productCacheService';
 
 export function useOrders() {
     const { user } = useAuth();
@@ -283,6 +284,7 @@ export function useOrders() {
                                 unit: productData.unidadMedida || 'unidad',
                                 referenceId: orderId,
                                 referenceType: 'order',
+                                reason: `Venta - Pedido #${existingOrder?.dailyNumber ?? ''}`,
                                 userId: user?.id || 'system',
                                 userName: user?.name || 'Sistema',
                                 createdAt: getPeruNow(),
@@ -294,6 +296,9 @@ export function useOrders() {
         }
 
         await batch.commit();
+        if (restaurantId) {
+            productCacheService.invalidate(restaurantId).catch(err => console.error('Error invalidating product cache:', err));
+        }
     };
 
     const deleteOrder = async (orderId: string) => {

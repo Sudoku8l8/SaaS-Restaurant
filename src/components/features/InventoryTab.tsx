@@ -76,6 +76,21 @@ export function InventoryTab({ readOnly = false }: InventoryTabProps) {
         return () => { unsub(); };
     }, [user?.restaurantId]);
 
+    // Realtime listener for products so stock updates instantly on sale from any device/session
+    useEffect(() => {
+        if (!user?.restaurantId) return;
+
+        const pQuery = query(
+            collection(db, 'products'),
+            where('restaurantId', '==', user.restaurantId)
+        );
+        const unsub = onSnapshot(pQuery, () => {
+            refreshCache();
+        });
+
+        return () => { unsub(); };
+    }, [user?.restaurantId, refreshCache]);
+
     // Stats
     const productStats = {
         total: products.length,
@@ -178,10 +193,10 @@ export function InventoryTab({ readOnly = false }: InventoryTabProps) {
         return <Badge variant="success">Normal</Badge>;
     };
 
-    const tabs: { id: SubTab; label: string; icon: typeof Package }[] = [
-        { id: 'products', label: 'Productos', icon: Package },
-        { id: 'items', label: 'Insumos', icon: Box },
-        { id: 'movements', label: 'Movimientos', icon: ArrowUpDown },
+    const tabs: { id: SubTab; label: string; mobileLabel: string; icon: typeof Package }[] = [
+        { id: 'products', label: 'Productos', mobileLabel: 'Productos', icon: Package },
+        { id: 'items', label: 'Insumos', mobileLabel: 'Insumos', icon: Box },
+        { id: 'movements', label: 'Movimientos', mobileLabel: 'Mov.', icon: ArrowUpDown },
     ];
 
     return (
@@ -206,7 +221,7 @@ export function InventoryTab({ readOnly = false }: InventoryTabProps) {
                 </div>
             )}
             {/* Summary Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+            <div className="inventory-kpi-grid">
                 <Card style={{ padding: '1rem', border: '1px solid var(--divider-color)', textAlign: 'center' }}>
                     <p style={{ margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
                         <Package size={16} /> Productos con Stock
@@ -238,20 +253,22 @@ export function InventoryTab({ readOnly = false }: InventoryTabProps) {
             </div>
 
             {/* Sub-tabs */}
-            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', borderBottom: '2px solid var(--divider-color)', paddingBottom: '0' }}>
+            <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '1.5rem', borderBottom: '2px solid var(--divider-color)', paddingBottom: '0', overflowX: 'auto' }}>
                 {tabs.map(tab => {
                     const Icon = tab.icon;
                     const active = subTab === tab.id;
                     return (
                         <button key={tab.id} onClick={() => setSubTab(tab.id)} style={{
-                            padding: '0.75rem 1.25rem', border: 'none', background: 'transparent',
+                            padding: '0.75rem 1rem', border: 'none', background: 'transparent',
                             cursor: 'pointer', fontSize: '0.95rem', fontWeight: active ? 700 : 500,
                             color: active ? 'var(--primary-color)' : 'var(--text-secondary)',
                             borderBottom: active ? '3px solid var(--primary-color)' : '3px solid transparent',
                             marginBottom: '-2px', transition: 'all 0.15s',
-                            display: 'flex', alignItems: 'center', gap: '0.5rem',
+                            display: 'flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap',
                         }}>
-                            <Icon size={16} /> {tab.label}
+                            <Icon size={16} />
+                            <span className="hidden-mobile">{tab.label}</span>
+                            <span className="hidden-desktop">{tab.mobileLabel}</span>
                         </button>
                     );
                 })}

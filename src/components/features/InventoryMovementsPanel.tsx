@@ -192,7 +192,7 @@ export function InventoryMovementsPanel({ productId, productName, collectionType
                                         {mov.productName}
                                         <Badge variant="neutral" style={{ marginLeft: '0.5rem', fontSize: '0.7rem' }}>{meta.label}</Badge>
                                     </div>
-                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
                                         <Clock size={12} />
                                         {mov.createdAt.toLocaleDateString()} {mov.createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         {mov.userName && <> • {mov.userName}</>}

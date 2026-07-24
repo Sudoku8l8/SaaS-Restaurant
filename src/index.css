@@ -357,3 +357,20 @@ input:focus, textarea:focus, select:focus {
     margin-bottom: 0.5rem !important;
   }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   Inventory KPI Grid Responsive
+   ══════════════════════════════════════════════════════════════════════════════ */
+.inventory-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .inventory-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+}
