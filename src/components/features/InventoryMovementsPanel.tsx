@@ -173,34 +173,37 @@ export function InventoryMovementsPanel({ productId, productName, collectionType
                         const meta = MOVEMENT_LABELS[mov.type] || MOVEMENT_LABELS.adjustment;
                         const Icon = meta.icon;
                         const isPositive = mov.quantity > 0;
+                        const badgeVariant = mov.type === 'sale' ? 'error' : mov.type === 'purchase' ? 'success' : mov.type === 'waste' ? 'warning' : mov.type === 'adjustment' ? 'info' : 'neutral';
+                        const itemTitle = productId ? (mov.reason || meta.label) : mov.productName;
 
                         return (
                             <div key={mov.id} style={{
                                 display: 'flex', alignItems: 'center', gap: '0.75rem',
                                 padding: '0.75rem 1rem', background: 'var(--surface-color)',
-                                border: '1px solid var(--divider-color)', borderRadius: 'var(--radius-sm)',
+                                border: '1px solid var(--divider-color)', borderRadius: 'var(--radius-md)',
+                                transition: 'all 0.15s ease',
                             }}>
                                 <div style={{
-                                    width: '36px', height: '36px', borderRadius: '50%',
+                                    width: '38px', height: '38px', borderRadius: '50%',
                                     background: `${meta.color}15`, color: meta.color,
                                     display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                                 }}>
                                     <Icon size={18} />
                                 </div>
                                 <div style={{ flex: 1, minWidth: 0 }}>
-                                    <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>
-                                        {mov.productName}
-                                        <Badge variant="neutral" style={{ marginLeft: '0.5rem', fontSize: '0.7rem' }}>{meta.label}</Badge>
+                                    <div style={{ fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                        <span style={{ color: 'var(--text-primary)' }}>{itemTitle}</span>
+                                        <Badge variant={badgeVariant} style={{ fontSize: '0.7rem' }}>{meta.label}</Badge>
                                     </div>
-                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+                                    <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap', marginTop: '2px' }}>
                                         <Clock size={12} />
-                                        {mov.createdAt.toLocaleDateString()} {mov.createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                        {mov.userName && <> • {mov.userName}</>}
-                                        {mov.reason && <> — {mov.reason}</>}
+                                        <span>{mov.createdAt.toLocaleDateString()} {mov.createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                        {mov.userName && <span>• {mov.userName}</span>}
+                                        {!productId && mov.reason && <span>— {mov.reason}</span>}
                                     </div>
                                 </div>
                                 <div style={{
-                                    fontWeight: 700, fontSize: '1rem',
+                                    fontWeight: 700, fontSize: '0.95rem', flexShrink: 0,
                                     color: isPositive ? '#10b981' : '#ef4444',
                                 }}>
                                     {isPositive ? '+' : ''}{mov.quantity} {mov.unit}

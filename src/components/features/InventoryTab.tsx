@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { db } from '@/services/firebase/config';
 import { collection, query, where, onSnapshot, updateDoc, doc, addDoc, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
 import { useProductCache } from '@/hooks/useProductCache';
 import { Button, Card, Badge, Input } from '@/components/shared';
-import { Search, Package, Box, AlertTriangle, AlertCircle, ClipboardList, ArrowUpDown, Plus, Edit2, Trash2 } from 'lucide-react';
+import { Search, Package, Box, AlertTriangle, AlertCircle, ClipboardList, ArrowUpDown, Plus, Edit2, Trash2, X } from 'lucide-react';
 import type { Product, InventoryItem, UnitOfMeasure } from '@/types';
 import { UnitOfMeasure as UnitConst } from '@/types';
 import { InventoryMovementsPanel } from './InventoryMovementsPanel';
@@ -475,27 +476,64 @@ export function InventoryTab({ readOnly = false }: InventoryTabProps) {
             )}
 
             {/* Adjust Stock Modal */}
-            {adjustProduct && (
-                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
-                    <Card style={{ padding: '2rem', width: '400px', maxWidth: '100%' }}>
-                        <h3 style={{ marginTop: 0 }}>Ajustar Stock: {adjustProduct.name}</h3>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Stock actual: {adjustProduct.stockActual || 0}</p>
+            {adjustProduct && createPortal(
+                <div
+                    onClick={() => setAdjustProduct(null)}
+                    style={{
+                        position: 'fixed', inset: 0,
+                        background: 'rgba(15, 23, 42, 0.65)',
+                        backdropFilter: 'blur(8px)',
+                        WebkitBackdropFilter: 'blur(8px)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        zIndex: 99999, padding: '1rem',
+                        animation: 'fadeIn 0.2s ease-out',
+                    }}
+                >
+                    <Card onClick={e => e.stopPropagation()} style={{ padding: '1.75rem', width: '420px', maxWidth: '92vw', borderRadius: 'var(--radius-lg)', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.35)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--divider-color)' }}>
+                            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>Ajustar Stock</h3>
+                            <button type="button" onClick={() => setAdjustProduct(null)} style={{ background: 'var(--divider-color)', border: 'none', borderRadius: '50%', width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                                <X size={16} />
+                            </button>
+                        </div>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: 0, marginBottom: '1.25rem' }}>
+                            Producto: <strong style={{ color: 'var(--text-primary)' }}>{adjustProduct.name}</strong> (Stock actual: {adjustProduct.stockActual || 0})
+                        </p>
                         <Input label="Nuevo Stock" type="number" min="0" value={adjustQty} onChange={e => setAdjustQty(e.target.value)} />
                         <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
                             <Button type="button" variant="ghost" onClick={() => setAdjustProduct(null)} fullWidth>Cancelar</Button>
                             <Button variant="primary" onClick={handleAdjust} fullWidth>Guardar</Button>
                         </div>
                     </Card>
-                </div>
+                </div>,
+                document.body
             )}
 
             {/* Inspect Product Movements Modal */}
-            {inspectProduct && (
-                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
-                    <Card style={{ padding: '2rem', width: '700px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                            <h3 style={{ margin: 0 }}>Movimientos: {inspectProduct.name}</h3>
-                            <Button variant="ghost" onClick={() => setInspectProduct(null)}>✕</Button>
+            {inspectProduct && createPortal(
+                <div
+                    onClick={() => setInspectProduct(null)}
+                    style={{
+                        position: 'fixed', inset: 0,
+                        background: 'rgba(15, 23, 42, 0.65)',
+                        backdropFilter: 'blur(8px)',
+                        WebkitBackdropFilter: 'blur(8px)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        zIndex: 99999, padding: '1rem',
+                        animation: 'fadeIn 0.2s ease-out',
+                    }}
+                >
+                    <Card onClick={e => e.stopPropagation()} style={{ padding: '1.5rem 1.75rem', width: '700px', maxWidth: '94vw', maxHeight: '90vh', overflowY: 'auto', borderRadius: 'var(--radius-lg)', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.35)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--divider-color)' }}>
+                            <div>
+                                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)' }}>Historial de Movimientos</h3>
+                                <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                                    Producto: <strong style={{ color: 'var(--primary-color)' }}>{inspectProduct.name}</strong>
+                                </p>
+                            </div>
+                            <button type="button" onClick={() => setInspectProduct(null)} style={{ background: 'var(--divider-color)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                                <X size={18} />
+                            </button>
                         </div>
                         <InventoryMovementsPanel
                             productId={inspectProduct.id}
@@ -503,14 +541,31 @@ export function InventoryTab({ readOnly = false }: InventoryTabProps) {
                             collectionType="products"
                         />
                     </Card>
-                </div>
+                </div>,
+                document.body
             )}
 
             {/* Create/Edit Insumo Modal */}
-            {isItemModalOpen && (
-                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
-                    <Card style={{ padding: '2rem', width: '480px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
-                        <h3 style={{ marginTop: 0, marginBottom: '1.5rem' }}>{editingItem ? 'Editar' : 'Nuevo'} Insumo</h3>
+            {isItemModalOpen && createPortal(
+                <div
+                    onClick={() => setIsItemModalOpen(false)}
+                    style={{
+                        position: 'fixed', inset: 0,
+                        background: 'rgba(15, 23, 42, 0.65)',
+                        backdropFilter: 'blur(8px)',
+                        WebkitBackdropFilter: 'blur(8px)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        zIndex: 99999, padding: '1rem',
+                        animation: 'fadeIn 0.2s ease-out',
+                    }}
+                >
+                    <Card onClick={e => e.stopPropagation()} style={{ padding: '1.75rem', width: '480px', maxWidth: '94vw', maxHeight: '90vh', overflowY: 'auto', borderRadius: 'var(--radius-lg)', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.35)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--divider-color)' }}>
+                            <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>{editingItem ? 'Editar' : 'Nuevo'} Insumo</h3>
+                            <button type="button" onClick={() => setIsItemModalOpen(false)} style={{ background: 'var(--divider-color)', border: 'none', borderRadius: '50%', width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                                <X size={16} />
+                            </button>
+                        </div>
                         <form onSubmit={handleItemSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                             <Input label="Nombre" value={itemForm.name} onChange={e => setItemForm({ ...itemForm, name: e.target.value })} required placeholder="Ej: Queso Mozzarella" />
 
@@ -541,7 +596,8 @@ export function InventoryTab({ readOnly = false }: InventoryTabProps) {
                             </div>
                         </form>
                     </Card>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );
