@@ -15,9 +15,10 @@ type SubTab = 'products' | 'items' | 'movements';
 
 interface InventoryTabProps {
     readOnly?: boolean;
+    initialFilter?: 'all' | 'low' | 'critical';
 }
 
-export function InventoryTab({ readOnly = false }: InventoryTabProps) {
+export function InventoryTab({ readOnly = false, initialFilter = 'all' }: InventoryTabProps) {
     const { user } = useAuth();
     const { products: allProducts, refresh: refreshCache } = useProductCache(user?.restaurantId);
     const [subTab, setSubTab] = useState<SubTab>('products');
@@ -26,7 +27,7 @@ export function InventoryTab({ readOnly = false }: InventoryTabProps) {
     const products = allProducts.filter(p => p.controlaStock);
     const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [filterState, setFilterState] = useState<'all' | 'low' | 'critical'>('all');
+    const [filterState, setFilterState] = useState<'all' | 'low' | 'critical'>(initialFilter);
 
     // Adjustment modal
     const [adjustProduct, setAdjustProduct] = useState<Product | null>(null);

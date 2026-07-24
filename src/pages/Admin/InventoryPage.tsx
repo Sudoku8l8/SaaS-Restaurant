@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { Menu } from 'lucide-react';
 import { InventoryTab } from '@/components/features/InventoryTab';
 import { useAuth } from '@/hooks/useAuth';
@@ -8,6 +8,8 @@ import { AppSidebar } from '@/components/shared/AppSidebar';
 
 export function InventoryPage() {
     const { restaurantSlug } = useParams();
+    const [searchParams] = useSearchParams();
+    const initialFilter = (searchParams.get('filter') as 'all' | 'low' | 'critical') || 'all';
     const { user } = useAuth();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -53,7 +55,7 @@ export function InventoryPage() {
             </header>
 
             <div className="glass-card" style={{ padding: '1.5rem' }}>
-                <InventoryTab readOnly={isReadOnly} />
+                <InventoryTab readOnly={isReadOnly} initialFilter={initialFilter} />
             </div>
         </div>
     );

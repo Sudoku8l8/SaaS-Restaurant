@@ -1,12 +1,19 @@
 import { useDailySales } from '@/hooks/useDailySales';
+import { useLowStock } from '@/hooks/useLowStock';
 import { Badge } from '@/components/shared';
 import { DashboardSkeleton } from '@/components/shared/Skeleton';
-import { TrendingUp, Users } from "lucide-react";
+import { TrendingUp, Users, AlertTriangle, Package } from "lucide-react";
+import { useNavigate, useParams } from 'react-router-dom';
 
 export function SalesDashboard() {
     const { metrics, isLoading } = useDailySales();
+    const { lowStockProducts } = useLowStock();
+    const navigate = useNavigate();
+    const { restaurantSlug } = useParams<{ restaurantSlug: string }>();
 
     if (isLoading) return <DashboardSkeleton />;
+
+    const lowStockCount = lowStockProducts.length;
 
     return (
         <div style={{ marginBottom: '0.5rem' }}>
@@ -78,6 +85,56 @@ export function SalesDashboard() {
                         Promedio de tiempo: {metrics.orderCount > 0 ? Math.round(metrics.totalSales / metrics.orderCount) : 0} min
                     </p>
                 </div>
+                {/* Stock Bajo */}
+                <div
+                    className="glass-card kpi-card"
+                    onClick={() => navigate(`/${restaurantSlug}/inventario?filter=low`)}
+                    style={{
+                        cursor: 'pointer',
+                        transition: 'all 0.25s ease',
+                        borderColor: lowStockCount > 0 ? 'rgba(245, 158, 11, 0.25)' : undefined,
+                    }}
+                    onMouseEnter={e => {
+                        (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)';
+                        (e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 25px rgba(245, 158, 11, 0.15)';
+                    }}
+                    onMouseLeave={e => {
+                        (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
+                        (e.currentTarget as HTMLDivElement).style.boxShadow = '';
+                    }}
+                >
+                    <span style={{
+                        color: 'var(--warning-color, #f59e0b)', fontSize: '0.7rem', fontWeight: 700,
+                        textTransform: 'uppercase', letterSpacing: '0.1em',
+                        display: 'block', marginBottom: '1rem'
+                    }}>
+                        Stock Bajo
+                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <span className="kpi-value" style={{
+                            color: lowStockCount > 0 ? 'var(--warning-color, #f59e0b)' : undefined
+                        }}>
+                            {lowStockCount}
+                        </span>
+                        <div style={{
+                            width: '40px', height: '40px', borderRadius: '50%',
+                            background: lowStockCount > 0 ? 'rgba(245, 158, 11, 0.12)' : 'rgba(16, 185, 129, 0.1)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            transition: 'background 0.3s ease'
+                        }}>
+                            {lowStockCount > 0 ? (
+                                <AlertTriangle size={20} color="var(--warning-color, #f59e0b)" />
+                            ) : (
+                                <Package size={20} color="var(--accent-emerald, #10b981)" />
+                            )}
+                        </div>
+                    </div>
+                    <p style={{ marginTop: '1rem', fontSize: '0.75rem', color: 'var(--text-muted, var(--text-secondary))', fontWeight: 500 }}>
+                        {lowStockCount > 0
+                            ? `${lowStockCount} producto${lowStockCount > 1 ? 's' : ''} por reabastecer`
+                            : 'Todo el stock está en orden'}
+                    </p>
+                </div>
 
                 {/* Líder del Turno */}
                 <div className="glass-card kpi-card" style={{
@@ -118,6 +175,8 @@ export function SalesDashboard() {
                         </div>
                     )}
                 </div>
+
+
             </div>
         </div>
     );
