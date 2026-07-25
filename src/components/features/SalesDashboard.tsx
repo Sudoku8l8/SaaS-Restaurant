@@ -93,6 +93,8 @@ export function SalesDashboard() {
                         cursor: 'pointer',
                         transition: 'all 0.25s ease',
                         borderColor: lowStockCount > 0 ? 'rgba(245, 158, 11, 0.25)' : undefined,
+                        position: 'relative',
+                        overflow: 'hidden',
                     }}
                     onMouseEnter={e => {
                         (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)';
@@ -103,6 +105,20 @@ export function SalesDashboard() {
                         (e.currentTarget as HTMLDivElement).style.boxShadow = '';
                     }}
                 >
+                    {/* Icon pinned to top-right */}
+                    <div style={{
+                        position: 'absolute', top: '1rem', right: '1rem',
+                        width: '40px', height: '40px', borderRadius: '50%',
+                        background: lowStockCount > 0 ? 'rgba(245, 158, 11, 0.12)' : 'rgba(16, 185, 129, 0.1)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        transition: 'background 0.3s ease'
+                    }}>
+                        {lowStockCount > 0 ? (
+                            <AlertTriangle size={20} color="var(--warning-color, #f59e0b)" />
+                        ) : (
+                            <Package size={20} color="var(--accent-emerald, #10b981)" />
+                        )}
+                    </div>
                     <span style={{
                         color: 'var(--warning-color, #f59e0b)', fontSize: '0.7rem', fontWeight: 700,
                         textTransform: 'uppercase', letterSpacing: '0.1em',
@@ -116,18 +132,6 @@ export function SalesDashboard() {
                         }}>
                             {lowStockCount}
                         </span>
-                        <div style={{
-                            width: '40px', height: '40px', borderRadius: '50%',
-                            background: lowStockCount > 0 ? 'rgba(245, 158, 11, 0.12)' : 'rgba(16, 185, 129, 0.1)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            transition: 'background 0.3s ease'
-                        }}>
-                            {lowStockCount > 0 ? (
-                                <AlertTriangle size={20} color="var(--warning-color, #f59e0b)" />
-                            ) : (
-                                <Package size={20} color="var(--accent-emerald, #10b981)" />
-                            )}
-                        </div>
                     </div>
                     <p style={{ marginTop: '1rem', fontSize: '0.75rem', color: 'var(--text-muted, var(--text-secondary))', fontWeight: 500 }}>
                         {lowStockCount > 0
